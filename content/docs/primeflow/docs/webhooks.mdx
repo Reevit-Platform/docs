@@ -1,0 +1,884 @@
+---
+title: Webhooks
+description: Receive real-time notifications when payment events occur
+icon: Webhook
+---
+
+import { CreditCard, Repeat, Workflow, BookOpen, AlertTriangle, CheckCircle } from "lucide-react"
+
+# Webhooks
+
+Webhooks are HTTP callbacks that notify your application in real-time when payment events occur. Instead of constantly polling the API to check payment status, Primeflow pushes events to your server as they happen.
+
+![Webhook Delivery Flow](/images/webhooks/delivery-flow.svg)
+
+---
+
+## Understanding Webhook Architecture
+
+Primeflow handles **two types of webhooks**. Understanding the difference is crucial:
+
+### Inbound Webhooks (PSP → Primeflow)
+
+These are webhooks from payment providers (Paystack, Flutterwave, M-Pesa, etc.) **to Primeflow**.
+
+```
+┌─────────────┐     Webhook      ┌─────────────┐
+│   Paystack  │ ───────────────► │  Primeflow  │
+│ Flutterwave │   (PSP events)   │   Backend   │
+│   M-Pesa    │                  │             │
+└─────────────┘                  └─────────────┘
+```
+
+**Key Points:**
+- **Primeflow handles these automatically** - you don't need to do anything
+- Configure the Primeflow webhook URL in each PSP's dashboard
+- Primeflow processes provider events and updates payment status
+
+**PSP Webhook URLs:**
+| Provider | Webhook URL to configure in PSP Dashboard |
+|----------|-------------------------------------------|
+| Paystack | `https://api.primeflow.com/webhooks/paystack` |
+| Flutterwave | `https://api.primeflow.com/webhooks/flutterwave` |
+| Hubtel | `https://api.primeflow.com/webhooks/hubtel` |
+| M-Pesa | `https://api.primeflow.com/webhooks/mpesa` |
+| Stripe | `https://api.primeflow.com/webhooks/stripe` |
+
+<Callout type="info">
+You configure these URLs in the **payment provider's dashboard** (e.g., Paystack Dashboard), NOT in Primeflow.
+</Callout>
+
+### Outbound Webhooks (Primeflow → Your App)
+
+These are webhooks **from Primeflow to your application**.
+
+```
+┌─────────────┐     Webhook      ┌─────────────┐
+│  Primeflow  │ ───────────────► │  Your App   │
+│   Backend   │  (your events)   │   Backend   │
+└─────────────┘                  └─────────────┘
+```
+
+**Key Points:**
+- **You must create a webhook handler** in your application
+- Configure your webhook URL in the **Primeflow Dashboard**
+- Primeflow sends you normalized events (same format regardless of PSP)
+- You verify signatures using your organization's signing secret
+
+<Callout type="warning">
+This is the webhook you configure in **Primeflow Dashboard > Developers > Webhooks**.
+</Callout>
+
+---
+
+## Why Webhooks Matter
+
+### The Problem with Polling
+
+**Without webhooks**, you'd need to:
+- Poll the API every few seconds to check payment status
+- Waste server resources on unnecessary requests
+- Experience delays between payment completion and order fulfillment
+- Miss events if your polling interval is too long
+
+**Example**: Customer completes payment at 10:00:00, but you only poll at 10:00:30 → 30-second delay before order fulfillment.
+
+### The Webhook Solution
+
+**With webhooks**:
+- **Instant notifications**: Know immediately when payments succeed or fail
+- **Efficient**: No wasted API calls
+- **Reliable**: Events are delivered even if you're not actively checking
+- **Scalable**: Works with thousands of payments per minute
+
+**Result**: Faster order fulfillment, better customer experience, lower server costs.
+
+---
+
+## How Outbound Webhooks Work
+
+### The Flow
+
+```
+1. Payment Event Occurs → 2. Primeflow Sends Webhook → 3. Your Server Processes → 4. You Respond
+```
+
+1. **Event Occurs**: Payment succeeds, fails, or changes status
+2. **Primeflow Sends**: POST request to your webhook URL with event data
+3. **Your Server Processes**: Verify signature, update database, fulfill order
+4. **You Respond**: Return 2xx status code to acknowledge receipt
+
+### Key Concepts
+
+- **Webhook URL**: Your server endpoint that receives events
+- **Signing Secret**: Unique secret per organization for signature verification
+- **Event Types**: Different events for different payment states
+- **Signatures**: Cryptographic signatures to verify events are from Primeflow
+- **Idempotency**: Events include IDs to prevent duplicate processing
+- **Retries**: Failed deliveries are automatically retried
+
+---
+
+## Setting Up Webhooks
+
+### Via Dashboard (Recommended)
+
+1. Go to **Settings → Webhooks** in your Primeflow dashboard
+2. Enter your webhook endpoint URL (must be HTTPS)
+3. Select which events you want to receive
+4. Copy the webhook signing secret
+5. Save configuration
+
+**Benefits**:
+- Visual interface
+- Easy to update
+- See delivery status
+
+### Via API
+
+```bash
+curl -X POST https://api.primeflow.com/v1/webhooks/config \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: webhook-config-001" \
+  -d '{
+    "url": "https://yourapp.com/webhooks/primeflow",
+    "events": [
+      "payment.succeeded",
+      "payment.failed",
+      "payment.refunded",
+      "subscription.renewed"
+    ],
+    "enabled": true
+  }'
+```
+
+### Webhook URL Requirements
+
+- **HTTPS only**: HTTP endpoints are not supported for security
+- **Publicly accessible**: Must be reachable from the internet
+- **Fast response**: Return 2xx within 30 seconds
+- **Idempotent**: Handle duplicate events gracefully
+
+### Get Configuration
+
+```bash
+curl https://api.primeflow.com/v1/webhooks/config \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Response:**
+```json
+{
+  "url": "https://yourapp.com/webhooks/primeflow",
+  "events": ["payment.succeeded", "payment.failed"],
+  "enabled": true,
+  "signing_secret": "whsec_xxx",
+  "created_at": "2025-02-10T10:00:00Z"
+}
+```
+
+---
+
+## Event Types
+
+Primeflow sends different events for different scenarios. Subscribe only to events you need.
+
+### Payment Events
+
+| Event | When It Fires | Use Case |
+|-------|---------------|----------|
+| `payment.created` | Payment intent created | Log payment attempts |
+| `payment.succeeded` | Payment completed successfully | **Fulfill order, send confirmation** |
+| `payment.failed` | Payment failed | Notify customer, allow retry |
+| `payment.canceled` | Payment canceled | Release inventory, update order |
+| `payment.refunded` | Refund completed | Update order status, notify customer |
+
+### Subscription Events
+
+| Event | When It Fires | Use Case |
+|-------|---------------|----------|
+| `subscription.created` | New subscription created | Activate subscription, send welcome email |
+| `subscription.updated` | Subscription modified | Update subscription status |
+| `subscription.canceled` | Subscription canceled | Deactivate access, send cancellation email |
+| `subscription.paused` | Subscription paused | Suspend access temporarily |
+| `subscription.resumed` | Subscription resumed | Reactivate access |
+
+### Invoice Events
+
+| Event | When It Fires | Use Case |
+|-------|---------------|----------|
+| `invoice.created` | Invoice generated | Notify customer of upcoming charge |
+| `invoice.paid` | Invoice payment succeeded | Extend subscription, grant access |
+| `invoice.failed` | Invoice payment failed | Notify customer, retry payment |
+| `invoice.canceled` | Invoice canceled | Update subscription status |
+
+---
+
+## Webhook Payload
+
+Every webhook includes a consistent payload structure:
+
+```json
+{
+  "id": "evt_abc123",
+  "type": "payment.succeeded",
+  "org_id": "org_123",
+  "created_at": "2025-02-10T10:05:00Z",
+  "data": {
+    "id": "pay_xyz789",
+    "amount": 5000,
+    "currency": "GHS",
+    "status": "succeeded",
+    "provider": "paystack",
+    "customer_id": "cust_456",
+    "metadata": {
+      "order_id": "12345"
+    }
+  }
+}
+```
+
+### Payload Fields
+
+- **`id`**: Unique event identifier (use for idempotency)
+- **`type`**: Event type (e.g., `payment.succeeded`)
+- **`org_id`**: Your organization ID
+- **`created_at`**: When the event occurred (ISO 8601)
+- **`data`**: Event-specific data (varies by event type)
+
+### Using Event Data
+
+**Example: Fulfill Order on Payment Success**
+
+```javascript
+if (event.type === 'payment.succeeded') {
+  const payment = event.data;
+  const orderId = payment.metadata.order_id;
+  
+  // Fulfill order
+  await fulfillOrder(orderId);
+  
+  // Send confirmation email
+  await sendConfirmationEmail(payment.customer_id);
+  
+  // Update analytics
+  await trackPurchase(payment);
+}
+```
+
+---
+
+## Verifying Webhooks
+
+**Always verify webhook signatures**. This ensures events are actually from Primeflow and haven't been tampered with.
+
+### Why Verification Matters
+
+Without verification, attackers could:
+- Send fake payment success events
+- Trigger order fulfillment without payment
+- Cause financial losses
+- Compromise your system
+
+### How Verification Works
+
+Primeflow signs each webhook using HMAC-SHA256 with your organization's signing secret:
+
+1. **Header**: `X-Primeflow-Signature: sha256=<hex-signature>`
+2. **Signature**: `HMAC-SHA256(request_body, signing_secret)`
+3. **Verification**: Compare using constant-time comparison
+
+### Getting Your Signing Secret
+
+Your signing secret is **automatically generated** when you first configure a webhook endpoint:
+
+1. Go to **Primeflow Dashboard > Developers > Webhooks**
+2. Add your webhook endpoint URL
+3. Click the **copy button** next to "Signing Secret"
+4. Add to your environment: `PRIMEFLOW_WEBHOOK_SECRET=whsec_xxx...`
+
+<Callout type="info">
+The signing secret is unique per organization and starts with `whsec_`. It's generated once and persists across webhook URL updates.
+</Callout>
+
+### Next.js App Router Example (Recommended)
+
+```typescript
+// app/api/webhooks/primeflow/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+
+function verifySignature(payload: string, signature: string, secret: string): boolean {
+  if (!signature.startsWith("sha256=")) return false;
+  
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  
+  const received = signature.slice(7); // Remove "sha256=" prefix
+  if (received.length !== expected.length) return false;
+  
+  return crypto.timingSafeEqual(Buffer.from(received), Buffer.from(expected));
+}
+
+export async function POST(request: NextRequest) {
+  const rawBody = await request.text();
+  const signature = request.headers.get("x-primeflow-signature") || "";
+  const secret = process.env.PRIMEFLOW_WEBHOOK_SECRET!;
+
+  // Verify signature
+  if (!verifySignature(rawBody, signature, secret)) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  const event = JSON.parse(rawBody);
+
+  // Handle events
+  switch (event.type) {
+    case "primeflow.webhook.test":
+      console.log("Test webhook received");
+      break;
+    case "payment.succeeded":
+      await handlePaymentSucceeded(event.data);
+      break;
+    case "payment.failed":
+      await handlePaymentFailed(event.data);
+      break;
+  }
+
+  return NextResponse.json({ received: true });
+}
+
+async function handlePaymentSucceeded(data: any) {
+  const orderId = data.metadata?.order_id;
+  // Update order status, send confirmation email, etc.
+  console.log(`Payment ${data.id} succeeded for order ${orderId}`);
+}
+
+async function handlePaymentFailed(data: any) {
+  // Notify customer, allow retry, etc.
+  console.log(`Payment ${data.id} failed`);
+}
+```
+
+### Express.js Example
+
+```javascript
+const crypto = require('crypto');
+const express = require('express');
+
+function verifySignature(payload, signature, secret) {
+  if (!signature.startsWith('sha256=')) return false;
+  
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  
+  const received = signature.slice(7);
+  if (received.length !== expected.length) return false;
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(received),
+    Buffer.from(expected)
+  );
+}
+
+// IMPORTANT: Use raw body for signature verification
+app.post('/webhooks/primeflow', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-primeflow-signature'];
+  const payload = req.body.toString();
+  const secret = process.env.PRIMEFLOW_WEBHOOK_SECRET;
+  
+  if (!verifySignature(payload, signature, secret)) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+  
+  const event = JSON.parse(payload);
+  
+  switch (event.type) {
+    case 'payment.succeeded':
+      // Fulfill order
+      break;
+    case 'payment.failed':
+      // Notify customer
+      break;
+  }
+  
+  res.status(200).json({ received: true });
+});
+```
+
+### Go Example
+
+```go
+package main
+
+import (
+    "crypto/hmac"
+    "crypto/sha256"
+    "encoding/hex"
+    "encoding/json"
+    "io"
+    "net/http"
+    "os"
+    "strings"
+)
+
+func verifySignature(payload []byte, signature, secret string) bool {
+    if !strings.HasPrefix(signature, "sha256=") {
+        return false
+    }
+    
+    mac := hmac.New(sha256.New, []byte(secret))
+    mac.Write(payload)
+    expected := hex.EncodeToString(mac.Sum(nil))
+    received := signature[7:] // Remove "sha256=" prefix
+    
+    return hmac.Equal([]byte(received), []byte(expected))
+}
+
+func webhookHandler(w http.ResponseWriter, r *http.Request) {
+    body, _ := io.ReadAll(r.Body)
+    signature := r.Header.Get("X-Primeflow-Signature")
+    secret := os.Getenv("PRIMEFLOW_WEBHOOK_SECRET")
+    
+    if !verifySignature(body, signature, secret) {
+        http.Error(w, "Invalid signature", http.StatusUnauthorized)
+        return
+    }
+    
+    var event map[string]interface{}
+    json.Unmarshal(body, &event)
+    
+    // Handle event based on type
+    switch event["type"] {
+    case "payment.succeeded":
+        // Fulfill order
+    case "payment.failed":
+        // Notify customer
+    }
+    
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]bool{"received": true})
+}
+```
+
+### Python (Flask) Example
+
+```python
+import hmac
+import hashlib
+import os
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+def verify_signature(payload: bytes, signature: str, secret: str) -> bool:
+    if not signature.startswith('sha256='):
+        return False
+    
+    expected = hmac.new(
+        secret.encode('utf-8'),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    
+    received = signature[7:]  # Remove "sha256=" prefix
+    return hmac.compare_digest(received, expected)
+
+@app.route('/webhooks/primeflow', methods=['POST'])
+def webhook():
+    payload = request.get_data()
+    signature = request.headers.get('X-Primeflow-Signature', '')
+    secret = os.environ['PRIMEFLOW_WEBHOOK_SECRET']
+    
+    if not verify_signature(payload, signature, secret):
+        return jsonify({'error': 'Invalid signature'}), 401
+    
+    event = request.get_json()
+    
+    if event['type'] == 'payment.succeeded':
+        # Fulfill order
+        pass
+    elif event['type'] == 'payment.failed':
+        # Notify customer
+        pass
+    
+    return jsonify({'received': True})
+```
+
+### PHP Example
+
+```php
+<?php
+
+function verifySignature(string $payload, string $signature, string $secret): bool {
+    if (strpos($signature, 'sha256=') !== 0) {
+        return false;
+    }
+    
+    $expected = hash_hmac('sha256', $payload, $secret);
+    $received = substr($signature, 7); // Remove "sha256=" prefix
+    
+    return hash_equals($expected, $received);
+}
+
+// Webhook handler
+$payload = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_PRIMEFLOW_SIGNATURE'] ?? '';
+$secret = getenv('PRIMEFLOW_WEBHOOK_SECRET');
+
+if (!verifySignature($payload, $signature, $secret)) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Invalid signature']);
+    exit;
+}
+
+$event = json_decode($payload, true);
+
+switch ($event['type']) {
+    case 'payment.succeeded':
+        // Fulfill order
+        break;
+    case 'payment.failed':
+        // Notify customer
+        break;
+}
+
+http_response_code(200);
+echo json_encode(['received' => true]);
+```
+
+---
+
+## Processing Webhooks
+
+### Best Practices
+
+1. **Respond Quickly**: Return 2xx within 30 seconds
+2. **Process Async**: Queue events for background processing
+3. **Handle Duplicates**: Use event ID for idempotency
+4. **Verify Signatures**: Always verify webhook authenticity
+5. **Log Events**: Log all events for debugging and audit
+
+### Idempotency
+
+Events include unique IDs. Use these to prevent duplicate processing:
+
+```javascript
+// Check if event already processed
+const existingEvent = await db.events.findOne({ id: event.id });
+if (existingEvent) {
+  return res.status(200).send('Already processed');
+}
+
+// Process event
+await processEvent(event);
+
+// Store event ID
+await db.events.insert({ id: event.id, processed_at: new Date() });
+```
+
+### Error Handling
+
+**Return 2xx for success**: Even if processing fails internally, return 2xx to acknowledge receipt. Process failures in background.
+
+**Return 4xx/5xx for retry**: Only return error codes if you want Primeflow to retry:
+- **4xx**: Client error (won't retry)
+- **5xx**: Server error (will retry)
+
+**Example**:
+
+```javascript
+app.post('/webhooks/primeflow', async (req, res) => {
+  try {
+    // Verify signature
+    if (!verifyWebhook(req.body, signature, secret)) {
+      return res.status(401).send('Invalid signature');
+    }
+    
+    const event = JSON.parse(req.body);
+    
+    // Queue for processing (don't block webhook response)
+    await queue.add('process-webhook', event);
+    
+    // Return success immediately
+    res.status(200).send('OK');
+  } catch (error) {
+    // Log error but still return 200
+    console.error('Webhook error:', error);
+    res.status(200).send('OK');
+  }
+});
+```
+
+---
+
+## Testing Webhooks
+
+### Test Events
+
+Send a test event to verify your endpoint:
+
+```bash
+curl -X POST https://api.primeflow.com/v1/webhooks/test \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Use Cases**:
+- **Initial setup**: Verify endpoint is working
+- **After changes**: Test after updating webhook URL
+- **Debugging**: Test signature verification
+
+### Local Development
+
+For local development, use tools like:
+- **ngrok**: Expose local server to internet
+- **webhook.site**: Temporary webhook URLs for testing
+- **Stripe CLI**: Forward webhooks to local server
+
+**Example with ngrok**:
+```bash
+# Start ngrok
+ngrok http 3000
+
+# Use ngrok URL in webhook config
+# https://abc123.ngrok.io/webhooks/primeflow
+```
+
+---
+
+## Viewing Webhook Events
+
+### List Events
+
+```bash
+curl "https://api.primeflow.com/v1/webhooks/events?limit=20" \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Use Cases**:
+- **Debugging**: See what events were sent
+- **Audit**: Review event history
+- **Monitoring**: Check event delivery
+
+### Get Single Event
+
+```bash
+curl https://api.primeflow.com/v1/webhooks/events/evt_abc123 \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Use Cases**:
+- **Investigation**: Review specific event details
+- **Replay**: Get event data for replaying
+
+---
+
+## Replaying Events
+
+Re-send a webhook event if delivery failed or you need to reprocess:
+
+```bash
+curl -X POST https://api.primeflow.com/v1/webhooks/events/evt_abc123/replay \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Use Cases**:
+- **Failed delivery**: Retry after fixing endpoint
+- **Reprocessing**: Reprocess event after bug fix
+- **Testing**: Test event processing logic
+
+---
+
+## Delivery Status
+
+### View Delivery Attempts
+
+```bash
+curl https://api.primeflow.com/v1/webhooks/outbound \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Response:**
+```json
+{
+  "deliveries": [
+    {
+      "id": "del_123",
+      "event_id": "evt_abc123",
+      "url": "https://yourapp.com/webhooks/primeflow",
+      "status": "delivered",
+      "response_code": 200,
+      "attempts": 1,
+      "delivered_at": "2025-02-10T10:05:01Z"
+    },
+    {
+      "id": "del_124",
+      "event_id": "evt_def456",
+      "url": "https://yourapp.com/webhooks/primeflow",
+      "status": "failed",
+      "response_code": 500,
+      "attempts": 5,
+      "last_attempt_at": "2025-02-10T10:10:00Z"
+    }
+  ]
+}
+```
+
+### Delivery Statuses
+
+- **`delivered`**: Successfully delivered and acknowledged
+- **`pending`**: Queued for delivery
+- **`failed`**: Failed after all retry attempts
+- **`retrying`**: Currently retrying after failure
+
+---
+
+## Retry Behavior
+
+Primeflow automatically retries failed webhook deliveries with exponential backoff:
+
+| Attempt | Delay | Total Time |
+|---------|-------|------------|
+| 1 | Immediate | 0s |
+| 2 | 1 minute | 1m |
+| 3 | 5 minutes | 6m |
+| 4 | 30 minutes | 36m |
+| 5 | 2 hours | 2h 36m |
+
+After 5 failed attempts, the event is marked as failed and won't be retried automatically.
+
+### Why Retries Matter
+
+- **Network issues**: Temporary network problems resolve themselves
+- **Server restarts**: Your server may be restarting
+- **Rate limiting**: Temporary rate limits may clear
+- **Transient errors**: Some errors are temporary
+
+**Best Practice**: Make your webhook endpoint idempotent so retries are safe.
+
+---
+
+## Security Best Practices
+
+1. **Always Verify Signatures**: Never process unverified webhooks
+2. **Use HTTPS**: Only accept webhooks over HTTPS
+3. **Validate Event Data**: Don't trust event data blindly
+4. **Rate Limiting**: Implement rate limiting on webhook endpoint
+5. **Monitor Failures**: Alert on repeated webhook failures
+6. **Keep Secrets Secure**: Never expose webhook secrets
+7. **Use Idempotency**: Handle duplicate events gracefully
+
+---
+
+## Common Patterns
+
+### Order Fulfillment
+
+```javascript
+if (event.type === 'payment.succeeded') {
+  const orderId = event.data.metadata.order_id;
+  await fulfillOrder(orderId);
+  await sendConfirmationEmail(event.data.customer_id);
+}
+```
+
+### Subscription Management
+
+```javascript
+if (event.type === 'subscription.renewed') {
+  const subscription = event.data;
+  await extendAccess(subscription.customer_id);
+  await sendRenewalConfirmation(subscription);
+}
+```
+
+### Refund Processing
+
+```javascript
+if (event.type === 'payment.refunded') {
+  const refund = event.data;
+  await updateOrderStatus(refund.metadata.order_id, 'refunded');
+  await notifyCustomer(refund.customer_id, 'refund_processed');
+}
+```
+
+### Failed Payment Handling
+
+```javascript
+if (event.type === 'payment.failed') {
+  const payment = event.data;
+  await notifyCustomer(payment.customer_id, 'payment_failed');
+  await allowRetry(payment.id);
+}
+```
+
+---
+
+## Troubleshooting
+
+### Webhooks Not Received
+
+1. **Check URL**: Verify webhook URL is correct and accessible
+2. **Check HTTPS**: Ensure URL uses HTTPS
+3. **Check Firewall**: Ensure firewall allows Primeflow IPs
+4. **Check Logs**: Review delivery logs for errors
+5. **Test Endpoint**: Use test endpoint to verify connectivity
+
+### Signature Verification Failing
+
+1. **Check Secret**: Verify webhook secret is correct
+2. **Check Payload**: Ensure you're using raw request body
+3. **Check Encoding**: Ensure proper string encoding
+4. **Check Headers**: Verify signature header name
+
+### Duplicate Events
+
+1. **Use Event IDs**: Check event ID before processing
+2. **Implement Idempotency**: Make handlers idempotent
+3. **Check Retries**: Verify retry logic isn't causing duplicates
+
+---
+
+## Next Steps
+
+<Cards columns={2}>
+  <Card
+    title="Payments"
+    href="/docs/primeflow/docs/payments"
+    icon={<CreditCard />}
+  >
+    Map `payment.*` events to your fulfillment and reconciliation flows.
+  </Card>
+  <Card
+    title="Subscriptions"
+    href="/docs/primeflow/docs/subscriptions"
+    icon={<Repeat />}
+  >
+    Act on `subscription.*` and `invoice.*` events for renewals and dunning.
+  </Card>
+  <Card
+    title="Workflows"
+    href="/docs/primeflow/docs/workflows"
+    icon={<Workflow />}
+  >
+    Trigger emails, SMS, or webhooks to third-parties from incoming events.
+  </Card>
+  <Card
+    title="API Reference"
+    href="/docs/primeflow/docs/api-reference"
+    icon={<BookOpen />}
+  >
+    Review endpoint schemas and headers for webhook setup and retries.
+  </Card>
+</Cards>

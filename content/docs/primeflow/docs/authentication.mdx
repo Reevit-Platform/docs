@@ -1,0 +1,266 @@
+---
+title: Authentication
+description: API keys, headers, and security
+icon: Key
+---
+
+# Authentication
+
+Primeflow uses API keys for server-to-server authentication.
+
+## API Keys
+
+### Format
+```
+pfk_live_a1b2c3d4e5f6g7h8i9j0...
+pfk_test_a1b2c3d4e5f6g7h8i9j0...
+```
+
+- `pfk_live_` — Production keys
+- `pfk_test_` — Sandbox/test keys
+
+### Creating Keys
+
+```bash
+curl -X POST https://api.primeflow.com/v1/api-keys \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: key-create-001" \
+  -d '{
+    "name": "Backend Production",
+    "scopes": ["payments:read", "payments:write"]
+  }'
+```
+
+**Response:**
+```json
+{
+  "id": "key_abc123",
+  "name": "Backend Production",
+  "key": "pfk_live_a1b2c3d4e5f6...",
+  "scopes": ["payments:read", "payments:write"],
+  "created_at": "2025-02-10T10:00:00Z"
+}
+```
+
+> ⚠️ **Important:** The full key is only shown once. Store it securely!
+
+### Listing Keys
+
+```bash
+curl https://api.primeflow.com/v1/api-keys \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+### Revoking Keys
+
+```bash
+curl -X DELETE https://api.primeflow.com/v1/api-keys/key_abc123 \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+---
+
+## Required Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-Primeflow-Key` | Yes | Your API key |
+| `X-Org-Id` | Yes | Your organization ID |
+| `Idempotency-Key` | For mutations | Unique request identifier |
+| `Content-Type` | For POST/PATCH | `application/json` |
+| `X-Actor-Id` | Optional | User ID for audit logs |
+
+### Example Request
+
+```bash
+curl -X POST https://api.primeflow.com/v1/payments/intents \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: order-12345" \
+  -H "X-Actor-Id: user_789" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 5000, "currency": "GHS"}'
+```
+
+---
+
+## Scopes
+
+API keys are scoped to limit access:
+
+| Scope | Permissions |
+|-------|-------------|
+| `connections:read` | View PSP connections |
+| `connections:write` | Create/update/delete connections |
+| `payments:read` | View payments and stats |
+| `payments:write` | Create/confirm/refund payments |
+| `fraud:read` | View fraud policies |
+| `fraud:write` | Update fraud policies |
+| `webhooks:read` | View webhook events and config |
+| `webhooks:write` | Configure webhooks, replay events |
+| `subscriptions:read` | View subscriptions |
+| `subscriptions:write` | Create/update/cancel subscriptions |
+| `invoices:read` | View invoices |
+| `invoices:write` | Retry/cancel invoices |
+| `api_keys:read` | List API keys |
+| `api_keys:write` | Create/revoke API keys |
+| `workflows:read` | View workflow automation |
+| `workflows:write` | Manage workflows |
+
+### Scope Errors
+
+If you call an endpoint without the required scope:
+
+```json
+{
+  "error": "forbidden",
+  "message": "API key missing required scope: payments:write"
+}
+```
+
+---
+
+## Idempotency
+
+All mutation endpoints (POST, PATCH, DELETE) require an `Idempotency-Key` header.
+
+### How It Works
+
+1. First request with key `order-12345` → Processed, response cached
+2. Retry with same key → Cached response returned (no duplicate)
+3. Different key → New request processed
+
+### Best Practices
+
+- Use unique, deterministic keys (e.g., `order-{order_id}`)
+- Keys are valid for 24 hours
+- Include enough context to be unique
+
+```bash
+# Good: Deterministic, unique per order
+Idempotency-Key: order-12345
+
+# Bad: Random, can't retry safely
+Idempotency-Key: abc123xyz
+```
+
+---
+
+## Error Responses
+
+### 401 Unauthorized
+```json
+{
+  "error": "unauthorized",
+  "message": "Invalid or missing API key"
+}
+```
+
+### 403 Forbidden
+```json
+{
+  "error": "forbidden",
+  "message": "API key missing required scope"
+}
+```
+
+### 429 Too Many Requests
+```json
+{
+  "error": "rate_limited",
+  "message": "Too many requests",
+  "retry_after": 60
+}
+```
+
+---
+
+## Security Best Practices
+
+1. **Never expose keys in client-side code** — Use server-to-server calls only
+2. **Use environment variables** — Don't commit keys to version control
+3. **Rotate keys regularly** — Create new keys and revoke old ones
+4. **Use minimal scopes** — Only grant permissions you need
+5. **Monitor usage** — Check dashboard for unusual activity
+
+---
+
+## Session Authentication
+
+For dashboard and web applications, Primeflow supports session-based authentication:
+
+### Magic Link Authentication
+
+1. Request a magic link:
+```bash
+curl -X POST https://api.primeflow.com/v1/auth/magic-link \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com"}'
+```
+
+2. User clicks link in email, which calls:
+```bash
+GET https://api.primeflow.com/v1/auth/verify?token=xxx
+```
+
+3. Session cookie is set automatically (`primeflow_session`)
+
+### Two-Factor Authentication (2FA)
+
+Users can enable TOTP-based 2FA:
+
+```bash
+# Setup 2FA
+POST /v1/auth/2fa/setup
+
+# Enable with verification code
+POST /v1/auth/2fa/enable
+{"code": "123456"}
+
+# Login with 2FA
+GET /v1/auth/verify?token=xxx&code=123456
+```
+
+### WebAuthn/Passkeys
+
+Passwordless authentication using WebAuthn:
+
+```bash
+# Register passkey
+POST /v1/auth/webauthn/register/begin
+POST /v1/auth/webauthn/register/finish
+
+# Authenticate with passkey
+POST /v1/auth/webauthn/authenticate/begin
+POST /v1/auth/webauthn/authenticate/finish
+```
+
+---
+
+## Platform Admin Authentication
+
+Platform administrators have elevated access across all organizations:
+
+| Role | Permissions |
+|------|-------------|
+| `platform_admin` | View/manage all organizations, approve/reject KYC |
+| `platform_owner` | All platform_admin permissions + manage platform admins |
+
+Platform admin endpoints require session authentication and platform admin role:
+
+```bash
+# Check platform admin status
+GET /v1/platform/me
+
+# List all organizations (platform admin only)
+GET /v1/platform/organizations
+
+# Approve KYC (platform admin only)
+POST /v1/platform/kyc/approve
+{"org_id": "org_123"}
+```
+
+Platform admin actions are logged in the platform audit log for compliance.

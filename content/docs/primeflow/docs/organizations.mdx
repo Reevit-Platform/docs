@@ -1,0 +1,196 @@
+---
+title: Organizations
+description: Team management and organization settings
+icon: Building2
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Step, Steps } from 'fumadocs-ui/components/steps'
+
+# Organizations
+
+Organizations are the core unit of multi-tenancy in Primeflow. Each organization has its own connections, payments, team members, and settings.
+
+## Organization Types
+
+| Type | Description | Features |
+|------|-------------|----------|
+| **Personal** | Single-user organization | Test mode only, no team members |
+| **Business** | Multi-user organization | Team invites, KYC verification, live mode |
+
+---
+
+## Team Roles
+
+Business organizations support role-based access control:
+
+| Role | Permissions |
+|------|-------------|
+| **Owner** | Full access, can delete organization, manage billing |
+| **Admin** | Manage team members, connections, settings |
+| **Developer** | Create/manage connections, view payments, API access |
+| **Finance** | View payments, refunds, reports (read-only) |
+| **Viewer** | Read-only access to dashboard |
+
+---
+
+## Inviting Team Members
+
+Invite users to your organization via the dashboard or API:
+
+```bash
+curl -X POST https://api.primeflow.com/v1/admin/users/invite \
+  -H "Content-Type: application/json" \
+  -H "X-Org-Id: your_org_id" \
+  -H "Cookie: primeflow_session=your_session" \
+  -d '{
+    "email": "teammate@example.com",
+    "role": "developer"
+  }'
+```
+
+<Callout type="info">
+  Invites are sent via email and expire after 7 days.
+</Callout>
+
+---
+
+## Managing Members
+
+### List Organization Members
+
+```bash
+curl -X GET "https://api.primeflow.com/v1/admin/users?limit=50" \
+  -H "X-Org-Id: your_org_id" \
+  -H "Cookie: primeflow_session=your_session"
+```
+
+### Update Member Role
+
+```bash
+curl -X POST https://api.primeflow.com/v1/admin/users/role \
+  -H "Content-Type: application/json" \
+  -H "X-Org-Id: your_org_id" \
+  -H "Cookie: primeflow_session=your_session" \
+  -d '{
+    "user_id": "user_abc123",
+    "role": "admin"
+  }'
+```
+
+### Remove Member
+
+```bash
+curl -X DELETE "https://api.primeflow.com/v1/admin/users/remove?user_id=user_abc123" \
+  -H "X-Org-Id: your_org_id" \
+  -H "Cookie: primeflow_session=your_session"
+```
+
+---
+
+## Upgrading to Business
+
+Personal organizations can upgrade to business to unlock team features:
+
+<Steps>
+  <Step>
+    ### Initiate Upgrade
+    
+    Via dashboard or API:
+    ```bash
+    curl -X POST https://api.primeflow.com/v1/onboarding/upgrade-to-business \
+      -H "X-Org-Id: your_org_id" \
+      -H "Cookie: primeflow_session=your_session"
+    ```
+  </Step>
+  
+  <Step>
+    ### Complete KYC
+    
+    Submit business verification to enable live payments.
+    See [KYC Verification](/docs/primeflow/docs/kyc) for details.
+  </Step>
+  
+  <Step>
+    ### Invite Team
+    
+    Add team members with appropriate roles.
+  </Step>
+</Steps>
+
+---
+
+## Organization Settings
+
+### Get Organization Details
+
+```bash
+curl -X GET https://api.primeflow.com/v1/admin/organizations \
+  -H "X-Org-Id: your_org_id" \
+  -H "Cookie: primeflow_session=your_session"
+```
+
+### Update Organization
+
+```bash
+curl -X PATCH https://api.primeflow.com/v1/admin/organizations \
+  -H "Content-Type: application/json" \
+  -H "X-Org-Id: your_org_id" \
+  -H "Cookie: primeflow_session=your_session" \
+  -d '{
+    "name": "Updated Company Name",
+    "contact_email": "billing@company.com"
+  }'
+```
+
+---
+
+## Multi-Organization Access
+
+Users can belong to multiple organizations. Switch between organizations using the `X-Org-Id` header in API requests or the organization switcher in the dashboard.
+
+### List User's Organizations
+
+The `/v1/auth/me` endpoint returns all organizations the user belongs to:
+
+```json
+{
+  "user": {
+    "id": "user_abc123",
+    "email": "user@example.com"
+  },
+  "memberships": [
+    {
+      "org_id": "org_123",
+      "org_name": "Acme Corp",
+      "role": "owner",
+      "kyc_status": "approved"
+    },
+    {
+      "org_id": "org_456",
+      "org_name": "Beta Inc",
+      "role": "developer",
+      "kyc_status": "pending"
+    }
+  ]
+}
+```
+
+---
+
+## Platform Administration
+
+For Primeflow platform administrators, additional endpoints are available:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /v1/platform/organizations` | List all organizations |
+| `GET /v1/platform/organizations/{id}` | Get organization details |
+| `GET /v1/platform/kyc/submissions` | List KYC submissions |
+| `POST /v1/platform/kyc/approve` | Approve KYC |
+| `POST /v1/platform/kyc/reject` | Reject KYC |
+| `GET /v1/platform/audit-logs` | View platform audit logs |
+
+<Callout type="warning">
+  Platform admin endpoints require platform_admin or platform_owner role.
+</Callout>

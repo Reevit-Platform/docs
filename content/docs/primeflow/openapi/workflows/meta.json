@@ -1,0 +1,32 @@
+{
+  "title": "Workflows",
+  "root": true,
+  "pages": [
+    "v1/workflows/executions/id/actions",
+    "v1/workflows/executions/id",
+    "v1/workflows/executions",
+    "v1/workflows/fraud-rules/get",
+    "v1/workflows/fraud-rules/id/delete",
+    "v1/workflows/fraud-rules/id/disable",
+    "v1/workflows/fraud-rules/id/enable",
+    "v1/workflows/fraud-rules/id/get",
+    "v1/workflows/fraud-rules/post",
+    "v1/workflows/integrations/get",
+    "v1/workflows/integrations/id/default",
+    "v1/workflows/integrations/id/delete",
+    "v1/workflows/integrations/id/get",
+    "v1/workflows/integrations/post",
+    "v1/workflows/rules/get",
+    "v1/workflows/rules/id/delete",
+    "v1/workflows/rules/id/disable",
+    "v1/workflows/rules/id/enable",
+    "v1/workflows/rules/id/get",
+    "v1/workflows/rules/id/put",
+    "v1/workflows/rules/post",
+    "v1/workflows/templates/get",
+    "v1/workflows/templates/id/delete",
+    "v1/workflows/templates/id/get",
+    "v1/workflows/templates/id/put",
+    "v1/workflows/templates/post"
+  ]
+}

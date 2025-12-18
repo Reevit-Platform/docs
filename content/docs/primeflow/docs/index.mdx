@@ -1,0 +1,128 @@
+---
+title: Introduction
+description: Unified Payments, Billing, and Orchestration for Africa
+icon: Book
+---
+
+import { 
+  CreditCard, 
+  Link, 
+  Repeat, 
+  Webhook, 
+  Workflow, 
+  ShieldCheck, 
+  Code, 
+  Coins,
+  BadgeCheck,
+  Users,
+  Building2
+} from "lucide-react"
+
+# Introduction
+
+Reevit is the unified payment orchestration platform built for African businesses. We abstract the complexity of integrating multiple payment providers (Paystack, Hubtel, Stripe, etc.) into a single, powerful API.
+
+## Why Reevit?
+
+Integrating payments in Africa is fragmented. You have to deal with:
+- **Multiple APIs**: Different request/response formats for every provider
+- **Maintenance Hell**: Constant API updates and breaking changes
+- **Failures**: No easy way to failover when a provider goes down
+- **Complex Reporting**: scattered data across multiple dashboards
+
+**Reevit solves this** by giving you:
+- **One API**: Connect once, access all providers
+- **Smart Routing**: Automatically route payments to the best provider
+- **Auto-Failover**: Zero downtime payment processing
+- **Unified Data**: Single source of truth for all transactions
+
+---
+
+## Core Features
+
+<Cards>
+  <Card 
+    title="Payments" 
+    href="/docs/primeflow/docs/payments"
+    icon={<CreditCard />}
+  >
+    Accept mobile money, cards, and bank transfers with a unified API.
+  </Card>
+  <Card 
+    title="Connections" 
+    href="/docs/primeflow/docs/connections"
+    icon={<Link />}
+  >
+    Bring Your Own Key (BYOK) - connect your existing provider accounts.
+  </Card>
+  <Card 
+    title="Subscriptions" 
+    href="/docs/primeflow/docs/subscriptions"
+    icon={<Repeat />}
+  >
+    Automated recurring billing, invoicing, and dunning management.
+  </Card>
+  <Card 
+    title="Webhooks" 
+    href="/docs/primeflow/docs/webhooks"
+    icon={<Webhook />}
+  >
+    Real-time event notifications with robust retry logic.
+  </Card>
+  <Card 
+    title="Workflows" 
+    href="/docs/primeflow/docs/workflows"
+    icon={<Workflow />}
+  >
+    No-code automation triggered by payment events.
+  </Card>
+  <Card 
+    title="Fraud Policies" 
+    href="/docs/primeflow/docs/fraud-policies"
+    icon={<ShieldCheck />}
+  >
+    Customizable fraud detection and prevention rules.
+  </Card>
+  <Card 
+    title="KYC Verification" 
+    href="/docs/primeflow/docs/kyc"
+    icon={<BadgeCheck />}
+  >
+    Business verification to enable live payments.
+  </Card>
+  <Card 
+    title="Organizations" 
+    href="/docs/primeflow/docs/organizations"
+    icon={<Building2 />}
+  >
+    Team management and organization settings.
+  </Card>
+</Cards>
+
+---
+
+## Developer Resources
+
+<Cards>
+  <Card 
+    title="API Reference" 
+    href="/docs/primeflow/docs/api-reference"
+    icon={<Code />}
+  >
+    Complete OpenAPI documentation for all endpoints.
+  </Card>
+  <Card 
+    title="SDKs" 
+    href="/docs/primeflow/docs/sdks"
+    icon={<Code />}
+  >
+    Official libraries for Node.js, Python, Go, PHP, and more.
+  </Card>
+  <Card 
+    title="Pricing" 
+    href="/docs/primeflow/docs/pricing"
+    icon={<Coins />}
+  >
+    Simple, transparent pricing for orchestration.
+  </Card>
+</Cards>

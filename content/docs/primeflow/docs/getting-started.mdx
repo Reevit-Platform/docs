@@ -1,0 +1,162 @@
+---
+title: Getting Started
+description: Get up and running with Primeflow in 5 minutes
+icon: Play
+---
+
+import { ShieldCheck, Link, CreditCard, Code } from "lucide-react"
+
+Get up and running with Primeflow in 5 minutes.
+
+## Step 1: Create Your Account
+
+1. Visit [dashboard.primeflow.com](https://dashboard.primeflow.com)
+2. Sign up with your email (we'll send a magic link)
+3. Complete the onboarding questionnaire
+4. Your organization is created automatically
+
+## Step 2: Get Your API Keys
+
+1. Go to **Settings → API Keys** in the dashboard
+2. Click **Create API Key**
+3. Name your key (e.g., "Production Backend")
+4. Select scopes:
+   - `payments:read` — View payments
+   - `payments:write` — Create/refund payments
+   - `connections:read` — View PSP connections
+   - `connections:write` — Manage PSP connections
+5. Copy your key — **it's only shown once!**
+
+Your key looks like: `pfk_live_a1b2c3d4e5f6...`
+
+## Step 3: Connect a Payment Provider
+
+Before accepting payments, connect your PSP account credentials.
+
+```bash
+curl -X POST https://api.primeflow.com/v1/connections \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: conn-paystack-001" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "paystack_live",
+    "provider": "paystack",
+    "mode": "live",
+    "status": "active",
+    "credentials": {
+      "secret_key": "sk_live_xxx",
+      "public_key": "pk_live_xxx"
+    },
+    "capabilities": {
+      "methods": ["card", "momo"],
+      "countries": ["GH", "NG"]
+    }
+  }'
+```
+
+## Step 4: Create Your First Payment
+
+```bash
+curl -X POST https://api.primeflow.com/v1/payments/intents \
+  -H "X-Primeflow-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: order-12345" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 5000,
+    "currency": "GHS",
+    "method": "momo",
+    "country": "GH",
+    "customer_id": "cust_456",
+    "metadata": {
+      "order_id": "12345"
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "id": "pay_abc123",
+  "status": "requires_action",
+  "provider": "hubtel",
+  "connection_id": "hubtel_live",
+  "amount": 5000,
+  "currency": "GHS"
+}
+```
+
+## Step 5: Handle the Response
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| `pending` | Awaiting processing | Wait for webhook |
+| `requires_action` | Customer action needed | Show OTP/prompt |
+| `succeeded` | Payment complete | Fulfill order |
+| `failed` | Payment failed | Show error |
+
+## Step 6: Set Up Webhooks
+
+Receive real-time payment notifications:
+
+1. Go to **Settings → Webhooks** in dashboard
+2. Enter your endpoint URL
+3. Select events to receive
+4. Copy the signing secret
+
+See [Webhooks Guide](./webhooks) for implementation details.
+
+---
+
+## Required Headers
+
+Every API request needs these headers:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `X-Primeflow-Key` | Your API key | `pfk_live_xxx` |
+| `X-Org-Id` | Your organization ID | `org_123` |
+| `Idempotency-Key` | Unique request ID | `order-12345` |
+| `Content-Type` | Always JSON | `application/json` |
+
+## Test Mode
+
+Use test credentials to develop without real money:
+- Test API keys start with `pfk_test_`
+- Use sandbox PSP credentials
+- Payments are simulated
+
+## Next Steps
+
+<Cards columns={2}>
+  <Card
+    title="Authentication"
+    href="/docs/primeflow/docs/authentication"
+    icon={<ShieldCheck />}
+  >
+    Secure API access with scoped keys and required headers.
+  </Card>
+  <Card
+    title="Connections"
+    href="/docs/primeflow/docs/connections"
+    icon={<Link />}
+  >
+    Add your PSP credentials (BYOK) for routing and failover.
+  </Card>
+  <Card
+    title="Payments"
+    href="/docs/primeflow/docs/payments"
+    icon={<CreditCard />}
+  >
+    Create payment intents, handle statuses, and issue refunds.
+  </Card>
+  <Card
+    title="SDKs"
+    href="/docs/primeflow/docs/sdks"
+    icon={<Code />}
+  >
+    Install official client libraries to ship faster.
+  </Card>
+</Cards>
+

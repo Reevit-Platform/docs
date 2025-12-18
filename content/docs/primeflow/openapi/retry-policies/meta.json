@@ -1,0 +1,10 @@
+{
+  "title": "Retry Policies",
+  "root": true,
+  "pages": [
+    "v1/policies/retry/delete",
+    "v1/policies/retry/get",
+    "v1/policies/retry/list",
+    "v1/policies/retry/post"
+  ]
+}

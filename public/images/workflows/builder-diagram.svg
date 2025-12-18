@@ -1,0 +1,68 @@
+<svg width="800" height="400" viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="400" rx="12" fill="#F8FAFC" />
+  <rect x="1" y="1" width="798" height="398" rx="11" stroke="#E2E8F0" stroke-width="2"/>
+  
+  <!-- Dot Grid Pattern -->
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#CBD5E1" fill-opacity="0.5"/>
+    </pattern>
+    <filter id="shadow" x="-4" y="-4" width="200" height="100" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+  <rect width="800" height="400" fill="url(#grid)" />
+
+  <!-- Connecting Lines -->
+  <path d="M220 200 L340 200" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4 4"/>
+  <path d="M480 200 L600 200" stroke="#94A3B8" stroke-width="2"/>
+
+  <!-- Node 1: Trigger (Payment Succeeded) -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="165" width="140" height="70" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+    <rect x="80" y="165" width="6" height="70" rx="0" fill="#8B5CF6" transform="matrix(1 0 0 1 0 0)"/> <!-- Left border color -->
+    <path d="M80 173 C80 168.582 83.5817 165 88 165 H220 C224.418 165 228 168.582 228 173 V235 H80 V173 Z" fill="white"/> <!-- Mask for rounded corner -->
+    <!-- Icon -->
+    <rect x="98" y="186" width="28" height="28" rx="6" fill="#F3E8FF"/>
+    <path d="M112 196 L116 204 L120 192" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Text -->
+    <text x="136" y="196" font-family="sans-serif" font-size="12" font-weight="600" fill="#1E293B">Payment</text>
+    <text x="136" y="210" font-family="sans-serif" font-size="10" font-weight="400" fill="#64748B">Succeeded</text>
+  </g>
+
+  <!-- Node 2: Condition (Amount > 100) -->
+  <g filter="url(#shadow)">
+    <rect x="340" y="165" width="140" height="70" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+    <rect x="340" y="165" width="6" height="70" rx="0" fill="#F59E0B"/>
+    <!-- Icon -->
+    <rect x="358" y="186" width="28" height="28" rx="6" fill="#FEF3C7"/>
+    <path d="M368 200 L378 200 M372 194 L378 200 L372 206" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Text -->
+    <text x="396" y="196" font-family="sans-serif" font-size="12" font-weight="600" fill="#1E293B">Condition</text>
+    <text x="396" y="210" font-family="sans-serif" font-size="10" font-weight="400" fill="#64748B">Amount > 100</text>
+  </g>
+
+  <!-- Node 3: Action (Send Email) -->
+  <g filter="url(#shadow)">
+    <rect x="600" y="165" width="140" height="70" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+    <rect x="600" y="165" width="6" height="70" rx="0" fill="#10B981"/>
+    <!-- Icon -->
+    <rect x="618" y="186" width="28" height="28" rx="6" fill="#D1FAE5"/>
+    <path d="M626 196 L632 200 L638 196 M626 196 V204 M638 196 V204" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="625" y="193" width="14" height="14" rx="2" stroke="#059669" stroke-width="1.5"/>
+    <!-- Text -->
+    <text x="656" y="196" font-family="sans-serif" font-size="12" font-weight="600" fill="#1E293B">Send Email</text>
+    <text x="656" y="210" font-family="sans-serif" font-size="10" font-weight="400" fill="#64748B">via Resend</text>
+  </g>
+
+  <!-- Status Badges -->
+  <rect x="300" y="192" width="24" height="16" rx="8" fill="#EFF6FF" stroke="#BFDBFE"/>
+  <text x="312" y="203" font-family="sans-serif" font-size="10" font-weight="600" fill="#3B82F6" text-anchor="middle">AND</text>
+
+</svg>
+
+
+
+
+
