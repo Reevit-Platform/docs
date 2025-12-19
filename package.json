@@ -1,6 +1,7 @@
 {
   "name": "reevit-docs",
   "version": "0.1.0",
+  "packageManager": "pnpm@10.18.2",
   "private": true,
   "scripts": {
     "build": "next build",
