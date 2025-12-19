@@ -1,6 +1,6 @@
 {
-  "name": "openfront-docs",
-  "version": "0.0.0",
+  "name": "reevit-docs",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
