@@ -1,0 +1,12 @@
+{
+  "title": "Subscriptions",
+  "root": true,
+  "pages": [
+    "v1/subscriptions/get",
+    "v1/subscriptions/id/cancel",
+    "v1/subscriptions/id/get",
+    "v1/subscriptions/id/patch",
+    "v1/subscriptions/id/resume",
+    "v1/subscriptions/post"
+  ]
+}

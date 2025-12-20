@@ -1,0 +1,10 @@
+{
+  "title": "Webhooks",
+  "root": true,
+  "pages": [
+    "v1/webhooks/events/event_id/replay",
+    "v1/webhooks/events/id",
+    "v1/webhooks/events",
+    "v1/webhooks/incoming/provider"
+  ]
+}

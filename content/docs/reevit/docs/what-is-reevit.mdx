@@ -1,0 +1,189 @@
+---
+title: What is Reevit
+description: Introducing Reevit, unified payments, billing, and orchestration for Africa
+icon: CircleQuestionMark
+---
+
+# What is Reevit?
+
+Reevit is a **unified payments, billing, and orchestration API for Africa**. We solve the complexity of managing multiple payment service providers (PSPs) across different African markets by providing one simple API that handles routing, failover, webhooks, and recurring billing.
+
+## The Problem We Solve
+
+African businesses face unique challenges when accepting payments:
+
+### Fragmented Payment Landscape
+
+- **Multiple PSPs per market**: Each country has different payment providers (Paystack, Hubtel, Flutterwave, Monnify, M-Pesa, Stripe)
+- **Different APIs**: Each provider has unique endpoints, request formats, and response structures
+- **Inconsistent webhooks**: Different event formats and verification methods
+- **Manual failover**: When one provider fails, you must manually switch to another
+- **No unified billing**: Recurring subscriptions require separate integrations per provider
+
+### Developer Friction
+
+- **Complex integrations**: Building and maintaining integrations for multiple PSPs is time-consuming
+- **Error handling**: Each provider has different error codes and retry logic
+- **Testing complexity**: Testing across multiple sandbox environments
+- **Documentation sprawl**: Keeping track of multiple API documentation sites
+
+### Business Challenges
+
+- **Higher failure rates**: Single points of failure when a provider goes down
+- **Lost revenue**: Failed payments due to provider outages
+- **Operational overhead**: Managing multiple PSP accounts, credentials, and dashboards
+- **Limited visibility**: No unified view of payment performance across providers
+
+## Our Solution
+
+Reevit provides **one API** that abstracts away the complexity:
+
+### ✅ One API for All Providers
+
+A single, consistent API that works across all payment providers. No need to learn different APIs or handle provider-specific quirks.
+
+### ✅ Smart Routing & Failover
+
+Automatically routes payments to the best provider based on:
+- **Success rates** — Historical performance data
+- **Latency** — Response times
+- **Fees** — Cost optimization
+- **Availability** — Real-time health monitoring
+
+If a provider fails, Reevit automatically tries the next available connection.
+
+### ✅ Unified Webhooks
+
+Receive normalized webhook events from all providers in one consistent format. No more parsing different event structures.
+
+### ✅ Built-in Subscriptions
+
+Automated recurring billing with dunning (retry logic) and invoice management. Works across all your connected providers.
+
+### ✅ Bring Your Own Key (BYOK)
+
+Connect your own PSP accounts. You maintain direct relationships with providers while benefiting from Reevit's orchestration layer.
+
+### ✅ Comprehensive Dashboard
+
+One dashboard to manage:
+- All your PSP connections
+- Payment analytics across providers
+- Webhook configurations
+- Subscription management
+- Fraud policies and routing rules
+
+## How It Works
+
+```
+┌─────────────┐
+│   Your App  │
+└──────┬──────┘
+       │
+       │ Single API Call
+       ▼
+┌─────────────────┐
+│   Reevit API │
+└──────┬──────────┘
+       │
+       │ Smart Routing
+       ▼
+┌─────────────────────────────────────┐
+│  Paystack  │  Hubtel  │  Flutterwave │
+└────────────┴──────────┴─────────────┘
+```
+
+1. **You make one API call** to Reevit with payment details
+2. **Reevit routes intelligently** to the best available provider
+3. **If a provider fails**, Reevit automatically tries the next one
+4. **You receive unified webhooks** regardless of which provider processed the payment
+
+## Supported Providers
+
+| Provider | Countries | Methods |
+|----------|-----------|---------|
+| Paystack | Ghana, Nigeria | Card, Mobile Money, Bank |
+| Hubtel | Ghana | Mobile Money, USSD |
+| Flutterwave | Ghana, Nigeria, Kenya | Card, Mobile Money, Bank |
+| Monnify | Nigeria | Card, Bank Transfer |
+| M-Pesa | Kenya | Mobile Money |
+| Stripe | Global (50+ countries) | Card, Apple Pay, Google Pay |
+
+## Use Cases
+
+### E-commerce Platforms
+
+Accept payments from customers across Africa with automatic failover and unified webhooks.
+
+### SaaS Applications
+
+Automate recurring billing with subscriptions that work across multiple payment methods and countries.
+
+### Marketplaces
+
+Handle payments for multiple merchants, each with their own PSP connections, through one API.
+
+### Fintech Applications
+
+Build payment features without managing multiple PSP integrations and complex routing logic.
+
+## Why Choose Reevit?
+
+### For Developers
+
+- **Faster integration**: One API instead of multiple
+- **Less code**: No need to handle provider-specific logic
+- **Better reliability**: Automatic failover and retries
+- **Unified webhooks**: Consistent event handling
+
+### For Businesses
+
+- **Higher success rates**: Smart routing and failover
+- **Lower costs**: Fee optimization across providers
+- **Better visibility**: Unified analytics dashboard
+- **Scalability**: Easy to add new providers and countries
+
+### For Operations Teams
+
+- **Simplified management**: One dashboard for everything
+- **Better monitoring**: Unified logs and metrics
+- **Easier troubleshooting**: Clear error messages and retry logic
+- **Reduced overhead**: Less time managing multiple PSP accounts
+
+## Getting Started
+
+Ready to simplify your payment infrastructure? [Get started](./getting-started) in minutes.
+
+---
+
+## Key Concepts
+
+### Organizations
+
+Each Reevit account has an **organization** that contains:
+- API keys
+- PSP connections
+- Payment history
+- Subscriptions
+- Webhook configurations
+
+### Connections
+
+A **connection** represents your credentials for a specific PSP account. You can have multiple connections per provider (e.g., one for Ghana, one for Nigeria).
+
+### Payments
+
+A **payment** represents a single transaction attempt. Reevit handles routing, retries, and webhooks automatically.
+
+### Subscriptions
+
+A **subscription** automates recurring billing. Reevit creates invoices and charges customers on schedule with automatic retry logic.
+
+### Routing Rules
+
+**Routing rules** let you explicitly control which provider handles payments from specific countries or payment methods.
+
+### Webhooks
+
+**Webhooks** notify your application when payment events occur. All providers send events in the same unified format.
+

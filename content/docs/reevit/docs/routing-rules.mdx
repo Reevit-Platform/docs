@@ -1,0 +1,201 @@
+---
+title: Routing Rules
+description: Explicitly route payments from specific countries and methods to specific PSP connections
+icon: Route
+---
+
+# Routing Rules
+
+Routing rules allow you to explicitly route payments from specific countries and/or payment methods to specific PSP connections. This gives you fine-grained control over which payment provider handles transactions from different regions.
+
+## Overview
+
+By default, Reevit uses intelligent routing based on:
+- Connection health scores
+- Fee optimization
+- Provider capabilities
+- Country/method support
+
+**Routing rules** let you override this default behavior for specific scenarios:
+- Route all European payments through Stripe
+- Route African payments through Paystack
+- Use different providers for card vs mobile money payments
+
+## How It Works
+
+1. **Priority-based evaluation**: Rules are evaluated by priority (highest first)
+2. **Country + Method matching**: A rule matches if the payment's country is in the rule's countries list AND (the method matches OR the rule has no method filter)
+3. **Fallback behavior**: If a rule matches but the connection is unavailable, you can choose to fall back to default routing or fail the payment
+4. **Default routing**: If no rule matches, standard routing logic applies
+
+## API Endpoints
+
+### List Routing Rules
+
+```http
+GET /v1/routing-rules
+```
+
+**Query Parameters:**
+- `limit` (optional): Number of rules to return (default: 50, max: 100)
+- `offset` (optional): Pagination offset (default: 0)
+
+**Response:**
+```json
+{
+  "rules": [
+    {
+      "id": "01HXYZ...",
+      "name": "Europe Stripe Rule",
+      "countries": ["US", "GB", "DE", "FR", "ES", "IT"],
+      "methods": ["card"],
+      "connection_id": "stripe_live",
+      "priority": 10,
+      "fallback_to_default": true,
+      "enabled": true,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "limit": 50,
+    "offset": 0
+  }
+}
+```
+
+### Create Routing Rule
+
+```http
+POST /v1/routing-rules
+```
+
+**Request Body:**
+```json
+{
+  "name": "Europe Stripe Rule",
+  "countries": ["US", "GB", "DE", "FR", "ES", "IT"],
+  "methods": ["card"],
+  "connection_id": "stripe_live",
+  "priority": 10,
+  "fallback_to_default": true,
+  "enabled": true
+}
+```
+
+**Fields:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Human-readable name for the rule |
+| `countries` | string[] | Yes | ISO 3166-1 alpha-2 country codes (e.g., "US", "GB", "GH") |
+| `methods` | string[] | No | Payment methods (e.g., "card", "mobile_money"). Empty = all methods |
+| `connection_id` | string | Yes | The connection ID to use when this rule matches |
+| `priority` | integer | No | Higher priority rules are evaluated first (default: 0) |
+| `fallback_to_default` | boolean | No | Fall back to default routing if connection unavailable (default: true) |
+| `enabled` | boolean | No | Whether the rule is active (default: true) |
+
+### Get Routing Rule
+
+```http
+GET /v1/routing-rules/{id}
+```
+
+### Update Routing Rule
+
+```http
+PATCH /v1/routing-rules/{id}
+```
+
+**Request Body:** (all fields optional)
+```json
+{
+  "name": "Updated Rule Name",
+  "countries": ["US", "CA"],
+  "methods": ["card", "apple_pay"],
+  "connection_id": "new_connection_id",
+  "priority": 20,
+  "fallback_to_default": false,
+  "enabled": false
+}
+```
+
+### Delete Routing Rule
+
+```http
+DELETE /v1/routing-rules/{id}
+```
+
+Returns `204 No Content` on success.
+
+## Examples
+
+### Route European Card Payments to Stripe
+
+```json
+{
+  "name": "Europe Cards → Stripe",
+  "countries": ["GB", "DE", "FR", "ES", "IT", "NL", "BE", "AT", "CH", "SE", "NO", "DK", "FI", "IE", "PT", "PL"],
+  "methods": ["card", "apple_pay", "google_pay"],
+  "connection_id": "stripe_eu_live",
+  "priority": 10,
+  "fallback_to_default": true,
+  "enabled": true
+}
+```
+
+### Route African Payments to Paystack
+
+```json
+{
+  "name": "Africa → Paystack",
+  "countries": ["GH", "NG", "KE", "ZA"],
+  "methods": [],
+  "connection_id": "paystack_live",
+  "priority": 5,
+  "fallback_to_default": true,
+  "enabled": true
+}
+```
+
+### Route US Payments to Stripe (No Fallback)
+
+```json
+{
+  "name": "US Strict → Stripe",
+  "countries": ["US"],
+  "methods": [],
+  "connection_id": "stripe_us_live",
+  "priority": 20,
+  "fallback_to_default": false,
+  "enabled": true
+}
+```
+
+## Best Practices
+
+1. **Use meaningful names**: Name rules descriptively (e.g., "Europe Cards → Stripe" instead of "Rule 1")
+
+2. **Set appropriate priorities**: Higher priority rules are checked first. Use this to create specific rules that override general ones.
+
+3. **Enable fallback for reliability**: Unless you have a specific reason, enable `fallback_to_default` to ensure payments don't fail if a connection is temporarily unavailable.
+
+4. **Test before enabling**: Create rules with `enabled: false`, verify the configuration, then enable them.
+
+5. **Monitor after changes**: After creating or modifying rules, monitor your payment success rates to ensure the routing is working as expected.
+
+## Scopes Required
+
+- `routing_rules:read` - List and get routing rules
+- `routing_rules:write` - Create, update, and delete routing rules
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `missing_name` | Rule name is required |
+| `missing_countries` | At least one country is required |
+| `missing_connection_id` | Connection ID is required |
+| `invalid_priority` | Priority must be non-negative |
+| `connection_not_found` | The specified connection does not exist |
+| `rule_not_found` | The routing rule was not found |

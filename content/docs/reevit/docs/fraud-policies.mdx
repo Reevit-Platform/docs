@@ -1,0 +1,222 @@
+---
+title: Fraud & Policies
+description: Protect your business with fraud controls and retry policies
+icon: Shield
+---
+
+# Fraud & Policies
+
+Protect your business with fraud controls and retry policies.
+
+## Fraud Policies
+
+Set organization-level risk controls for payment intents.
+
+### Available Controls
+
+| Control | Description |
+|---------|-------------|
+| `max_amount` | Maximum payment amount (minor units) |
+| `blocked_bins` | Card BINs to reject |
+| `allowed_bins` | Only allow these BINs (whitelist) |
+| `velocity_max_per_minute` | Max payments per minute per customer |
+
+---
+
+### Get Fraud Policy
+
+```bash
+curl https://api.reevit.com/v1/policies/fraud \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Response:**
+```json
+{
+  "org_id": "org_123",
+  "max_amount": 10000000,
+  "blocked_bins": ["411111", "400000"],
+  "allowed_bins": [],
+  "velocity_max_per_minute": 5,
+  "updated_at": "2025-02-10T10:00:00Z"
+}
+```
+
+---
+
+### Set Fraud Policy
+
+```bash
+curl -X POST https://api.reevit.com/v1/policies/fraud \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: fraud-policy-001" \
+  -d '{
+    "max_amount": 10000000,
+    "blocked_bins": ["411111"],
+    "velocity_max_per_minute": 10
+  }'
+```
+
+### Merge Behavior
+
+Policies are merged, not replaced:
+- `blocked_bins` are added to existing list
+- `allowed_bins` are added to existing list
+- Other fields are overwritten
+
+---
+
+### Per-Request Override
+
+Override fraud policy for a specific payment:
+
+```bash
+curl -X POST https://api.reevit.com/v1/payments/intents \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: order-12345" \
+  -d '{
+    "amount": 15000000,
+    "currency": "GHS",
+    "method": "card",
+    "country": "GH",
+    "fraud_override": {
+      "max_amount": 20000000,
+      "skip_velocity": true
+    }
+  }'
+```
+
+---
+
+### Audit Trail
+
+View policy changes:
+
+```bash
+curl https://api.reevit.com/v1/policies/fraud/audit \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+```json
+{
+  "logs": [
+    {
+      "id": "log_123",
+      "actor": "user_456",
+      "previous": { "max_amount": 5000000 },
+      "new": { "max_amount": 10000000 },
+      "created_at": "2025-02-10T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Retry Policies
+
+Configure how failed subscription payments are retried.
+
+### Get Retry Policy
+
+```bash
+curl https://api.reevit.com/v1/policies/retry \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Response:**
+```json
+{
+  "org_id": "org_123",
+  "plan_id": "",
+  "delays": ["15m", "1h", "24h"],
+  "max_retries": 3
+}
+```
+
+---
+
+### Set Retry Policy
+
+```bash
+curl -X POST https://api.reevit.com/v1/policies/retry \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: retry-policy-001" \
+  -d '{
+    "plan_id": "premium",
+    "delays": ["30m", "4h", "24h", "72h"],
+    "max_retries": 4
+  }'
+```
+
+### Delay Format
+
+| Format | Duration |
+|--------|----------|
+| `15m` | 15 minutes |
+| `1h` | 1 hour |
+| `24h` | 24 hours |
+| `7d` | 7 days |
+
+---
+
+### Policy Hierarchy
+
+Policies are applied in order:
+
+1. **Plan-level** — Specific to subscription plan
+2. **Org-level** — Default for organization (empty `plan_id`)
+3. **Global** — System default (3 retries at 15m, 1h, 24h)
+
+---
+
+### List Retry Policies
+
+```bash
+curl https://api.reevit.com/v1/policies/retry/list \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+---
+
+### Delete Retry Policy
+
+```bash
+curl -X DELETE "https://api.reevit.com/v1/policies/retry?plan_id=premium" \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+---
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `fraud_blocked` | Payment blocked by fraud policy |
+| `max_amount_exceeded` | Amount exceeds limit |
+| `bin_blocked` | Card BIN is blocked |
+| `velocity_exceeded` | Too many payments in time window |
+
+---
+
+## Best Practices
+
+### Fraud Policies
+1. **Start Conservative** — Set lower limits initially
+2. **Monitor Blocks** — Review blocked payments regularly
+3. **Whitelist Trusted** — Use `allowed_bins` for known customers
+4. **Velocity Limits** — Prevent card testing attacks
+
+### Retry Policies
+1. **Gradual Delays** — Start short, increase over time
+2. **Plan-Specific** — Higher-value plans may need more retries
+3. **Notify Customers** — Send emails before final retry
+4. **Grace Period** — Allow time for customers to update payment

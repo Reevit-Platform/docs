@@ -1,0 +1,150 @@
+---
+title: API Reference
+description: Complete API reference for reevit
+icon: FileText
+---
+
+# API Reference
+
+Complete API reference documentation is available through our interactive OpenAPI documentation.
+
+## Interactive Documentation
+
+Visit our [OpenAPI documentation](/docs/openapi) for interactive API exploration, request/response examples, and code samples.
+
+## Base URL
+
+- **Production**: `https://api.reevit.com`
+- **Sandbox**: `https://api-sandbox.reevit.com`
+
+## Authentication
+
+All API requests require authentication using API keys. See [Authentication](./authentication) for details.
+
+## Rate Limits
+
+- **Default**: 100 requests per minute per API key
+- **Burst**: Up to 200 requests in a 10-second window
+- Rate limit headers are included in all responses:
+  - `X-RateLimit-Limit`: Maximum requests allowed
+  - `X-RateLimit-Remaining`: Remaining requests in window
+  - `X-RateLimit-Reset`: Unix timestamp when limit resets
+
+## Idempotency
+
+All mutation endpoints (POST, PATCH, DELETE) support idempotency via the `Idempotency-Key` header. See [Authentication](./authentication#idempotency) for details.
+
+## Error Responses
+
+All errors follow this format:
+
+```json
+{
+  "error": "error_type",
+  "code": "error_code",
+  "message": "Human-readable error message",
+  "details": {}
+}
+```
+
+### Billing enforcement (402)
+
+Some endpoints enforce plan and feature access. When enforcement blocks a request, the API returns **402 Payment Required** with one of these codes:
+
+| Code | Status | When it happens |
+|------|--------|-----------------|
+| `plan_required` | 402 | Feature/live mode requires a paid plan |
+| `subscription_inactive` | 402 | Subscription is past due or otherwise inactive |
+| `limit_exceeded` | 402 | A metered limit was reached (details include `metric`, `used`, `limit`, and optionally `reset`) |
+
+### Common Error Codes
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `unauthorized` | 401 | Invalid or missing API key |
+| `forbidden` | 403 | Missing required scope |
+| `not_found` | 404 | Resource not found |
+| `validation_error` | 400 | Invalid request data |
+| `rate_limited` | 429 | Too many requests |
+| `server_error` | 500 | Internal server error |
+
+## Endpoints
+
+### Payments
+
+- `POST /v1/payments/intents` - Create payment intent
+- `GET /v1/payments` - List payments
+- `GET /v1/payments/{id}` - Get payment
+- `POST /v1/payments/{id}/confirm` - Confirm payment
+- `POST /v1/payments/{id}/retry` - Retry payment
+- `POST /v1/payments/{id}/cancel` - Cancel payment
+- `POST /v1/payments/{id}/refund` - Refund payment
+- `GET /v1/payments/stats` - Get payment statistics
+
+### Connections
+
+- `POST /v1/connections` - Create connection
+- `GET /v1/connections` - List connections
+- `GET /v1/connections/{id}` - Get connection
+- `POST /v1/connections/test` - Test connection
+- `PATCH /v1/connections/{id}/status` - Update connection status
+- `DELETE /v1/connections/{id}` - Delete connection
+
+### Subscriptions
+
+- `POST /v1/subscriptions` - Create subscription
+- `GET /v1/subscriptions` - List subscriptions
+- `GET /v1/subscriptions/{id}` - Get subscription
+- `PATCH /v1/subscriptions/{id}` - Update subscription
+- `POST /v1/subscriptions/{id}/cancel` - Cancel subscription
+- `POST /v1/subscriptions/{id}/resume` - Resume subscription
+
+### Invoices
+
+- `GET /v1/invoices` - List invoices
+- `GET /v1/invoices/{id}` - Get invoice
+- `POST /v1/invoices/{id}/retry` - Retry invoice
+- `POST /v1/invoices/{id}/cancel` - Cancel invoice
+
+### Routing Rules
+
+- `GET /v1/routing-rules` - List routing rules
+- `POST /v1/routing-rules` - Create routing rule
+- `GET /v1/routing-rules/{id}` - Get routing rule
+- `PATCH /v1/routing-rules/{id}` - Update routing rule
+- `DELETE /v1/routing-rules/{id}` - Delete routing rule
+
+### Webhooks
+
+- `GET /v1/webhooks/config` - Get webhook configuration
+- `POST /v1/webhooks/config` - Update webhook configuration
+- `GET /v1/webhooks/events` - List webhook events
+- `GET /v1/webhooks/events/{id}` - Get webhook event
+- `POST /v1/webhooks/events/{id}/replay` - Replay webhook event
+
+### Policies
+
+- `GET /v1/policies/fraud` - Get fraud policy
+- `POST /v1/policies/fraud` - Update fraud policy
+- `GET /v1/policies/retry` - Get retry policy
+- `POST /v1/policies/retry` - Update retry policy
+
+### Workflows
+
+- `GET /v1/workflows/integrations` - List integrations
+- `POST /v1/workflows/integrations` - Create integration
+- `GET /v1/workflows/templates` - List templates
+- `POST /v1/workflows/templates` - Create template
+- `GET /v1/workflows/rules` - List workflow rules
+- `POST /v1/workflows/rules` - Create workflow rule
+
+## SDKs
+
+We provide official SDKs for popular languages. See [SDKs](./sdks) for details.
+
+## Support
+
+- 📖 [Documentation](/docs/reevit) - Complete guides
+- 💬 [Support](mailto:support@reevit.com) - Email support
+- 🐛 [GitHub Issues](github.com/Reevit-Platform/backend/issues) - Report bugs
+

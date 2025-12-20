@@ -1,0 +1,9 @@
+{
+  "title": "Reevit",
+  "root": true,
+  "pages": [
+    "index",
+    "docs",
+    "openapi"
+  ]
+}

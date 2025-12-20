@@ -1,0 +1,98 @@
+---
+title: Test Mode
+description: Develop and test your integration without processing real payments
+icon: FlaskConical
+---
+
+# Test Mode
+
+Reevit provides a complete test environment so you can develop and test your integration without processing real payments or affecting live data.
+
+## Environment URLs
+
+| Environment | Base URL |
+|-------------|----------|
+| **Test Mode** | `https://api.reevit.com` (with test API key) |
+| **Live Mode** | `https://api.reevit.com` (with live API key) |
+
+## API Keys
+
+Your organization has two sets of API keys:
+
+- **Test API Keys**: Start with `sk_test_` - use these for development
+- **Live API Keys**: Start with `sk_live_` - use these for production
+
+```bash
+# Test mode request
+curl -X POST https://api.reevit.com/v1/payments/intents \
+  -H "Authorization: Bearer sk_test_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 1000, "currency": "GHS", "method": "mobile_money"}'
+```
+
+## Test Mode Behavior
+
+In test mode:
+
+- ✅ **No real charges** - Payments are simulated
+- ✅ **Instant webhooks** - Events fire immediately
+- ✅ **Full API access** - All endpoints work identically
+- ✅ **Separate data** - Test and live data are completely isolated
+
+## Test Cards & Mobile Money
+
+### Test Card Numbers
+
+| Card Number | Scenario |
+|-------------|----------|
+| `4084084084084081` | Successful payment |
+| `4000000000000002` | Card declined |
+| `4000000000009995` | Insufficient funds |
+
+### Test Mobile Money Numbers
+
+| Phone Number | Provider | Scenario |
+|--------------|----------|----------|
+| `0551234567` | MTN | Successful payment |
+| `0201234567` | Vodafone | Successful payment |
+| `0271234567` | AirtelTigo | Successful payment |
+| `0550000001` | MTN | Failed - Insufficient funds |
+| `0550000002` | MTN | Failed - User cancelled |
+
+## Switching to Live Mode
+
+Before going live, ensure you have:
+
+1. **Completed KYC verification** - Submit your business documents
+2. **Connected live PSP credentials** - Add your production API keys from Paystack, Hubtel, etc.
+3. **Tested webhook handling** - Verify your webhook endpoint processes all event types
+4. **Updated API keys** - Replace test keys with live keys in your production environment
+
+```bash
+# Live mode request
+curl -X POST https://api.reevit.com/v1/payments/intents \
+  -H "Authorization: Bearer sk_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 1000, "currency": "GHS", "method": "mobile_money"}'
+```
+
+## Mode Header
+
+You can also explicitly set the mode using the `X-Reevit-Mode` header:
+
+```bash
+# Explicitly use test mode
+curl -X GET https://api.reevit.com/v1/payments \
+  -H "Authorization: Bearer your_api_key" \
+  -H "X-Reevit-Mode: test"
+```
+
+Valid values: `test` or `live`
+
+## Best Practices
+
+1. **Use test mode for development** - Never use live credentials in development
+2. **Test all scenarios** - Use test numbers to simulate failures
+3. **Verify webhook signatures** - Ensure your webhook handler validates signatures
+4. **Test idempotency** - Verify duplicate requests are handled correctly
+5. **Monitor test logs** - Check the dashboard for test transaction logs

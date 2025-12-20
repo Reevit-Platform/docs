@@ -1,0 +1,10 @@
+{
+  "title": "Invoices",
+  "root": true,
+  "pages": [
+    "v1/invoices/id/cancel",
+    "v1/invoices/id/retry",
+    "v1/invoices/id",
+    "v1/invoices"
+  ]
+}
