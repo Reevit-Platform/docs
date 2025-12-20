@@ -1,9 +1,0 @@
-{
-  "title": "Primeflow",
-  "root": true,
-  "pages": [
-    "index",
-    "docs",
-    "openapi"
-  ]
-}

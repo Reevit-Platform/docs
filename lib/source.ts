@@ -8,10 +8,10 @@ import { createElement } from 'react';
 // fumadocs-core expects { files: VirtualFile[] }
 const files = resolveFiles({ docs: docs.docs, meta: docs.meta });
 
-export const primeflowSource = loader({
-  baseUrl: '/docs/primeflow',
+export const reevitSource = loader({
+  baseUrl: '/docs/reevit',
   url(slugs) {
-    return '/docs/primeflow/' + slugs.slice(1).join('/');
+    return '/docs/reevit/' + slugs.slice(1).join('/');
   },
   icon(icon) {
     if (icon && icon in icons)

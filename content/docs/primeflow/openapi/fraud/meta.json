@@ -1,9 +1,0 @@
-{
-  "title": "Fraud Policies",
-  "root": true,
-  "pages": [
-    "v1/policies/fraud/audit",
-    "v1/policies/fraud",
-    "v1/policies/retry/list"
-  ]
-}

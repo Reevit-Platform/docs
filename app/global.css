@@ -3,7 +3,8 @@
 @import 'fumadocs-ui/css/preset.css';
 
 @theme {
-  --color-fd-primary: oklch(58.8% 0.158 241.966); /* Purple from control-bar component */
+  /* Reevit brand color - matches main frontend primary */
+  --color-fd-primary: oklch(70.7% 0.165 254.624);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

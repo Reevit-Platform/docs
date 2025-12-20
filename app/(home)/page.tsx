@@ -1,8 +1,6 @@
 import { ReactNode } from "react";
-import { ArrowRight, CreditCard } from "lucide-react";
+import { ArrowRight, BookOpen, Code2, CreditCard, Route, Webhook, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Globe } from "@/components/ui/globe";
 import { Space_Grotesk } from "next/font/google";
 
 const spaceGrotesk = Space_Grotesk({
@@ -11,104 +9,82 @@ const spaceGrotesk = Space_Grotesk({
   adjustFontFallback: false,
 });
 
-const BentoGrid = ({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) => {
-  return (
-    <div
-      className={cn(
-        "grid w-full auto-rows-[22rem] grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4",
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-};
+// Documentation categories
+const DOC_CATEGORIES = [
+  {
+    title: "Getting Started",
+    description: "Quick setup guide to get Reevit running in minutes",
+    icon: Zap,
+    href: "/docs/reevit",
+  },
+  {
+    title: "Payments",
+    description: "Accept payments via cards, MoMo, and bank transfers",
+    icon: CreditCard,
+    href: "/docs/reevit/payments",
+  },
+  {
+    title: "Smart Routing",
+    description: "Configure failover rules and optimize success rates",
+    icon: Route,
+    href: "/docs/reevit/routing",
+  },
+  {
+    title: "Webhooks",
+    description: "Receive unified event notifications across all PSPs",
+    icon: Webhook,
+    href: "/docs/reevit/webhooks",
+  },
+  {
+    title: "SDKs & Libraries",
+    description: "Official client libraries for TypeScript, Python, Go, PHP",
+    icon: Code2,
+    href: "/docs/reevit/sdks",
+  },
+  {
+    title: "API Reference",
+    description: "Complete REST API documentation and examples",
+    icon: BookOpen,
+    href: "/docs/reevit/api-reference",
+  },
+];
 
-const BentoCard = ({
-  name,
-  className,
-  background,
-  Icon,
+function DocCard({
+  title,
   description,
+  icon: Icon,
   href,
-  cta,
 }: {
-  name: ReactNode;
-  className: string;
-  background: ReactNode;
-  Icon: ({ className }: { className?: string }) => ReactNode;
+  title: string;
   description: string;
+  icon: React.ComponentType<{ className?: string }>;
   href: string;
-  cta: string;
-}) => (
-  <a href={href} className="group block">
-    <div
-      className={cn(
-        "relative flex flex-col justify-between overflow-hidden rounded-lg border bg-background md:shadow-lg h-full transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
-        className
-      )}
-    >
-      <div>{background}</div>
-      <div className="z-10 flex transform-gpu flex-col gap-1 p-6 transition-all duration-300 md:group-hover:-translate-y-10">
-        <div className="h-12 w-12 origin-left transform-gpu transition-all duration-300 ease-in-out md:group-hover:scale-75">
-          <Icon className="size-full" />
-        </div>
-        <h3
-          className={cn(
-            spaceGrotesk.className,
-            "text-xl font-semibold text-neutral-700 dark:text-neutral-300"
-          )}
-        >
-          {name}
-        </h3>
-        <p className="whitespace-pre-wrap bg-gradient-to-b from-black to-gray-400 bg-clip-text text-xs font-bold uppercase tracking-widest text-transparent dark:from-white dark:to-slate-500">
-          {description}
-        </p>
-      </div>
-
-      <div
-        className={cn(
-          "absolute bottom-0 flex w-full transform-gpu flex-row items-center p-4 transition-all duration-300",
-          "md:translate-y-10 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100",
-          "opacity-100 translate-y-0" // Always visible on mobile
-        )}
-      >
-        <Button
-          variant="ghost"
-          size="sm"
-          className="opacity-60 hover:opacity-100"
-        >
-          Documentation
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
-      <div className="pointer-events-none absolute inset-0 h-full bg-[radial-gradient(circle_at_50%_200%,rgba(0,0,0,0.2),rgba(255,255,255,0))]" />
-    </div>
-  </a>
-);
-
-function GlobeDemo() {
+}) {
   return (
-    <a href="/docs/primeflow" className="group block">
-      <div className="relative flex size-full items-center justify-center overflow-hidden rounded-lg border bg-background px-6 pb-32 pt-12 md:px-24 md:pb-48 md:shadow-xl transition-all duration-300 group-hover:shadow-2xl group-hover:scale-[1.02]">
-        <span className="flex flex-col items-center pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-8xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-200/50">
-          Primeflow
-          <span className="text-lg font-normal max-w-md">
-            Unified payments, billing, and orchestration for modern African businesses
-          </span>
-        </span>
+    <a href={href} className="group block">
+      <div className="relative h-full rounded-xl border border-border/50 bg-card/50 p-6 transition-all duration-300 hover:border-fd-primary/30 hover:bg-card">
+        <div className="flex items-start gap-4">
+          {/* Icon */}
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-fd-primary/10">
+            <Icon className="h-5 w-5 text-fd-primary" />
+          </div>
 
-        <Globe className="top-40" />
-        <div className="pointer-events-none absolute inset-0 h-full bg-[radial-gradient(circle_at_50%_200%,rgba(0,0,0,0.2),rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_at_50%_200%,rgba(0,0,0,0.2),rgba(0,0,0,0))]" />
+          {/* Content */}
+          <div className="flex-1">
+            <h3
+              className={cn(
+                spaceGrotesk.className,
+                "font-semibold text-foreground transition-colors group-hover:text-fd-primary"
+              )}
+            >
+              {title}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          </div>
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-blue-500/10 to-sky-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Arrow */}
+          <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:text-fd-primary group-hover:opacity-100" />
+        </div>
       </div>
     </a>
   );
@@ -116,24 +92,64 @@ function GlobeDemo() {
 
 export default function HomePage() {
   return (
-    <main className="px-4 py-8 max-w-6xl mx-auto w-full">
-      <GlobeDemo />
-      <BentoGrid className="mt-8">
-        <BentoCard
-          name={
-            <>
-              <span className="font-semibold">prime</span>
-              <span className="font-normal">flow</span>
-            </>
-          }
-          className=""
-          background={<div />}
-          Icon={({ className }) => <CreditCard className="size-full" />}
-          description="PAYMENTS & BILLING"
-          href="/docs/primeflow"
-          cta="Explore Primeflow"
-        />
-      </BentoGrid>
+    <main className="mx-auto w-full max-w-4xl px-4 py-16 md:py-24">
+      {/* Header */}
+      <div className="mb-16 text-center">
+        {/* Badge */}
+        <p className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Documentation
+        </p>
+
+        {/* Title */}
+        <h1
+          className={cn(
+            spaceGrotesk.className,
+            "text-4xl font-semibold tracking-tight text-foreground md:text-5xl"
+          )}
+        >
+          Reevit Docs
+        </h1>
+
+        {/* Subtitle */}
+        <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
+          Everything you need to integrate unified payments, billing, and orchestration for African
+          businesses.
+        </p>
+
+        {/* CTA */}
+        <a
+          href="/docs/reevit"
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-fd-primary px-6 py-2.5 text-sm font-medium text-black transition-colors hover:bg-fd-primary/90"
+        >
+          Get Started
+          <ArrowRight className="h-4 w-4" />
+        </a>
+      </div>
+
+      {/* Documentation grid */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {DOC_CATEGORIES.map((category) => (
+          <DocCard key={category.title} {...category} />
+        ))}
+      </div>
+
+      {/* Footer links */}
+      <div className="mt-16 flex flex-wrap items-center justify-center gap-6 border-t border-border/50 pt-8 text-sm text-muted-foreground">
+        <a href="https://reevit.io" className="transition-colors hover:text-foreground">
+          reevit.io
+        </a>
+        <span className="text-border">•</span>
+        <a href="/docs/reevit/changelog" className="transition-colors hover:text-foreground">
+          Changelog
+        </a>
+        <span className="text-border">•</span>
+        <a
+          href="https://github.com/reevitinc/docs"
+          className="transition-colors hover:text-foreground"
+        >
+          GitHub
+        </a>
+      </div>
     </main>
   );
 }

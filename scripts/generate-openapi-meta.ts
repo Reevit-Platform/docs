@@ -1,7 +1,7 @@
 import { readdirSync, statSync, existsSync, writeFileSync } from 'fs';
 import { join, basename } from 'path';
 
-const openapiDir = './content/docs/primeflow/openapi';
+const openapiDir = './content/docs/reevit/openapi';
 
 // Title mappings for tag folders
 const tagTitles: Record<string, string> = {

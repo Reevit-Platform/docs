@@ -1,4 +1,4 @@
-import { primeflowSource } from '@/lib/source';
+import { reevitSource } from '@/lib/source';
 import {
   PageArticle,
   PageBreadcrumb,
@@ -25,11 +25,11 @@ export default async function Page(props: {
   const { product, slug } = params;
 
   // Validate product parameter
-  if (product !== 'primeflow') {
+  if (product !== 'reevit') {
     notFound();
   }
 
-  const currentSource = primeflowSource;
+  const currentSource = reevitSource;
 
   const normalizedSlug = slug?.[0] === product ? slug.slice(1) : slug;
   const lookupPath = [product, ...(normalizedSlug || [])];
@@ -95,11 +95,11 @@ export default async function Page(props: {
 }
 
 export async function generateStaticParams() {
-  const primeflowParams = primeflowSource.generateParams().map((p) => ({
-    product: 'primeflow',
+  const reevitParams = reevitSource.generateParams().map((p) => ({
+    product: 'reevit',
     slug: p.slug.slice(1),
   }));
-  return [...primeflowParams];
+  return [...reevitParams];
 }
 
 export async function generateMetadata(props: {
@@ -108,11 +108,11 @@ export async function generateMetadata(props: {
   const params = await props.params;
   const { product, slug } = params;
 
-  if (product !== 'primeflow') {
+  if (product !== 'reevit') {
     return {};
   }
 
-  const currentSource = primeflowSource;
+  const currentSource = reevitSource;
 
   const normalizedSlug = slug?.[0] === product ? slug.slice(1) : slug;
   const page = currentSource.getPage([product, ...(normalizedSlug || [])]);

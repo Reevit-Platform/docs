@@ -1,7 +1,7 @@
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { ReactNode } from 'react';
 import { baseOptions } from '@/app/layout.config';
-import { primeflowSource } from '@/lib/source';
+import { reevitSource } from '@/lib/source';
 import { DocsSwitcher } from '@/components/DocsSwitcher';
 import { notFound } from 'next/navigation';
 import { Book, FileCode } from 'lucide-react';
@@ -15,7 +15,7 @@ export default async function Layout({
 }) {
   const { product } = await params;
   
-  if (product !== 'primeflow') {
+  if (product !== 'reevit') {
     notFound();
   }
 
@@ -26,11 +26,11 @@ export default async function Layout({
         ...baseOptions.nav,
         title: <DocsSwitcher />,
       }}
-      tree={primeflowSource.pageTree}
+      tree={reevitSource.pageTree}
       sidebar={{
         tabs: {
           transform(option, node) {
-            const meta = primeflowSource.getNodeMeta(node);
+            const meta = reevitSource.getNodeMeta(node);
             if (!meta) return option;
 
             // Define colors and icons for each tab

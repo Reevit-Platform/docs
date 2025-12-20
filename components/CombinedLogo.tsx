@@ -8,10 +8,8 @@ interface CombinedLogoProps {
 
 export function CombinedLogo({ className = "" }: CombinedLogoProps) {
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
-      <OpenFrontIcon className="size-6" />
-      <OpenShipIcon className="size-6" />
-      <OpenSupportIcon className="size-6" />
+    <div className={`flex items-center gap-1 font-normal ${className}`}>
+      reevit
     </div>
   )
 }

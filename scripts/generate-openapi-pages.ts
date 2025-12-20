@@ -14,9 +14,9 @@ const { generateFiles } = fumadocsOpenAPI;
 // ========================================
 // CONFIGURATION - Update this URL to your production OpenAPI spec
 // ========================================
-const OPENAPI_SPEC_URL = 'https://api.primeflow.com/openapi.yaml';
+const OPENAPI_SPEC_URL = 'https://api.reevit.com/openapi.yaml';
 // You can also use a local file path for development:
-// const OPENAPI_SPEC_URL = 'content/docs/primeflow/openapi/openapi.yaml';
+// const OPENAPI_SPEC_URL = 'content/docs/reevit/openapi/openapi.yaml';
 
 async function generate() {
   console.log('Generating OpenAPI documentation pages...');
@@ -25,7 +25,7 @@ async function generate() {
 
   await generateFiles({
     input: [OPENAPI_SPEC_URL],
-    output: 'content/docs/primeflow/openapi',
+    output: 'content/docs/reevit/openapi',
     // Generate a page for each operation, grouped by tag
     per: 'operation',
     groupBy: 'tag',
