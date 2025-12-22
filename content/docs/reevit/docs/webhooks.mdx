@@ -10,7 +10,7 @@ import { CreditCard, Repeat, Workflow, BookOpen, AlertTriangle, CheckCircle } fr
 
 Webhooks are HTTP callbacks that notify your application in real-time when payment events occur. Instead of constantly polling the API to check payment status, Reevit pushes events to your server as they happen.
 
-![Webhook Delivery Flow](/images/webhooks/delivery-flow.svg)
+<DocShowcase type="webhooks" />
 
 ---
 
@@ -22,13 +22,7 @@ Reevit handles **two types of webhooks**. Understanding the difference is crucia
 
 These are webhooks from payment providers (Paystack, Flutterwave, M-Pesa, etc.) **to Reevit**.
 
-```
-┌─────────────┐     Webhook      ┌─────────────┐
-│   Paystack  │ ───────────────► │  Reevit  │
-│ Flutterwave │   (PSP events)   │   Backend   │
-│   M-Pesa    │                  │             │
-└─────────────┘                  └─────────────┘
-```
+
 
 **Key Points:**
 - **Reevit handles these automatically** - you don't need to do anything
@@ -52,12 +46,7 @@ You configure these URLs in the **payment provider's dashboard** (e.g., Paystack
 
 These are webhooks **from Reevit to your application**.
 
-```
-┌─────────────┐     Webhook      ┌─────────────┐
-│  Reevit  │ ───────────────► │  Your App   │
-│   Backend   │  (your events)   │   Backend   │
-└─────────────┘                  └─────────────┘
-```
+
 
 **Key Points:**
 - **You must create a webhook handler** in your application

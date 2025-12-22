@@ -1,98 +1,60 @@
 ---
-title: Test Mode
-description: Develop and test your integration without processing real payments
+title: Sandbox & Test Mode
+description: Build and test your payment flows without financial risk
 icon: FlaskConical
 ---
 
-# Test Mode
+# Sandbox & Test Mode
 
-Reevit provides a complete test environment so you can develop and test your integration without processing real payments or affecting live data.
+Reevit Sandbox is a completely isolated environment designed for rapid development and rigorous testing. In Test Mode, transactions are processed against provider test environments, allowing you to verify your integration logic without moving real money or incurring production fees.
 
-## Environment URLs
+---
 
-| Environment | Base URL |
-|-------------|----------|
-| **Test Mode** | `https://api.reevit.com` (with test API key) |
-| **Live Mode** | `https://api.reevit.com` (with live API key) |
+## 💎 The Sandbox Advantage
 
-## API Keys
+### 🏢 For Business Safety
+*   **Risk-Free Staging**: Test your entire checkout flow in an environment that mirrors production exactly, ensuring that your logic is bulletproof before the first real customer arrives.
+*   **Zero-Cost Integration**: You don't need to fund a wallet or connect real bank accounts to start building. Prototype your vision for free.
+*   **Audit Readiness**: Use Sandbox to demonstrate payment handling to internal stakeholders or auditors without exposing sensitive financial data.
 
-Your organization has two sets of API keys:
+### 💻 For Developer Velocity
+*   **Environment Parity**: Sandbox mirrors the production environment exactly, ensuring that what you build in staging works seamlessly in live mode.
+*   **Swift Integration**: Use provider test credentials to verify end-to-end flows.
+*   **Safe Experimentation**: Try out new [Routing Rules](/docs/reevit/docs/routing-rules) or [Workflows](/docs/reevit/docs/workflows) with zero consequences if you make a configuration error.
 
-- **Test API Keys**: Start with `sk_test_` - use these for development
-- **Live API Keys**: Start with `sk_live_` - use these for production
+---
+
+## 🔑 Your Environment Keys
+
+Your Reevit workspace provides two separate sets of credentials. The mode is determined by which key you use to authorize the request.
+
+| Mode | Prefix | Intent |
+| :--- | :--- | :--- |
+| **Sandbox** | `sk_test_...` | For development, QA, and automated testing. |
+| **Production** | `sk_live_...` | For real money transactions. Requires [KYC Approval](#path-to-production). |
 
 ```bash
-# Test mode request
-curl -X POST https://api.reevit.com/v1/payments/intents \
+# Example Sandbox Request
+curl -X POST https://api.reevit.com/v1/payments \
   -H "Authorization: Bearer sk_test_your_key" \
-  -H "Content-Type: application/json" \
-  -d '{"amount": 1000, "currency": "GHS", "method": "mobile_money"}'
+  -d '{"amount": 1000, "currency": "GHS", "method": "momo"}'
 ```
 
-## Test Mode Behavior
+---
 
-In test mode:
+## 🚀 Path to Production
 
-- ✅ **No real charges** - Payments are simulated
-- ✅ **Instant webhooks** - Events fire immediately
-- ✅ **Full API access** - All endpoints work identically
-- ✅ **Separate data** - Test and live data are completely isolated
+When you are ready to move from Sandbox to Production, follow this checklist:
 
-## Test Cards & Mobile Money
+1.  **Identity Verification**: Complete the Organization KYC in [Settings > Business Details](https://dashboard.reevit.com/settings).
+2.  **Live Connections**: Replace your Sandbox PSP keys (e.g., Paystack Test) with Live keys in [Connections](/docs/reevit/docs/connections).
+3.  **Webhook Secret**: Update your server-side environment variables with your **Production** Webhook Signing Secret.
+4.  **Key Rotation**: Swap `sk_test_...` for `sk_live_...` in your production environment.
 
-### Test Card Numbers
+---
 
-| Card Number | Scenario |
-|-------------|----------|
-| `4084084084084081` | Successful payment |
-| `4000000000000002` | Card declined |
-| `4000000000009995` | Insufficient funds |
+## ✅ Best Practices
 
-### Test Mobile Money Numbers
-
-| Phone Number | Provider | Scenario |
-|--------------|----------|----------|
-| `0551234567` | MTN | Successful payment |
-| `0201234567` | Vodafone | Successful payment |
-| `0271234567` | AirtelTigo | Successful payment |
-| `0550000001` | MTN | Failed - Insufficient funds |
-| `0550000002` | MTN | Failed - User cancelled |
-
-## Switching to Live Mode
-
-Before going live, ensure you have:
-
-1. **Completed KYC verification** - Submit your business documents
-2. **Connected live PSP credentials** - Add your production API keys from Paystack, Hubtel, etc.
-3. **Tested webhook handling** - Verify your webhook endpoint processes all event types
-4. **Updated API keys** - Replace test keys with live keys in your production environment
-
-```bash
-# Live mode request
-curl -X POST https://api.reevit.com/v1/payments/intents \
-  -H "Authorization: Bearer sk_live_your_key" \
-  -H "Content-Type: application/json" \
-  -d '{"amount": 1000, "currency": "GHS", "method": "mobile_money"}'
-```
-
-## Mode Header
-
-You can also explicitly set the mode using the `X-Reevit-Mode` header:
-
-```bash
-# Explicitly use test mode
-curl -X GET https://api.reevit.com/v1/payments \
-  -H "Authorization: Bearer your_api_key" \
-  -H "X-Reevit-Mode: test"
-```
-
-Valid values: `test` or `live`
-
-## Best Practices
-
-1. **Use test mode for development** - Never use live credentials in development
-2. **Test all scenarios** - Use test numbers to simulate failures
-3. **Verify webhook signatures** - Ensure your webhook handler validates signatures
-4. **Test idempotency** - Verify duplicate requests are handled correctly
-5. **Monitor test logs** - Check the dashboard for test transaction logs
+1.  **Separate Staging/Production**: Use your Sandbox keys on your `local` and `staging` servers, and strictly limit Live keys to your `production` cluster.
+2.  **Automated CI/CD**: You can safely run integration tests in your CI/CD pipeline using Sandbox keys. They are designed for high-concurrency automated traffic.
+3.  **Monitor Test Logs**: Use the dashboard to inspect test request/response payloads to debug integration issues quickly.

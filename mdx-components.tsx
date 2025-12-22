@@ -7,6 +7,7 @@ import { ShopDiagram } from '@/components/ShopDiagram';
 import { ChannelDiagram } from '@/components/ChannelDiagram';
 import { LinkDiagram } from '@/components/LinkDiagram';
 import { MatchDiagram } from '@/components/MatchDiagram';
+import { DocShowcase } from '@/components/ui/showcase';
 import { APIPage } from 'fumadocs-openapi/ui';
 
 export function getMDXComponents(components?: MDXComponents): MDXComponents {
@@ -19,6 +20,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     ChannelDiagram,
     LinkDiagram,
     MatchDiagram,
+    DocShowcase,
     APIPage,
     ...components,
   };

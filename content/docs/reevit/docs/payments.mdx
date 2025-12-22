@@ -1,199 +1,94 @@
 ---
 title: Payments
-description: Accept and manage payments with smart routing and failover
+description: Process unified payments with smart routing and automated failover
 icon: CreditCard
 ---
 
-import { Link, Shuffle, Webhook, Repeat } from "lucide-react"
+# Unified Payments
 
-# Payments
+Reevit Payments allows you to accept funds from customers globally via a single API. We abstract away the technical debt of integrating multiple Gateways, Mobile Money providers, and Bank Transfer systems into one standardized flow.
 
-Accept payments from customers using a unified API that routes transactions to the best available provider. Reevit handles the complexity of integrating multiple payment gateways, standardizing their APIs, and managing transaction lifecycles.
-
-![Payment Lifecycle](/images/payments/lifecycle-diagram.svg)
-
-## Why Reevit Payments?
-
-### The Challenge
-
-Integrating multiple payment providers is hard:
-- **Different APIs**: Paystack, Hubtel, and Stripe all have different request/response formats
-- **Maintenance**: APIs change, requiring constant updates
-- **Failures**: Payments fail, and handling retries across providers is complex
-- **Reporting**: Consolidating data from multiple dashboards is manual and error-prone
-
-### The Solution
-
-Reevit provides a **single, unified API** for all providers:
-- **One integration**: Write code once, access any provider
-- **Smart routing**: Automatically route to the best provider based on fees, success rates, and availability
-- **Failover**: If one provider fails, Reevit retries with another
-- **Unified data**: All your transaction data in one place
+<DocShowcase type="payments" />
 
 ---
 
-## Payment Flow
+## 🏆 The Reevit Advantage
 
-1. **Create Intent**: Your app requests a payment intent from Reevit
-2. **Process**: Reevit routes the request to the best PSP (e.g., Paystack)
-3. **User Action**: User enters card details or completes mobile money prompt
-4. **Confirmation**: PSP confirms payment to Reevit
-5. **Webhook**: Reevit notifies your app via webhook
+### 🏢 For Business Growth
+*   **Maximized Acceptance**: If a card fails on one provider, we instantly retry on another. Never lose a sale to a gateway outage again.
+*   **Optimized Fees**: Route transactions to providers with the lowest processing fees based on the customer's region.
+*   **Unified Reporting**: View your consolidated revenue across Hubtel, Paystack, and Stripe in a single dashboard.
+
+### 💻 For Engineering Velocity
+*   **Standardized Lifecycle**: No more mapping "Success" from paystack to "Completed" from Hubtel. Every transaction follows a [unified state machine](#the-transaction-lifecycle).
+*   **Developer-First SDKs**: Use our typed libraries to handle payment intents, idempotency, and error handling out of the box.
+*   **One Integration**: Add a new country or payment method by simply toggling a switch in the dashboard—no code changes required.
 
 ---
 
-## Creating a Payment
+## 🔄 The Transaction Lifecycle
 
-To start a payment, create a **Payment Intent**. This object represents the transaction lifecycle.
+Every payment on Reevit follows a secure, 5-step lifecycle:
 
-```bash
-curl -X POST https://api.reevit.com/v1/payments/intents \
-  -H "X-Reevit-Key: pfk_live_xxx" \
-  -H "X-Org-Id: org_123" \
-  -H "Idempotency-Key: order_12345" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "amount": 5000,
-    "currency": "GHS",
-    "method": "momo",
-    "country": "GH",
-    "customer_id": "cust_456",
-    "description": "Order #12345",
-    "metadata": {
-      "product_id": "prod_789"
-    }
-  }'
+1.  **Intent Created**: Your server requests a [Payment Intent](#creating-a-payment).
+2.  **Smart Routing**: Reevit selects the optimal connection based on your [Routing Rules](/docs/reevit/docs/routing-rules).
+3.  **Customer Action**: The customer completes the required action (OTP, PIN, or 3DS).
+4.  **Transaction Finalized**: The PSP confirms success to Reevit.
+5.  **Verified Webhook**: Your application receives a [standardized notification](/docs/reevit/docs/webhooks) to fulfill the order.
+
+---
+
+## 🛠️ Implementation
+
+### Creating a Payment Intent
+
+To start a transaction, use the `create` method in the SDK. This reserves the payment and returns a `client_secret` if frontend action is needed.
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const payment = await reevit.payments.create({
+  amount: 1000,           // 10.00 GHS
+  currency: 'GHS',
+  method: 'card',         // 'card', 'momo', or 'bank'
+  country: 'GH',
+  customer_id: 'user_1',
+  metadata: { cart_id: '99' }
+});
+
+// Response status: 'requires_action' | 'succeeded' | 'failed'
 ```
 
-### Request Parameters
+### Handling Next Actions
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `amount` | integer | Yes | Amount in minor units (e.g., 5000 = GHS 50.00) |
-| `currency` | string | Yes | ISO 4217 currency code (e.g., GHS, NGN, USD) |
-| `method` | string | Yes | Payment method: `card`, `momo`, `bank` |
-| `country` | string | Yes | ISO 3166-1 alpha-2 country code (e.g., GH, NG) |
-| `customer_id` | string | No | Your customer identifier |
-| `connection_id` | string | No | Force specific connection (overrides routing) |
+If a payment requires user input (like a 3D Secure redirect or a Mobile Money prompt), the status will be `requires_action`.
 
-### Response
-
-```json
-{
-  "id": "pi_abc123",
-  "amount": 5000,
-  "currency": "GHS",
-  "status": "processing",
-  "client_secret": "cs_xyz789",
-  "next_action": {
-    "type": "redirect",
-    "url": "https://checkout.paystack.com/..."
-  }
-}
-```
+*   **Redirect**: For cards, the SDK provides a URL to redirect the user to finish the secure check.
+*   **Asynchronous (MoMo)**: For mobile money, the payment stays in a `processing` state until the customer approves the prompt on their phone.
 
 ---
 
-## Handling User Actions
+## ✅ Best Practices
 
-Most payments require user interaction (e.g., 3DS authentication, mobile money PIN). Reevit returns a `next_action` field if action is needed.
-
-### Redirect Flow
-
-If `next_action.type` is `redirect`:
-1. Redirect the user to `next_action.url`
-2. User completes payment on provider's page
-3. Provider redirects user back to your `return_url`
-
-### Mobile Money Flow
-
-For mobile money, the user receives a prompt on their phone.
-1. Check `status` is `processing`
-2. Poll endpoint or listen for webhook to know when user completes prompt
+1.  **Always use Idempotency**: Provide an `idempotency_key` (like an Order ID) to prevent double-charging customers during network retries.
+2.  **Fulfill on Webhooks**: Never fulfill an order based solely on a frontend redirect. Wait for the `payment.succeeded` [webhook event](/docs/reevit/docs/webhooks).
+3.  **Use Test Mode**: Develop your integration using `sk_test_` keys to simulate different success and failure scenarios.
 
 ---
 
-## Payment Statuses
-
-| Status | Description |
-|--------|-------------|
-| `created` | Intent created, not sent to provider yet |
-| `processing` | Sent to provider, waiting for user action |
-| `succeeded` | Payment completed successfully |
-| `failed` | Payment failed (can be retried) |
-| `canceled` | Payment canceled by user or merchant |
-
----
-
-## Smart Routing & Failover
-
-Reevit automatically selects the best connection. You can control this with [Routing Rules](./routing-rules).
-
-### How it works
-1. **Filter**: Identifies connections that support the request (method, currency, country)
-2. **Rank**: Scores connections based on health, fees, and your priority rules
-3. **Select**: Routes to the top-ranked connection
-4. **Failover**: If the top connection fails, automatically retries with the next best
-
----
-
-## Refunds
-
-You can refund payments partially or fully.
-
-```bash
-curl -X POST https://api.reevit.com/v1/payments/refunds \
-  -H "X-Reevit-Key: pfk_live_xxx" \
-  -H "X-Org-Id: org_123" \
-  -d '{
-    "payment_id": "pi_abc123",
-    "amount": 2500,
-    "reason": "requested_by_customer"
-  }'
-```
-
-**Note**: `amount` is optional. If omitted, full amount is refunded.
-
----
-
-## Best Practices
-
-1. **Use Idempotency Keys**: Prevent duplicate charges by sending `Idempotency-Key` header.
-2. **Listen to Webhooks**: Don't rely on frontend redirection. Use webhooks for source-of-truth status updates.
-3. **Handle Fallbacks**: Be prepared for `next_action` even for methods that usually don't require it.
-4. **Store IDs**: Save the Reevit `payment_id` (`pi_...`) in your database to link orders.
-
----
-
-## Next Steps
+## 📚 Related Resources
 
 <Cards columns={2}>
-  <Card
-    title="Connections"
-    href="/docs/reevit/docs/connections"
-    icon={<Link />}
-  >
-    Link your PSP accounts (BYOK) and keep control of credentials.
+  <Card title="Smart Routing" href="/docs/reevit/docs/routing-rules" icon={<Shuffle />}>
+    Configure priority rules to optimize for success rates and fees.
   </Card>
-  <Card
-    title="Routing Rules"
-    href="/docs/reevit/docs/routing-rules"
-    icon={<Shuffle />}
-  >
-    Define how payments flow across providers, methods, and regions.
+  <Card title="Webhooks" href="/docs/reevit/docs/webhooks" icon={<Webhook />}>
+    Learn how to securely handle real-time payment notifications.
   </Card>
-  <Card
-    title="Webhooks"
-    href="/docs/reevit/docs/webhooks"
-    icon={<Webhook />}
-  >
-    Receive real-time status updates and drive order fulfillment.
+  <Card title="Connections" href="/docs/reevit/docs/connections" icon={<Link />}>
+    Connect your own PSP keys using our BYOK model.
   </Card>
-  <Card
-    title="Subscriptions"
-    href="/docs/reevit/docs/subscriptions"
-    icon={<Repeat />}
-  >
-    Automate recurring billing and keep revenue collection reliable.
+  <Card title="Subscriptions" href="/docs/reevit/docs/subscriptions" icon={<Repeat />}>
+    Automate recurring billing for your SaaS or membership business.
   </Card>
 </Cards>

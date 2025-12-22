@@ -1,189 +1,79 @@
 ---
 title: What is Reevit
-description: Introducing Reevit, unified payments, billing, and orchestration for Africa
+description: Unified Payments, Billing, and Orchestration for Africa
 icon: CircleQuestionMark
 ---
 
 # What is Reevit?
 
-Reevit is a **unified payments, billing, and orchestration API for Africa**. We solve the complexity of managing multiple payment service providers (PSPs) across different African markets by providing one simple API that handles routing, failover, webhooks, and recurring billing.
-
-## The Problem We Solve
-
-African businesses face unique challenges when accepting payments:
-
-### Fragmented Payment Landscape
-
-- **Multiple PSPs per market**: Each country has different payment providers (Paystack, Hubtel, Flutterwave, Monnify, M-Pesa, Stripe)
-- **Different APIs**: Each provider has unique endpoints, request formats, and response structures
-- **Inconsistent webhooks**: Different event formats and verification methods
-- **Manual failover**: When one provider fails, you must manually switch to another
-- **No unified billing**: Recurring subscriptions require separate integrations per provider
-
-### Developer Friction
-
-- **Complex integrations**: Building and maintaining integrations for multiple PSPs is time-consuming
-- **Error handling**: Each provider has different error codes and retry logic
-- **Testing complexity**: Testing across multiple sandbox environments
-- **Documentation sprawl**: Keeping track of multiple API documentation sites
-
-### Business Challenges
-
-- **Higher failure rates**: Single points of failure when a provider goes down
-- **Lost revenue**: Failed payments due to provider outages
-- **Operational overhead**: Managing multiple PSP accounts, credentials, and dashboards
-- **Limited visibility**: No unified view of payment performance across providers
-
-## Our Solution
-
-Reevit provides **one API** that abstracts away the complexity:
-
-### ✅ One API for All Providers
-
-A single, consistent API that works across all payment providers. No need to learn different APIs or handle provider-specific quirks.
-
-### ✅ Smart Routing & Failover
-
-Automatically routes payments to the best provider based on:
-- **Success rates** — Historical performance data
-- **Latency** — Response times
-- **Fees** — Cost optimization
-- **Availability** — Real-time health monitoring
-
-If a provider fails, Reevit automatically tries the next available connection.
-
-### ✅ Unified Webhooks
-
-Receive normalized webhook events from all providers in one consistent format. No more parsing different event structures.
-
-### ✅ Built-in Subscriptions
-
-Automated recurring billing with dunning (retry logic) and invoice management. Works across all your connected providers.
-
-### ✅ Bring Your Own Key (BYOK)
-
-Connect your own PSP accounts. You maintain direct relationships with providers while benefiting from Reevit's orchestration layer.
-
-### ✅ Comprehensive Dashboard
-
-One dashboard to manage:
-- All your PSP connections
-- Payment analytics across providers
-- Webhook configurations
-- Subscription management
-- Fraud policies and routing rules
-
-## How It Works
-
-```
-┌─────────────┐
-│   Your App  │
-└──────┬──────┘
-       │
-       │ Single API Call
-       ▼
-┌─────────────────┐
-│   Reevit API │
-└──────┬──────────┘
-       │
-       │ Smart Routing
-       ▼
-┌─────────────────────────────────────┐
-│  Paystack  │  Hubtel  │  Flutterwave │
-└────────────┴──────────┴─────────────┘
-```
-
-1. **You make one API call** to Reevit with payment details
-2. **Reevit routes intelligently** to the best available provider
-3. **If a provider fails**, Reevit automatically tries the next one
-4. **You receive unified webhooks** regardless of which provider processed the payment
-
-## Supported Providers
-
-| Provider | Countries | Methods |
-|----------|-----------|---------|
-| Paystack | Ghana, Nigeria | Card, Mobile Money, Bank |
-| Hubtel | Ghana | Mobile Money, USSD |
-| Flutterwave | Ghana, Nigeria, Kenya | Card, Mobile Money, Bank |
-| Monnify | Nigeria | Card, Bank Transfer |
-| M-Pesa | Kenya | Mobile Money |
-| Stripe | Global (50+ countries) | Card, Apple Pay, Google Pay |
-
-## Use Cases
-
-### E-commerce Platforms
-
-Accept payments from customers across Africa with automatic failover and unified webhooks.
-
-### SaaS Applications
-
-Automate recurring billing with subscriptions that work across multiple payment methods and countries.
-
-### Marketplaces
-
-Handle payments for multiple merchants, each with their own PSP connections, through one API.
-
-### Fintech Applications
-
-Build payment features without managing multiple PSP integrations and complex routing logic.
-
-## Why Choose Reevit?
-
-### For Developers
-
-- **Faster integration**: One API instead of multiple
-- **Less code**: No need to handle provider-specific logic
-- **Better reliability**: Automatic failover and retries
-- **Unified webhooks**: Consistent event handling
-
-### For Businesses
-
-- **Higher success rates**: Smart routing and failover
-- **Lower costs**: Fee optimization across providers
-- **Better visibility**: Unified analytics dashboard
-- **Scalability**: Easy to add new providers and countries
-
-### For Operations Teams
-
-- **Simplified management**: One dashboard for everything
-- **Better monitoring**: Unified logs and metrics
-- **Easier troubleshooting**: Clear error messages and retry logic
-- **Reduced overhead**: Less time managing multiple PSP accounts
-
-## Getting Started
-
-Ready to simplify your payment infrastructure? [Get started](./getting-started) in minutes.
+Reevit is a **unified payment orchestration platform** designed specifically for the unique challenges of African commerce. We provide a single API that connects you to every major payment provider across the continent, automating the complexity of routing, failover, and reconciliation.
 
 ---
 
-## Key Concepts
+## 🚀 The Value Proposition
 
-### Organizations
+We built Reevit to serve two distinct needs: growing your business and simplifying your engineering.
 
-Each Reevit account has an **organization** that contains:
-- API keys
-- PSP connections
-- Payment history
-- Subscriptions
-- Webhook configurations
+### 🏢 For Business Leaders
+*   **Revenue Rescue**: Stop losing sales when a provider goes down. Reevit automatically fails over to a backup provider in real-time.
+*   **Global Reach, Local Feel**: Accept Mobile Money (M-Pesa, MoMo), Bank Transfers, and Cards across 5+ countries with one contract.
+*   **Direct Ownership (BYOK)**: Use your own PSP keys. You keep your direct relationships with providers like Paystack or Stripe while we handle the technical orchestration.
+*   **Operational Clarity**: Unified analytics across all providers. No more logging into five different dashboards to see your daily sales.
 
-### Connections
+### 💻 For Developers
+*   **One API, Infinite Providers**: Write code once. Our standardized API abstracts away the quirks, different response formats, and error codes of 10+ PSPs.
+*   **Unified Webhooks**: Receive normalized event notifications. Whether it's a card payment from Nigeria or M-Pesa from Kenya, the payload format stays the same.
+*   **SDK-First Experience**: Fully typed SDKs in TypeScript, Python, Go, and PHP. Integration takes minutes, not weeks.
+*   **Built-in Reliability**: Automatic retries, signature verification, and idempotency are handled at the platform level.
 
-A **connection** represents your credentials for a specific PSP account. You can have multiple connections per provider (e.g., one for Ghana, one for Nigeria).
+---
 
-### Payments
+## 🛠️ How It Works
 
-A **payment** represents a single transaction attempt. Reevit handles routing, retries, and webhooks automatically.
+Reevit sits between your application and your payment providers, acting as an intelligent conductor for every transaction.
 
-### Subscriptions
+![Smart Routing](/images/routing/smart-logic.png)
 
-A **subscription** automates recurring billing. Reevit creates invoices and charges customers on schedule with automatic retry logic.
+1.  **Unified Request**: Your application sends a single payment intent to Reevit.
+2.  **Orchestration Engine**: Reevit evaluates your [Routing Rules](/docs/reevit/docs/routing-rules) and provider health.
+3.  **Smart Routing**: The transaction is routed to the optimal provider (based on success rates or fees).
+4.  **Automatic Failover**: If the primary provider is down, Reevit instantly tries a fallback connection.
+5.  **Verified Webhook**: You receive a single, verified notification once the payment is final.
 
-### Routing Rules
+---
 
-**Routing rules** let you explicitly control which provider handles payments from specific countries or payment methods.
+## 🌍 Supported Ecosystem
 
-### Webhooks
+We've integrated the providers that matter most for African business:
 
-**Webhooks** notify your application when payment events occur. All providers send events in the same unified format.
+| Region | Primary Providers | Payment Methods |
+| :--- | :--- | :--- |
+| **West Africa** | Paystack, Hubtel, Flutterwave, Monnify | Cards, Mobile Money, Bank Account |
+| **East Africa** | M-Pesa, Flutterwave | MPESA, Cards |
+| **Global** | Stripe | Credit/Debit Cards, Apple Pay, Google Pay |
+
+---
+
+## 🏗️ Core Pillars
+
+<Cards>
+  <Card title="Connections" href="/docs/reevit/docs/connections" icon={<CreditCard />}>
+    Manage your provider credentials in one place with our Bring Your Own Key (BYOK) model.
+  </Card>
+  <Card title="Workflows" href="/docs/reevit/docs/workflows" icon={<Zap />}>
+    Automate post-payment actions like sending receipts, Slack alerts, or updating your CRM.
+  </Card>
+  <Card title="Smart Routing" href="/docs/reevit/docs/routing-rules" icon={<Route />}>
+    Maximize success rates and minimize fees with priority-based routing logic.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/docs/webhooks" icon={<Webhook />}>
+    Standardized, secure event delivery for real-time application updates.
+  </Card>
+</Cards>
+
+---
+
+## Ready to build?
+
+Follow our [Getting Started](/docs/reevit/docs/getting-started) guide to process your first payment in under 5 minutes.
 

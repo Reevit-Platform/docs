@@ -61,7 +61,7 @@ export default async function Page(props: {
           </PageTOCPopoverContent>
         </PageTOCPopover>
       )}
-      <PageArticle>
+      <PageArticle className="max-w-none!">
         <PageBreadcrumb />
         <h1 className="text-3xl font-semibold">{page.data.title}</h1>
         <p className="text-lg text-fd-muted-foreground">
@@ -74,7 +74,7 @@ export default async function Page(props: {
           <ViewOptions markdownUrl={markdownUrl} githubUrl={githubUrl} />
         </div>
 
-        <div className="prose flex-1 text-fd-foreground/80">
+        <div className="prose max-w-none! flex-1 text-fd-foreground/80">
           <MDXContent
             components={getMDXComponents({
               // this allows you to link to other pages with relative file paths

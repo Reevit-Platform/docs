@@ -1,201 +1,92 @@
 ---
-title: Routing Rules
-description: Explicitly route payments from specific countries and methods to specific PSP connections
+title: Smart Routing
+description: Optimize success rates and minimize fees with priority-based routing rules
 icon: Route
 ---
 
-# Routing Rules
+# Smart Routing & Rules
 
-Routing rules allow you to explicitly route payments from specific countries and/or payment methods to specific PSP connections. This gives you fine-grained control over which payment provider handles transactions from different regions.
+The Reevit Routing Engine acts as a localized decision-maker for every transaction. It ensures that payments are sent to the provider most likely to succeed at the lowest possible cost, automatically failing over if the primary connection is unavailable.
 
-## Overview
+<DocShowcase type="routing" />
 
-By default, Reevit uses intelligent routing based on:
-- Connection health scores
-- Fee optimization
-- Provider capabilities
-- Country/method support
+---
 
-**Routing rules** let you override this default behavior for specific scenarios:
-- Route all European payments through Stripe
-- Route African payments through Paystack
-- Use different providers for card vs mobile money payments
+## 💎 The Routing Advantage
 
-## How It Works
+### 🏢 For Business Revenue
+*   **Revenue Rescue (Failover)**: If your primary provider (e.g., Hubtel) goes down, Reevit detects the failure and instantly re-routes the payment to your fallback (e.g., Paystack). This happens in milliseconds, ensuring you never miss a sale.
+*   **Precision Fee Optimization**: Route high-value transactions to providers with lower percentage fees, and small transactions to those with flat-rate pricing.
+*   **Regional Dominance**: Use your "Home-Court" providers for local markets (like Hubtel in Ghana) while routing global card traffic to international providers like Stripe.
 
-1. **Priority-based evaluation**: Rules are evaluated by priority (highest first)
-2. **Country + Method matching**: A rule matches if the payment's country is in the rule's countries list AND (the method matches OR the rule has no method filter)
-3. **Fallback behavior**: If a rule matches but the connection is unavailable, you can choose to fall back to default routing or fail the payment
-4. **Default routing**: If no rule matches, standard routing logic applies
+### 💻 For Engineering Precision
+*   **Logic Abstraction**: Your application code doesn't need to know *which* provider is being used. It just sends the payment to Reevit, and the engine handles the logic.
+*   **Priority-Based Evaluation**: Rules are evaluated in order of priority. You can create a "Broad" rule for a country and a "Specific" rule for a high-value customer that overrides it.
+*   **Dry-Run Testing**: Test your routing logic in [Sandbox Mode](/docs/reevit/docs/test-mode) to see how the engine behaves before going live.
 
-## API Endpoints
+---
 
-### List Routing Rules
+## ⚙️ How the Engine Works
 
-```http
-GET /v1/routing-rules
+When a payment is created, the engine follows these evaluation steps:
+
+1.  **Capability Filter**: Only connections supporting the requested [Method and Country](/docs/reevit/docs/connections) are considered.
+2.  **Rule Match**: The engine checks for any active **Routing Rules** that matches the request.
+3.  **Priority execution**: If multiple rules match, the one with the **Highest Priority** is executed.
+4.  **Health Check**: If a rule points to an "Unhealthy" connection, the engine will automatically [Failover](#automatic-failover) if enabled.
+
+---
+
+## 🛠️ Managing Rules
+
+### Creating a Rule via SDK
+
+You can manage your routing logic programmatically or via the dashboard.
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const rule = await reevit.routing.createRule({
+  name: 'Ghana MoMo → Hubtel Primary',
+  countries: ['GH'],
+  methods: ['momo'],
+  connection_id: 'hubtel_live_primary',
+  priority: 10,
+  fallback_to_default: true // Attempt other Ghanaian connections if Hubtel fails
+});
 ```
 
-**Query Parameters:**
-- `limit` (optional): Number of rules to return (default: 50, max: 100)
-- `offset` (optional): Pagination offset (default: 0)
+### Rule Parameters
 
-**Response:**
-```json
-{
-  "rules": [
-    {
-      "id": "01HXYZ...",
-      "name": "Europe Stripe Rule",
-      "countries": ["US", "GB", "DE", "FR", "ES", "IT"],
-      "methods": ["card"],
-      "connection_id": "stripe_live",
-      "priority": 10,
-      "fallback_to_default": true,
-      "enabled": true,
-      "created_at": "2024-01-15T10:30:00Z",
-      "updated_at": "2024-01-15T10:30:00Z"
-    }
-  ],
-  "pagination": {
-    "total": 1,
-    "limit": 50,
-    "offset": 0
-  }
-}
-```
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| **Priority** | Integer | Rules with higher numbers are evaluated first (e.g., 10 > 5). |
+| **Fallback** | Boolean | If `true`, Reevit will try other active connections if the rule's target connection fails. |
+| **Conditions** | Filter | Combinations of `country`, `method`, and `labels`. |
 
-### Create Routing Rule
+---
 
-```http
-POST /v1/routing-rules
-```
+## ✅ Best Practices
 
-**Request Body:**
-```json
-{
-  "name": "Europe Stripe Rule",
-  "countries": ["US", "GB", "DE", "FR", "ES", "IT"],
-  "methods": ["card"],
-  "connection_id": "stripe_live",
-  "priority": 10,
-  "fallback_to_default": true,
-  "enabled": true
-}
-```
+1.  **Start Broad, Then Refine**: Create a "catch-all" rule for your target countries first, then add specific rules for certain payment methods.
+2.  **Enabled Fallback**: Unless you have strict compliance reasons to use ONLY one provider, keep `fallback_to_default` set to `true` to maximize success rates.
+3.  **Monitor Health**: Regularly check your [Connection Health scores](/docs/reevit/docs/connections) to see if the engine is frequently failing over. This may indicate a needed change in your primary rules.
 
-**Fields:**
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Human-readable name for the rule |
-| `countries` | string[] | Yes | ISO 3166-1 alpha-2 country codes (e.g., "US", "GB", "GH") |
-| `methods` | string[] | No | Payment methods (e.g., "card", "mobile_money"). Empty = all methods |
-| `connection_id` | string | Yes | The connection ID to use when this rule matches |
-| `priority` | integer | No | Higher priority rules are evaluated first (default: 0) |
-| `fallback_to_default` | boolean | No | Fall back to default routing if connection unavailable (default: true) |
-| `enabled` | boolean | No | Whether the rule is active (default: true) |
+---
 
-### Get Routing Rule
+## 📚 Related Resources
 
-```http
-GET /v1/routing-rules/{id}
-```
-
-### Update Routing Rule
-
-```http
-PATCH /v1/routing-rules/{id}
-```
-
-**Request Body:** (all fields optional)
-```json
-{
-  "name": "Updated Rule Name",
-  "countries": ["US", "CA"],
-  "methods": ["card", "apple_pay"],
-  "connection_id": "new_connection_id",
-  "priority": 20,
-  "fallback_to_default": false,
-  "enabled": false
-}
-```
-
-### Delete Routing Rule
-
-```http
-DELETE /v1/routing-rules/{id}
-```
-
-Returns `204 No Content` on success.
-
-## Examples
-
-### Route European Card Payments to Stripe
-
-```json
-{
-  "name": "Europe Cards → Stripe",
-  "countries": ["GB", "DE", "FR", "ES", "IT", "NL", "BE", "AT", "CH", "SE", "NO", "DK", "FI", "IE", "PT", "PL"],
-  "methods": ["card", "apple_pay", "google_pay"],
-  "connection_id": "stripe_eu_live",
-  "priority": 10,
-  "fallback_to_default": true,
-  "enabled": true
-}
-```
-
-### Route African Payments to Paystack
-
-```json
-{
-  "name": "Africa → Paystack",
-  "countries": ["GH", "NG", "KE", "ZA"],
-  "methods": [],
-  "connection_id": "paystack_live",
-  "priority": 5,
-  "fallback_to_default": true,
-  "enabled": true
-}
-```
-
-### Route US Payments to Stripe (No Fallback)
-
-```json
-{
-  "name": "US Strict → Stripe",
-  "countries": ["US"],
-  "methods": [],
-  "connection_id": "stripe_us_live",
-  "priority": 20,
-  "fallback_to_default": false,
-  "enabled": true
-}
-```
-
-## Best Practices
-
-1. **Use meaningful names**: Name rules descriptively (e.g., "Europe Cards → Stripe" instead of "Rule 1")
-
-2. **Set appropriate priorities**: Higher priority rules are checked first. Use this to create specific rules that override general ones.
-
-3. **Enable fallback for reliability**: Unless you have a specific reason, enable `fallback_to_default` to ensure payments don't fail if a connection is temporarily unavailable.
-
-4. **Test before enabling**: Create rules with `enabled: false`, verify the configuration, then enable them.
-
-5. **Monitor after changes**: After creating or modifying rules, monitor your payment success rates to ensure the routing is working as expected.
-
-## Scopes Required
-
-- `routing_rules:read` - List and get routing rules
-- `routing_rules:write` - Create, update, and delete routing rules
-
-## Error Codes
-
-| Code | Description |
-|------|-------------|
-| `missing_name` | Rule name is required |
-| `missing_countries` | At least one country is required |
-| `missing_connection_id` | Connection ID is required |
-| `invalid_priority` | Priority must be non-negative |
-| `connection_not_found` | The specified connection does not exist |
-| `rule_not_found` | The routing rule was not found |
+<Cards columns={2}>
+  <Card title="Payments Guide" href="/docs/reevit/docs/payments" icon={<CreditCard />}>
+    Understand how payment intents interact with your routing rules.
+  </Card>
+  <Card title="Connections" href="/docs/reevit/docs/connections" icon={<Link />}>
+    Manage the PSP accounts that your rules point to.
+  </Card>
+  <Card title="Fraud Policies" href="/docs/reevit/docs/fraud-policies" icon={<ShieldCheck />}>
+    Add safety layers to your routes with velocity and risk limits.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/docs/webhooks" icon={<Webhook />}>
+    Receive events when a payment fails over to a secondary provider.
+  </Card>
+</Cards>
