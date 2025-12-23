@@ -17,7 +17,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/base.css";
 import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
+import { MoreVerticalIcon as MoreVertical } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import SchemaEdge from "@/components/schema/schema-edge";
 
 // Shop Platform Node
@@ -35,7 +36,7 @@ function ShopPlatformNode({ data }: NodeProps) {
           className="shadow-none hover:bg-transparent -my-2 -me-2 text-muted-foreground/60 hover:text-muted-foreground"
           aria-label="Open edit menu"
         >
-          <MoreVertical className="size-5" aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVertical} className="size-5" aria-hidden="true" />
         </Button>
       </div>
       <div className="text-xs py-2">
@@ -44,7 +45,7 @@ function ShopPlatformNode({ data }: NodeProps) {
             <div className="flex items-center justify-between gap-2 py-2 border-dashed border-border/40 [&:not(:last-child)]:border-b">
               <span className="truncate font-medium">{field.name}</span>
               <span className="text-muted-foreground/60">{field.type}</span>
-              
+
               {field.isPrimary && (
                 <Handle
                   type="source"
@@ -77,7 +78,7 @@ function ShopInstanceNode({ data }: NodeProps) {
           className="shadow-none hover:bg-transparent -my-2 -me-2 text-muted-foreground/60 hover:text-muted-foreground"
           aria-label="Open edit menu"
         >
-          <MoreVertical className="size-5" aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVertical} className="size-5" aria-hidden="true" />
         </Button>
       </div>
       <div className="text-xs py-2">
@@ -86,7 +87,7 @@ function ShopInstanceNode({ data }: NodeProps) {
             <div className="flex items-center justify-between gap-2 py-2 border-dashed border-border/40 [&:not(:last-child)]:border-b">
               <span className="truncate font-medium">{field.name}</span>
               <span className="text-muted-foreground/60">{field.type}</span>
-              
+
               {field.isForeign && (
                 <Handle
                   type="target"
@@ -188,7 +189,7 @@ const initialEdges = [
   {
     id: "shopplatform-shop1",
     source: "shopplatform",
-    target: "shop1", 
+    target: "shop1",
     sourceHandle: "id",
     targetHandle: "platformId",
     type: "custom",
@@ -197,7 +198,7 @@ const initialEdges = [
     id: "shopplatform-shop2",
     source: "shopplatform",
     target: "shop2",
-    sourceHandle: "id", 
+    sourceHandle: "id",
     targetHandle: "platformId",
     type: "custom",
   },
@@ -206,7 +207,7 @@ const initialEdges = [
     source: "shopplatform",
     target: "shop3",
     sourceHandle: "id",
-    targetHandle: "platformId", 
+    targetHandle: "platformId",
     type: "custom",
   },
 ];

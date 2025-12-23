@@ -1,6 +1,7 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon01Icon as Moon, Sun01Icon as Sun } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useTheme } from "next-themes";
 import { useId, useState } from "react";
 
@@ -44,8 +45,9 @@ export default function ThemeToggle() {
         htmlFor={id}
         aria-hidden="true"
       >
-        <Sun className="dark:hidden" size={22} aria-hidden="true" />
-        <Moon
+        <HugeiconsIcon icon={Sun} className="dark:hidden" size={22} aria-hidden="true" />
+        <HugeiconsIcon
+          icon={Moon}
           className="hidden dark:block"
           size={22}
           aria-hidden="true"

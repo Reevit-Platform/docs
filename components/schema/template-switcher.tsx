@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ArrowDown01Icon as ChevronDown } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
   Breadcrumb,
@@ -54,7 +55,8 @@ export default function TemplateSwitcher() {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1 font-medium text-foreground">
               {activeTemplate?.name ?? "Select Template"}
-              <ChevronDown
+              <HugeiconsIcon
+                icon={ChevronDown}
                 className="-me-1 opacity-60"
                 size={16}
                 aria-hidden="true"

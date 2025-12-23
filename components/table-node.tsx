@@ -1,7 +1,8 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
+import { MoreVerticalIcon as MoreVertical } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 
 export interface TableField {
@@ -42,10 +43,10 @@ function TableNode({ data, id }: NodeProps<TableNodeType>) {
           className="h-6 w-6 text-muted-foreground hover:text-foreground -my-2 -me-2"
           aria-label="Table options"
         >
-          <MoreVertical className="h-4 w-4" />
+          <HugeiconsIcon icon={MoreVertical} className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="py-2">
         {data.fields.map((field: TableField, index) => (
           <div key={field.name} className="px-4 relative group">

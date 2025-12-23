@@ -12,7 +12,8 @@ import {
   BackgroundVariant,
 } from "@xyflow/react";
 import "@xyflow/react/dist/base.css";
-import { Plus, Minus, Maximize2 } from "lucide-react";
+import { PlusSignIcon as Plus, MinusSignIcon as Minus, MaximizeIcon as Maximize2 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import TableNode from "@/components/schema/table-node";
 import SchemaEdge from "@/components/schema/schema-edge";
@@ -34,11 +35,11 @@ function SchemaVisualizerInner() {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
 
   const onFitView = useCallback(() => {
-    fitView({ 
-      padding: 0.1, 
+    fitView({
+      padding: 0.1,
       minZoom: 0.1,
       maxZoom: 1,
-      duration: 800 
+      duration: 800
     });
   }, [fitView]);
 
@@ -85,7 +86,7 @@ function SchemaVisualizerInner() {
               onClick={() => zoomIn()}
               aria-label="Zoom in"
             >
-              <Plus className="size-5" aria-hidden="true" />
+              <HugeiconsIcon icon={Plus} className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
@@ -94,7 +95,7 @@ function SchemaVisualizerInner() {
               onClick={() => zoomOut()}
               aria-label="Zoom out"
             >
-              <Minus className="size-5" aria-hidden="true" />
+              <HugeiconsIcon icon={Minus} className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
@@ -103,7 +104,7 @@ function SchemaVisualizerInner() {
               onClick={onFitView}
               aria-label="Fit view"
             >
-              <Maximize2 className="size-5" aria-hidden="true" />
+              <HugeiconsIcon icon={Maximize2} className="h-4 w-4" />
             </Button>
           </Panel>
         </ReactFlow>

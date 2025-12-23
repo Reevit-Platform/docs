@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
+import { MoreVerticalIcon as MoreVertical } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 
 const channelPlatformData = {
@@ -72,7 +73,7 @@ function ChannelPlatformCard() {
           className="shadow-none hover:bg-transparent -my-2 -me-2 text-muted-foreground/60 hover:text-muted-foreground"
           aria-label="Open edit menu"
         >
-          <MoreVertical className="size-5" aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVertical} className="size-5" aria-hidden="true" />
         </Button>
       </div>
       <div className="text-xs py-2">
@@ -103,7 +104,7 @@ function ChannelInstanceCard({ channel, index }: { channel: typeof channelPlatfo
           className="shadow-none hover:bg-transparent -my-2 -me-2 text-muted-foreground/60 hover:text-muted-foreground"
           aria-label="Open edit menu"
         >
-          <MoreVertical className="size-5" aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVertical} className="size-5" aria-hidden="true" />
         </Button>
       </div>
       <div className="text-xs py-2">
@@ -129,7 +130,7 @@ export default function ChannelPlatformCards() {
           <ChannelPlatformCard />
         </div>
       </div>
-      
+
       <div className="text-center my-8">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground text-sm">
           <span>connects to</span>

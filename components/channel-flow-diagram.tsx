@@ -17,7 +17,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/base.css";
 import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
+import { MoreVerticalIcon as MoreVertical } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import SchemaEdge from "@/components/schema/schema-edge";
 
 // Channel Platform Node
@@ -35,7 +36,7 @@ function ChannelPlatformNode({ data }: NodeProps) {
           className="shadow-none hover:bg-transparent -my-2 -me-2 text-muted-foreground/60 hover:text-muted-foreground"
           aria-label="Open edit menu"
         >
-          <MoreVertical className="size-5" aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVertical} className="size-5" aria-hidden="true" />
         </Button>
       </div>
       <div className="text-xs py-2">
@@ -44,7 +45,7 @@ function ChannelPlatformNode({ data }: NodeProps) {
             <div className="flex items-center justify-between gap-2 py-2 border-dashed border-border/40 [&:not(:last-child)]:border-b">
               <span className="truncate font-medium">{field.name}</span>
               <span className="text-muted-foreground/60">{field.type}</span>
-              
+
               {field.isPrimary && (
                 <Handle
                   type="source"
@@ -77,7 +78,7 @@ function ChannelInstanceNode({ data }: NodeProps) {
           className="shadow-none hover:bg-transparent -my-2 -me-2 text-muted-foreground/60 hover:text-muted-foreground"
           aria-label="Open edit menu"
         >
-          <MoreVertical className="size-5" aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVertical} className="size-5" aria-hidden="true" />
         </Button>
       </div>
       <div className="text-xs py-2">
@@ -86,7 +87,7 @@ function ChannelInstanceNode({ data }: NodeProps) {
             <div className="flex items-center justify-between gap-2 py-2 border-dashed border-border/40 [&:not(:last-child)]:border-b">
               <span className="truncate font-medium">{field.name}</span>
               <span className="text-muted-foreground/60">{field.type}</span>
-              
+
               {field.isForeign && (
                 <Handle
                   type="target"
@@ -185,7 +186,7 @@ const initialEdges = [
   {
     id: "channelplatform-channel1",
     source: "channelplatform",
-    target: "channel1", 
+    target: "channel1",
     sourceHandle: "id",
     targetHandle: "platformId",
     type: "custom",
@@ -194,7 +195,7 @@ const initialEdges = [
     id: "channelplatform-channel2",
     source: "channelplatform",
     target: "channel2",
-    sourceHandle: "id", 
+    sourceHandle: "id",
     targetHandle: "platformId",
     type: "custom",
   },
@@ -203,7 +204,7 @@ const initialEdges = [
     source: "channelplatform",
     target: "channel3",
     sourceHandle: "id",
-    targetHandle: "platformId", 
+    targetHandle: "platformId",
     type: "custom",
   },
 ];

@@ -1,7 +1,8 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
+import { MoreVerticalIcon as MoreVertical } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { initialEdges } from "@/lib/schema-data";
 
@@ -49,7 +50,7 @@ function TableNode({ data, id }: NodeProps<TableNodeType>) {
           className="shadow-none hover:bg-transparent -my-2 -me-2 text-muted-foreground/60 hover:text-muted-foreground"
           aria-label="Open edit menu"
         >
-          <MoreVertical className="size-5" aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVertical} className="size-5" aria-hidden="true" />
         </Button>
       </div>
       <div className="text-xs py-2">
