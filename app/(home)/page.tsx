@@ -1,5 +1,14 @@
 import { ReactNode } from "react";
-import { ArrowRight, BookOpen, Code2, CreditCard, Route, Webhook, Zap } from "lucide-react";
+import {
+  ArrowRight02Icon as ArrowRight,
+  BookOpen01Icon as BookOpen,
+  CodeIcon as Code2,
+  CreditCardIcon as CreditCard,
+  FlashIcon as Zap,
+  Route01Icon as Route,
+  WebhookIcon as Webhook,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { Space_Grotesk } from "next/font/google";
 
@@ -55,7 +64,7 @@ const DOC_CATEGORIES = [
     title: "API Reference",
     description: "Complete REST API documentation and examples",
     icon: BookOpen,
-    href: "/docs/reevit/api-reference",
+    href: "/api-reference",
     color: "text-pink-500",
     bg: "bg-pink-500/10",
   },
@@ -71,18 +80,18 @@ function DocCard({
 }: {
   title: string;
   description: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: IconSvgElement;
   href: string;
   color: string;
   bg: string;
 }) {
   return (
     <a href={href} className="group block h-full">
-      <div className="glass-card relative h-full overflow-hidden p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/4">
+      <div className="bg-card border relative h-full overflow-hidden p-6 transition-all duration-300 border-input rounded-md">
         <div className="flex flex-col gap-4">
           {/* Icon */}
           <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110", bg)}>
-            <Icon className={cn("h-6 w-6", color)} />
+            <HugeiconsIcon icon={Icon} className={cn("h-6 w-6", color)} />
           </div>
 
           {/* Content */}
@@ -90,20 +99,20 @@ function DocCard({
             <h3
               className={cn(
                 spaceGrotesk.className,
-                "text-xl font-semibold text-white transition-colors group-hover:text-fd-primary"
+                "text-xl font-semibold text-foreground transition-colors group-hover:text-fd-primary"
               )}
             >
               {title}
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-white/50 group-hover:text-white/70">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground group-hover:text-foreground">
               {description}
             </p>
           </div>
 
           {/* Learn More link */}
-          <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-fd-primary opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100">
+          <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-fd-primary transition-all duration-300 group-hover:translate-x-1">
             Learn more
-            <ArrowRight className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={ArrowRight} className="h-3.5 w-3.5" />
           </div>
         </div>
       </div>
@@ -122,7 +131,7 @@ export default function HomePage() {
       {/* Hero Content */}
       <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pt-24 pb-16 text-center md:pt-32 md:pb-24">
         {/* Badge */}
-        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium tracking-wider text-white/60 uppercase">
+        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-accent/50 px-4 py-2 text-xs font-medium tracking-wider text-muted-foreground uppercase">
           <span className="size-2 animate-pulse rounded-full bg-fd-primary" />
           Documentation
         </div>
@@ -131,14 +140,14 @@ export default function HomePage() {
         <h1
           className={cn(
             spaceGrotesk.className,
-            "text-5xl font-bold tracking-tight text-white md:text-7xl"
+            "text-5xl font-bold tracking-tight text-foreground md:text-7xl"
           )}
         >
-          Reevit <span className="text-white/40">Docs</span>
+          Reevit <span className="text-muted-foreground/40">Docs</span>
         </h1>
 
         {/* Subtitle */}
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/50 md:text-xl">
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
           Everything you need to integrate unified payments, billing, and orchestration for African
           businesses.
         </p>
@@ -147,10 +156,10 @@ export default function HomePage() {
         <div className="mt-10 flex items-center justify-center gap-4">
           <a
             href="/docs/reevit"
-            className="flex h-12 items-center gap-2 rounded-full bg-white px-8 text-sm font-semibold text-black transition-all hover:bg-gray-200"
+            className="flex h-12 items-center gap-2 rounded-full bg-foreground px-8 text-sm font-semibold text-background transition-all hover:opacity-90"
           >
             Get Started
-            <ArrowRight className="h-4 w-4" />
+            <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
           </a>
         </div>
       </div>
@@ -165,16 +174,16 @@ export default function HomePage() {
       </div>
 
       {/* Footer links */}
-      <div className="relative z-10 mt-auto flex w-full flex-wrap items-center justify-center gap-8 border-t border-white/5 bg-black/20 py-12 text-sm font-medium">
-        <a href="https://reevit.io" className="text-white/40 transition-colors hover:text-white">
+      <div className="relative z-10 mt-auto flex w-full flex-wrap items-center justify-center gap-8 border-t border-border bg-muted/30 py-12 text-sm font-medium">
+        <a href="https://reevit.io" className="text-muted-foreground transition-colors hover:text-foreground">
           reevit.io
         </a>
-        <a href="/docs/reevit/changelog" className="text-white/40 transition-colors hover:text-white">
+        <a href="/docs/reevit/changelog" className="text-muted-foreground transition-colors hover:text-foreground">
           Changelog
         </a>
         <a
           href="https://github.com/reevitinc/docs"
-          className="text-white/40 transition-colors hover:text-white"
+          className="text-muted-foreground transition-colors hover:text-foreground"
         >
           GitHub
         </a>
