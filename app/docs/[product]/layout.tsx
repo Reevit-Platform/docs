@@ -4,17 +4,18 @@ import { baseOptions } from '@/app/layout.config';
 import { reevitSource } from '@/lib/source';
 import { DocsSwitcher } from '@/components/DocsSwitcher';
 import { notFound } from 'next/navigation';
-import { Book, FileCode } from 'lucide-react';
+import { Book02Icon as Book, CodeIcon as FileCode } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 
-export default async function Layout({ 
-  children, 
+export default async function Layout({
+  children,
   params,
-}: { 
+}: {
   children: ReactNode;
   params: Promise<{ product: string }>;
 }) {
   const { product } = await params;
-  
+
   if (product !== 'reevit') {
     notFound();
   }
@@ -37,11 +38,11 @@ export default async function Layout({
             const tabConfig: Record<string, { color: string; icon: React.ReactNode }> = {
               docs: {
                 color: '#10b981', // emerald-500
-                icon: <Book className="size-4" />,
+                icon: <HugeiconsIcon icon={Book} className="size-4" />,
               },
               openapi: {
                 color: '#8b5cf6', // violet-500
-                icon: <FileCode className="size-4" />,
+                icon: <HugeiconsIcon icon={FileCode} className="size-4" />,
               },
             };
 
@@ -50,8 +51,13 @@ export default async function Layout({
             const tabId = pathSegments[0] || 'docs';
             const config = tabConfig[tabId] || tabConfig.docs;
 
+            // Redirect openapi tab to /api-reference
+            const isApiTab = tabId === 'openapi' || option.title === 'API Reference';
+            const tabUrl = isApiTab ? '/api-reference' : option.url;
+
             return {
               ...option,
+              url: tabUrl,
               icon: (
                 <div
                   className="[&_svg]:size-full rounded-lg size-full max-md:border max-md:p-1.5"

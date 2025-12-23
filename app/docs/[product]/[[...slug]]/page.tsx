@@ -13,7 +13,7 @@ import {
   PageTOCPopoverTrigger,
   PageTOCTitle,
 } from 'fumadocs-ui/layouts/docs/page';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { getMDXComponents } from '@/mdx-components';
 import { LLMCopyButton, ViewOptions } from '@/components/llm-copy-button';
@@ -32,6 +32,12 @@ export default async function Page(props: {
   const currentSource = reevitSource;
 
   const normalizedSlug = slug?.[0] === product ? slug.slice(1) : slug;
+
+  // Redirect API reference pages to the new dedicated route
+  if (normalizedSlug?.[0] === 'openapi' || normalizedSlug?.[0] === 'api-reference') {
+    redirect('/api-reference');
+  }
+
   const lookupPath = [product, ...(normalizedSlug || [])];
 
   const page = currentSource.getPage(lookupPath);
@@ -41,19 +47,22 @@ export default async function Page(props: {
 
   const MDXContent = (page.data as any).body;
 
+  const isFull = (page.data as any).full;
+
   // Generate URLs for the LLM copy button
   const fullSlug = [product, ...(normalizedSlug || [])].join('/');
   const markdownUrl = `/api/source/${fullSlug}`;
-  const githubUrl = `https://github.com/felixyeboah/docs-combined/blob/main/content/docs/${fullSlug}.mdx`;
+  const githubUrl = `https://github.com/Reevit-Platform/docs/blob/main/content/docs/${fullSlug}.mdx`;
 
   return (
     <PageRoot
       toc={{
-        toc: (page.data as any).toc,
+        toc: isFull ? [] : (page.data as any).toc,
         single: false,
       }}
+      {...(isFull && { 'data-full-width': 'true' })}
     >
-      {(page.data as any).toc.length > 0 && (
+      {!isFull && (page.data as any).toc.length > 0 && (
         <PageTOCPopover>
           <PageTOCPopoverTrigger />
           <PageTOCPopoverContent>
@@ -61,20 +70,24 @@ export default async function Page(props: {
           </PageTOCPopoverContent>
         </PageTOCPopover>
       )}
-      <PageArticle className="max-w-none!">
-        <PageBreadcrumb />
-        <h1 className="text-3xl font-semibold">{page.data.title}</h1>
-        <p className="text-lg text-fd-muted-foreground">
-          {page.data.description}
-        </p>
+      <PageArticle className={isFull ? 'max-w-none! px-0 py-0 gap-0' : 'max-w-none!'}>
+        {!(page.data as any).full && <PageBreadcrumb />}
+        {!(page.data as any).full && <h1 className="text-3xl font-semibold">{page.data.title}</h1>}
+        {!(page.data as any).full && (
+          <p className="text-lg text-fd-muted-foreground">
+            {page.data.description}
+          </p>
+        )}
 
         {/* LLM Copy Button with border */}
-        <div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
-          <LLMCopyButton markdownUrl={markdownUrl} />
-          <ViewOptions markdownUrl={markdownUrl} githubUrl={githubUrl} />
-        </div>
+        {!(page.data as any).full && (
+          <div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
+            <LLMCopyButton markdownUrl={markdownUrl} />
+            <ViewOptions markdownUrl={markdownUrl} githubUrl={githubUrl} />
+          </div>
+        )}
 
-        <div className="prose max-w-none! flex-1 text-fd-foreground/80">
+        <div className={isFull ? 'w-full' : 'prose max-w-none! flex-1 text-fd-foreground/80'}>
           <MDXContent
             components={getMDXComponents({
               // this allows you to link to other pages with relative file paths
@@ -82,9 +95,9 @@ export default async function Page(props: {
             })}
           />
         </div>
-        <PageFooter />
+        {!isFull && <PageFooter />}
       </PageArticle>
-      {(page.data as any).toc.length > 0 && (
+      {!isFull && (page.data as any).toc.length > 0 && (
         <PageTOC>
           <PageTOCTitle />
           <PageTOCItems variant="clerk" />
