@@ -178,11 +178,11 @@ export default function HomePage() {
         <a href="https://reevit.io" className="text-muted-foreground transition-colors hover:text-foreground">
           reevit.io
         </a>
-        <a href="/docs/reevit/changelog" className="text-muted-foreground transition-colors hover:text-foreground">
+        <a href="https://reevit.io/changelog" className="text-muted-foreground transition-colors hover:text-foreground">
           Changelog
         </a>
         <a
-          href="https://github.com/reevitinc/docs"
+          href="https://github.com/Reevit-Platform/docs"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           GitHub
