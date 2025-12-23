@@ -1,0 +1,157 @@
+---
+title: Error Codes
+description: Understanding and handling Reevit API errors
+icon: AlertTriangle
+---
+
+# Error Codes
+
+The Reevit API uses conventional HTTP response codes to indicate the success or failure of an API request.
+
+## HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| `200` | Success - Request completed successfully |
+| `201` | Created - Resource created successfully |
+| `400` | Bad Request - Invalid request parameters |
+| `401` | Unauthorized - Invalid or missing API key |
+| `403` | Forbidden - Insufficient permissions |
+| `404` | Not Found - Resource doesn't exist |
+| `409` | Conflict - Resource already exists (idempotency) |
+| `422` | Unprocessable Entity - Validation error |
+| `429` | Too Many Requests - Rate limit exceeded |
+| `500` | Internal Server Error - Something went wrong on our end |
+
+## Error Response Format
+
+All errors return a consistent JSON structure:
+
+```json
+{
+  "error": "validation_error",
+  "message": "Amount must be greater than 0",
+  "details": {
+    "field": "amount",
+    "value": -100
+  }
+}
+```
+
+## Common Error Codes
+
+### Authentication Errors
+
+| Error Code | Description | Resolution |
+|------------|-------------|------------|
+| `unauthorized` | Missing or invalid API key | Check your API key is correct |
+| `invalid_api_key` | API key format is invalid | Use format `sk_test_...` or `sk_live_...` |
+| `api_key_revoked` | API key has been revoked | Generate a new API key |
+| `insufficient_scopes` | API key lacks required permissions | Use a key with appropriate scopes |
+
+### Payment Errors
+
+| Error Code | Description | Resolution |
+|------------|-------------|------------|
+| `payment_failed` | Payment was declined | Check payment details or try another method |
+| `insufficient_funds` | Customer has insufficient funds | Customer needs to add funds |
+| `card_declined` | Card was declined by issuer | Try a different card |
+| `invalid_card` | Card number is invalid | Verify card details |
+| `expired_card` | Card has expired | Use a valid card |
+| `provider_error` | Payment provider returned an error | Retry or try a different provider |
+| `no_available_connection` | No PSP connection available for this payment | Add a connection for this country/method |
+
+### Connection Errors
+
+| Error Code | Description | Resolution |
+|------------|-------------|------------|
+| `connection_not_found` | Connection ID doesn't exist | Verify the connection ID |
+| `connection_disabled` | Connection is disabled | Enable the connection in dashboard |
+| `invalid_credentials` | PSP credentials are invalid | Update connection credentials |
+| `provider_unavailable` | PSP is temporarily unavailable | Retry later or use failover |
+
+### Subscription Errors
+
+| Error Code | Description | Resolution |
+|------------|-------------|------------|
+| `subscription_not_found` | Subscription doesn't exist | Verify subscription ID |
+| `subscription_cancelled` | Subscription is already cancelled | Cannot modify cancelled subscriptions |
+| `invoice_already_paid` | Invoice has already been paid | No action needed |
+| `max_retries_exceeded` | Invoice retry limit reached | Manual intervention required |
+
+### Validation Errors
+
+| Error Code | Description | Resolution |
+|------------|-------------|------------|
+| `validation_error` | Request body validation failed | Check the `details` field for specifics |
+| `invalid_currency` | Currency code is not supported | Use a supported currency (GHS, NGN, KES, USD) |
+| `invalid_amount` | Amount is invalid | Amount must be positive integer in minor units |
+| `missing_required_field` | Required field is missing | Include all required fields |
+
+### Rate Limiting
+
+| Error Code | Description | Resolution |
+|------------|-------------|------------|
+| `rate_limit_exceeded` | Too many requests | Wait and retry with exponential backoff |
+
+Rate limit headers are included in responses:
+- `X-RateLimit-Limit`: Maximum requests per window
+- `X-RateLimit-Remaining`: Remaining requests in window
+- `X-RateLimit-Reset`: Unix timestamp when limit resets
+
+## Handling Errors
+
+### Best Practices
+
+1. **Always check the HTTP status code** before parsing the response body
+2. **Log error responses** for debugging and monitoring
+3. **Implement retry logic** for 5xx errors and rate limits
+4. **Use idempotency keys** to safely retry failed requests
+5. **Handle specific error codes** to provide better user feedback
+
+### Example Error Handling
+
+```typescript
+try {
+  const payment = await reevit.payments.create({
+    amount: 1000,
+    currency: 'GHS',
+    method: 'mobile_money'
+  });
+} catch (error) {
+  if (error.status === 401) {
+    // Invalid API key
+    console.error('Authentication failed');
+  } else if (error.status === 422) {
+    // Validation error
+    console.error('Validation failed:', error.message);
+  } else if (error.status === 429) {
+    // Rate limited - retry with backoff
+    await sleep(error.retryAfter * 1000);
+    // Retry request
+  } else if (error.status >= 500) {
+    // Server error - retry with backoff
+    await retryWithBackoff(() => reevit.payments.create(...));
+  }
+}
+```
+
+### Retry Strategy
+
+For transient errors (5xx, rate limits), use exponential backoff:
+
+```typescript
+async function retryWithBackoff(fn, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      if (error.status < 500 && error.status !== 429) throw error;
+      
+      const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+}
+```

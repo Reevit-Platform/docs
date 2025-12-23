@@ -1,0 +1,60 @@
+---
+title: Sandbox & Test Mode
+description: Build and test your payment flows without financial risk
+icon: FlaskConical
+---
+
+# Sandbox & Test Mode
+
+Reevit Sandbox is a completely isolated environment designed for rapid development and rigorous testing. In Test Mode, transactions are processed against provider test environments, allowing you to verify your integration logic without moving real money or incurring production fees.
+
+---
+
+## 💎 The Sandbox Advantage
+
+### 🏢 For Business Safety
+*   **Risk-Free Staging**: Test your entire checkout flow in an environment that mirrors production exactly, ensuring that your logic is bulletproof before the first real customer arrives.
+*   **Zero-Cost Integration**: You don't need to fund a wallet or connect real bank accounts to start building. Prototype your vision for free.
+*   **Audit Readiness**: Use Sandbox to demonstrate payment handling to internal stakeholders or auditors without exposing sensitive financial data.
+
+### 💻 For Developer Velocity
+*   **Environment Parity**: Sandbox mirrors the production environment exactly, ensuring that what you build in staging works seamlessly in live mode.
+*   **Swift Integration**: Use provider test credentials to verify end-to-end flows.
+*   **Safe Experimentation**: Try out new [Routing Rules](/docs/reevit/routing-rules) or [Workflows](/docs/reevit/workflows) with zero consequences if you make a configuration error.
+
+---
+
+## 🔑 Your Environment Keys
+
+Your Reevit workspace provides two separate sets of credentials. The mode is determined by which key you use to authorize the request.
+
+| Mode | Prefix | Intent |
+| :--- | :--- | :--- |
+| **Sandbox** | `sk_test_...` | For development, QA, and automated testing. |
+| **Production** | `sk_live_...` | For real money transactions. Requires [KYC Approval](#path-to-production). |
+
+```bash
+# Example Sandbox Request
+curl -X POST https://api.reevit.com/v1/payments \
+  -H "Authorization: Bearer sk_test_your_key" \
+  -d '{"amount": 1000, "currency": "GHS", "method": "momo"}'
+```
+
+---
+
+## 🚀 Path to Production
+
+When you are ready to move from Sandbox to Production, follow this checklist:
+
+1.  **Identity Verification**: Complete the Organization KYC in [Settings > Business Details](https://dashboard.reevit.com/settings).
+2.  **Live Connections**: Replace your Sandbox PSP keys (e.g., Paystack Test) with Live keys in [Connections](/docs/reevit/connections).
+3.  **Webhook Secret**: Update your server-side environment variables with your **Production** Webhook Signing Secret.
+4.  **Key Rotation**: Swap `sk_test_...` for `sk_live_...` in your production environment.
+
+---
+
+## ✅ Best Practices
+
+1.  **Separate Staging/Production**: Use your Sandbox keys on your `local` and `staging` servers, and strictly limit Live keys to your `production` cluster.
+2.  **Automated CI/CD**: You can safely run integration tests in your CI/CD pipeline using Sandbox keys. They are designed for high-concurrency automated traffic.
+3.  **Monitor Test Logs**: Use the dashboard to inspect test request/response payloads to debug integration issues quickly.

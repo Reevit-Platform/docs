@@ -1,0 +1,381 @@
+---
+title: SDKs
+description: Official client libraries for Reevit
+icon: Code
+---
+
+# SDKs
+
+Official client libraries for Reevit.
+
+## Available SDKs
+
+| Language | Package | Status |
+|----------|---------|--------|
+| Go | `github.com/Reevit-Platform/backend/sdks/go` | ✅ Stable |
+| Node.js | `@reevit/node` | ✅ Stable |
+| Python | `reevit` | ✅ Stable |
+| PHP | `reevit/reevit-php` | ✅ Stable |
+
+---
+
+## Go SDK
+
+### Installation
+
+```bash
+go get github.com/Reevit-Platform/backend/sdks/go
+```
+
+### Usage
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/Reevit-Platform/backend/sdks/go/reevit"
+)
+
+func main() {
+    client := reevit.NewClient(
+        reevit.WithAPIKey("pfk_live_xxx"),
+        reevit.WithOrgID("org_123"),
+    )
+
+    // Create payment intent
+    intent, err := client.Payments.CreateIntent(context.Background(), &reevit.CreateIntentRequest{
+        Amount:     5000,
+        Currency:   "GHS",
+        Method:     "momo",
+        Country:    "GH",
+        CustomerID: "cust_456",
+        Metadata: map[string]string{
+            "order_id": "12345",
+        },
+    })
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Printf("Payment ID: %s, Status: %s\n", intent.ID, intent.Status)
+}
+```
+
+### Webhook Verification
+
+```go
+import "github.com/Reevit-Platform/backend/sdks/go/webhooks"
+
+func handleWebhook(w http.ResponseWriter, r *http.Request) {
+    body, _ := io.ReadAll(r.Body)
+    signature := r.Header.Get("X-Reevit-Signature")
+    
+    if !webhooks.Verify(body, signature, webhookSecret) {
+        http.Error(w, "Invalid signature", 401)
+        return
+    }
+    
+    var event webhooks.Event
+    json.Unmarshal(body, &event)
+    
+    switch event.Type {
+    case "payment.succeeded":
+        // Handle success
+    }
+    
+    w.WriteHeader(200)
+}
+```
+
+---
+
+## Node.js SDK
+
+### Installation
+
+```bash
+npm install @reevit/node
+# or
+yarn add @reevit/node
+```
+
+### Usage
+
+```javascript
+const Reevit = require('@reevit/node');
+
+const client = new Reevit({
+  apiKey: 'pfk_live_xxx',
+  orgId: 'org_123',
+});
+
+// Create payment intent
+const intent = await client.payments.createIntent({
+  amount: 5000,
+  currency: 'GHS',
+  method: 'momo',
+  country: 'GH',
+  customerId: 'cust_456',
+  metadata: {
+    orderId: '12345',
+  },
+});
+
+console.log(`Payment ID: ${intent.id}, Status: ${intent.status}`);
+```
+
+### TypeScript
+
+```typescript
+import Reevit, { PaymentIntent } from '@reevit/node';
+
+const client = new Reevit({
+  apiKey: process.env.REEVIT_API_KEY!,
+  orgId: process.env.REEVIT_ORG_ID!,
+});
+
+const intent: PaymentIntent = await client.payments.createIntent({
+  amount: 5000,
+  currency: 'GHS',
+  method: 'momo',
+  country: 'GH',
+});
+```
+
+### Webhook Verification
+
+```javascript
+const { verifyWebhook } = require('@reevit/node');
+
+app.post('/webhooks/reevit', (req, res) => {
+  const signature = req.headers['x-reevit-signature'];
+  
+  if (!verifyWebhook(req.rawBody, signature, webhookSecret)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  const event = req.body;
+  
+  switch (event.type) {
+    case 'payment.succeeded':
+      // Handle success
+      break;
+  }
+  
+  res.status(200).send('OK');
+});
+```
+
+---
+
+## Python SDK
+
+### Installation
+
+```bash
+pip install reevit
+```
+
+### Usage
+
+```python
+from reevit import Reevit
+
+client = Reevit(
+    api_key="pfk_live_xxx",
+    org_id="org_123"
+)
+
+# Create payment intent
+intent = client.payments.create_intent(
+    amount=5000,
+    currency="GHS",
+    method="momo",
+    country="GH",
+    customer_id="cust_456",
+    metadata={"order_id": "12345"}
+)
+
+print(f"Payment ID: {intent.id}, Status: {intent.status}")
+```
+
+### Async Support
+
+```python
+import asyncio
+from reevit import AsyncReevit
+
+async def main():
+    client = AsyncReevit(
+        api_key="pfk_live_xxx",
+        org_id="org_123"
+    )
+    
+    intent = await client.payments.create_intent(
+        amount=5000,
+        currency="GHS",
+        method="momo",
+        country="GH"
+    )
+    
+    print(f"Payment ID: {intent.id}")
+
+asyncio.run(main())
+```
+
+### Webhook Verification
+
+```python
+from reevit.webhooks import verify_signature
+
+@app.route('/webhooks/reevit', methods=['POST'])
+def handle_webhook():
+    signature = request.headers.get('X-Reevit-Signature')
+    
+    if not verify_signature(request.data, signature, webhook_secret):
+        return 'Invalid signature', 401
+    
+    event = request.json
+    
+    if event['type'] == 'payment.succeeded':
+        # Handle success
+        pass
+    
+    return 'OK', 200
+```
+
+---
+
+## PHP SDK
+
+### Installation
+
+```bash
+composer require reevit/reevit-php
+```
+
+### Usage
+
+```php
+<?php
+require_once 'vendor/autoload.php';
+
+use Reevit\Client;
+
+$client = new Client([
+    'api_key' => 'pfk_live_xxx',
+    'org_id' => 'org_123',
+]);
+
+// Create payment intent
+$intent = $client->payments->createIntent([
+    'amount' => 5000,
+    'currency' => 'GHS',
+    'method' => 'momo',
+    'country' => 'GH',
+    'customer_id' => 'cust_456',
+    'metadata' => [
+        'order_id' => '12345',
+    ],
+]);
+
+echo "Payment ID: {$intent->id}, Status: {$intent->status}\n";
+```
+
+### Webhook Verification
+
+```php
+<?php
+use Reevit\Webhook;
+
+$payload = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_REEVIT_SIGNATURE'];
+
+if (!Webhook::verify($payload, $signature, $webhookSecret)) {
+    http_response_code(401);
+    exit('Invalid signature');
+}
+
+$event = json_decode($payload, true);
+
+switch ($event['type']) {
+    case 'payment.succeeded':
+        // Handle success
+        break;
+}
+
+http_response_code(200);
+echo 'OK';
+```
+
+---
+
+## SDK Features
+
+All SDKs include:
+
+- ✅ **Typed Requests/Responses** — Full type safety
+- ✅ **Automatic Retries** — Retry on transient failures
+- ✅ **Idempotency** — Automatic idempotency key generation
+- ✅ **Webhook Helpers** — Signature verification utilities
+- ✅ **Error Handling** — Structured error responses
+
+---
+
+## Configuration Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `apiKey` | Your API key | Required |
+| `orgId` | Organization ID | Required |
+| `baseUrl` | API base URL | `https://api.reevit.com` |
+| `timeout` | Request timeout | `30s` |
+| `maxRetries` | Max retry attempts | `3` |
+
+---
+
+## Supported Payment Providers
+
+All SDKs support the following payment providers:
+
+| Provider | Methods | Countries |
+|----------|---------|-----------|
+| **Paystack** | Cards, MoMo, Bank | GH, NG, KE |
+| **Hubtel** | MoMo, Cards | GH |
+| **Flutterwave** | Cards, MoMo, Bank | GH, NG, KE |
+| **Monnify** | Bank Transfer | NG |
+| **M-Pesa** | Mobile Money | KE |
+| **Stripe** | Cards (Apple Pay, Google Pay) | Global |
+
+### Stripe Integration
+
+Stripe is supported for card payments including Apple Pay and Google Pay via card rails:
+
+```javascript
+const intent = await client.payments.createIntent({
+  amount: 5000,
+  currency: 'USD',
+  method: 'card',
+  country: 'US',
+  metadata: {
+    // Required for webhook correlation
+    org_id: 'org_123',
+    connection_id: 'conn_456',
+    payment_id: 'pay_789',
+  },
+});
+```
+
+**Important:** When using Stripe, ensure your PaymentIntent metadata includes `org_id`, `connection_id`, and `payment_id` so webhook events can be properly linked.
+
+---
+
+## Version History
+
+| Version | Changes |
+|---------|---------|
+| **0.3.0** | Added Stripe support, platform admin endpoints, KYC verification |
+| **0.2.0** | Added workflows, fraud policies, routing rules |
+| **0.1.0** | Initial release with payments, connections, subscriptions |

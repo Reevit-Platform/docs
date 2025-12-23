@@ -1,0 +1,95 @@
+---
+title: Smart Routing
+description: Optimize success rates and minimize fees with priority-based routing rules
+icon: Route
+---
+
+import { CreditCardIcon, Link01Icon as LinkIcon, Shield01Icon as ShieldCheckIcon, GlobeIcon as WebhookIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Smart Routing & Rules
+
+The Reevit Routing Engine acts as a localized decision-maker for every transaction. It ensures that payments are sent to the provider most likely to succeed at the lowest possible cost, automatically failing over if the primary connection is unavailable.
+
+<DocShowcase type="routing" />
+
+---
+
+## 💎 The Routing Advantage
+
+### 🏢 For Business Revenue
+*   **Revenue Rescue (Failover)**: If your primary provider (e.g., Hubtel) goes down, Reevit detects the failure and instantly re-routes the payment to your fallback (e.g., Paystack). This happens in milliseconds, ensuring you never miss a sale.
+*   **Precision Fee Optimization**: Route high-value transactions to providers with lower percentage fees, and small transactions to those with flat-rate pricing.
+*   **Regional Dominance**: Use your "Home-Court" providers for local markets (like Hubtel in Ghana) while routing global card traffic to international providers like Stripe.
+
+### 💻 For Engineering Precision
+*   **Logic Abstraction**: Your application code doesn't need to know *which* provider is being used. It just sends the payment to Reevit, and the engine handles the logic.
+*   **Priority-Based Evaluation**: Rules are evaluated in order of priority. You can create a "Broad" rule for a country and a "Specific" rule for a high-value customer that overrides it.
+*   **Dry-Run Testing**: Test your routing logic in [Sandbox Mode](/docs/reevit/test-mode) to see how the engine behaves before going live.
+
+---
+
+## ⚙️ How the Engine Works
+
+When a payment is created, the engine follows these evaluation steps:
+
+1.  **Capability Filter**: Only connections supporting the requested [Method and Country](/docs/reevit/connections) are considered.
+2.  **Rule Match**: The engine checks for any active **Routing Rules** that matches the request.
+3.  **Priority execution**: If multiple rules match, the one with the **Highest Priority** is executed.
+4.  **Health Check**: If a rule points to an "Unhealthy" connection, the engine will automatically [Failover](#automatic-failover) if enabled.
+
+---
+
+## 🛠️ Managing Rules
+
+### Creating a Rule via SDK
+
+You can manage your routing logic programmatically or via the dashboard.
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const rule = await reevit.routing.createRule({
+  name: 'Ghana MoMo → Hubtel Primary',
+  countries: ['GH'],
+  methods: ['momo'],
+  connection_id: 'hubtel_live_primary',
+  priority: 10,
+  fallback_to_default: true // Attempt other Ghanaian connections if Hubtel fails
+});
+```
+
+### Rule Parameters
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| **Priority** | Integer | Rules with higher numbers are evaluated first (e.g., 10 > 5). |
+| **Fallback** | Boolean | If `true`, Reevit will try other active connections if the rule's target connection fails. |
+| **Conditions** | Filter | Combinations of `country`, `method`, and `labels`. |
+
+---
+
+## ✅ Best Practices
+
+1.  **Start Broad, Then Refine**: Create a "catch-all" rule for your target countries first, then add specific rules for certain payment methods.
+2.  **Enabled Fallback**: Unless you have strict compliance reasons to use ONLY one provider, keep `fallback_to_default` set to `true` to maximize success rates.
+3.  **Monitor Health**: Regularly check your [Connection Health scores](/docs/reevit/connections) to see if the engine is frequently failing over. This may indicate a needed change in your primary rules.
+
+---
+
+## 📚 Related Resources
+
+<Cards columns={2}>
+  <Card title="Payments Guide" href="/docs/reevit/payments" icon={<HugeiconsIcon icon={CreditCardIcon} />}>
+    Understand how payment intents interact with your routing rules.
+  </Card>
+  <Card title="Connections" href="/docs/reevit/connections" icon={<HugeiconsIcon icon={LinkIcon} />}>
+    Manage the PSP accounts that your rules point to.
+  </Card>
+  <Card title="Fraud Policies" href="/docs/reevit/fraud-policies" icon={<HugeiconsIcon icon={ShieldCheckIcon} />}>
+    Add safety layers to your routes with velocity and risk limits.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/webhooks" icon={<HugeiconsIcon icon={WebhookIcon} />}>
+    Receive events when a payment fails over to a secondary provider.
+  </Card>
+</Cards>

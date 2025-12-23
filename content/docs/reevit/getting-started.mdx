@@ -1,0 +1,99 @@
+---
+title: Getting Started
+description: Set up your business and process your first payment in under 5 minutes
+icon: Play
+---
+
+import { CreditCardIcon, CodeIcon, BookOpen01Icon as BookOpenIcon, Shield01Icon as ShieldCheckIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Getting Started
+
+Welcome to Reevit. Whether you are a business owner looking to automate your billing or a developer building the next big fintech app, this guide will get you live in minutes.
+
+---
+
+## 🏢 Step 1: Business Onboarding (No-Code)
+
+Before writing any code, you need to set up your business environment in the [Reevit Dashboard](https://dashboard.reevit.com).
+
+1.  **Create your Organization**: Sign up and name your organization (e.g., "Acme Corp").
+2.  **Connect a Provider**: Navigate to **Connections** and add your first PSP (e.g., Paystack or Stripe). This is our "Bring Your Own Key" model.
+3.  **Configure a Workflow**: Go to **Workflows** and set up a simple "Slack Notification" for successful payments so your team stays informed.
+
+![BYOK Connections](/images/connections/byok-diagram.png)
+
+---
+
+## 💻 Step 2: Developer Setup
+
+Once your organization is ready, it's time to integrate the Reevit API.
+
+### 1. Get your API Keys
+Navigate to **Settings → API Keys**. You will need your `Secret Key` (starts with `sk_live_`) and your `Organization ID`.
+
+### 2. Install the SDK
+We recommend using our official SDKs for the best experience, including automatic retries and type safety.
+
+```bash
+# TypeScript / Node.js
+npm install @reevit/node
+
+# Python
+pip install reevit
+```
+
+---
+
+## 💳 Step 3: Process a Payment
+
+Here is how you create a simple payment intent using our SDK.
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const reevit = new Reevit(process.env.REEVIT_SECRET_KEY);
+
+const payment = await reevit.payments.create({
+  amount: 5000,
+  currency: 'GHS',
+  method: 'momo',
+  country: 'GH',
+  customer_id: 'cust_123',
+  metadata: { order_id: 'XYZ-99' }
+});
+
+console.log('Payment ID:', payment.id);
+```
+
+---
+
+## 🔄 Step 4: Go Live with Webhooks
+
+To keep your application in sync with real-world payment events, you must configure a Webhook.
+
+1.  Go to **Developers → Webhooks**.
+2.  Enter your endpoint URL (e.g., `https://api.yourdomain.com/webhooks/reevit`).
+3.  Reevit will now push [standardized events](/docs/reevit/webhooks) to your server regardless of which payment provider processed the transaction.
+
+![Webhook Delivery Flow](/images/webhooks/delivery-flow.png)
+
+---
+
+## 📚 Essential Resources
+
+<Cards>
+  <Card title="Payments Guide" href="/docs/reevit/payments" icon={<HugeiconsIcon icon={CreditCardIcon} />}>
+    Understand the complete transaction lifecycle and how failover works.
+  </Card>
+  <Card title="SDKs" href="/docs/reevit/sdks" icon={<HugeiconsIcon icon={CodeIcon} />}>
+    Download libraries for Go, Python, PHP, and TypeScript.
+  </Card>
+  <Card title="API Reference" href="/docs/reevit/api-reference" icon={<HugeiconsIcon icon={BookOpenIcon} />}>
+    Explore our interactive OpenAPI documentation.
+  </Card>
+  <Card title="Test Mode" href="/docs/reevit/test-mode" icon={<HugeiconsIcon icon={ShieldCheckIcon} />}>
+    Learn how to safely test your integration without processing real funds.
+  </Card>
+</Cards>
+

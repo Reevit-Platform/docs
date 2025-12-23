@@ -1,0 +1,109 @@
+---
+title: Workflows
+description: Automate your business logic with event-driven actions and integrations
+icon: Workflow
+---
+
+import { CreditCardIcon, Link01Icon as LinkIcon, GlobeIcon as WebhookIcon, RepeatIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Workflows & Automation
+
+Reevit Workflows allow you to automate complex business logic triggered by real-time payment events. Instead of writing custom webhook handlers for every communication channel, you can visually orchestrate actions like sending receipts, notifying your Slack team, or updating your CRM—all within the Reevit engine.
+
+<DocShowcase type="workflows" />
+
+---
+
+## 💎 The Automation Advantage
+
+### 🏢 For Operational Efficiency
+*   **Customer Delight**: Automatically send beautiful, branded PDF receipts via [Email or WhatsApp](#supported-integrations) the moment a payment succeeds.
+*   **Dunning & Recovery**: Automatically nudge customers via SMS when a subscription payment fails, increasing your revenue recovery rates.
+*   **Team Alignment**: Keep your finance and support teams in sync with automated Slack or Discord alerts for high-value transactions or unusual failures.
+
+### 💻 For Engineering Scalability
+*   **Event-Driven Architecture**: Your backend only needs to care about core business logic. Let Reevit handle the "side-effects" like logging to Google Sheets or updating HubSpot.
+*   **Bring Your Own Key (BYOK)**: Connect your existing [Twilio, Resend, or SendGrid](/docs/reevit/connections) accounts. Use your own templates and maintain full control over your sender reputation.
+*   **Visual Logic**: Non-technical team members can update email templates or notification rules in the dashboard without requiring a code deploy.
+
+---
+
+## ⚙️ How Workflows Execute
+
+Reevit follows a simple, robust execution cycle:
+
+1.  **Event Trigger**: A transaction moves to a new state (e.g., `payment.succeeded`).
+2.  **Condition Filter**: The engine checks if the event meets your criteria (e.g., `amount > 1000 GHS`).
+3.  **Action Execution**: Reevit communicates with your [Connected Integrations](#supported-integrations) to deliver messages or sync data.
+4.  **Audit Log**: Every execution is logged with full request/response payloads for debugging.
+
+---
+
+## 🛠️ Supported Integrations
+
+Reevit connects to the tools your business already uses. Like our payment model, this is **BYOK**—you provide the API keys, we provide the orchestration.
+
+| Category | Top Providers |
+| :--- | :--- |
+| **Email** | Resend, SendGrid, Postmark, AWS SES |
+| **Messaging** | Twilio (SMS/WhatsApp), Africa's Talking, Hubtel SMS |
+| **Notifications** | Slack, Discord, Microsoft Teams |
+| **Data & CRM** | Google Sheets, HubSpot, Salesforce, Airtable |
+
+---
+
+## 🚀 Example: High-Value Alert
+
+Here is how you define an automated alert for a large transaction via the API.
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const workflow = await reevit.workflows.create({
+  name: 'VIP Purchase Alert',
+  trigger: 'payment.succeeded',
+  conditions: {
+    amount_gte: 500000 // 5,000 GHS
+  },
+  actions: [
+    {
+      type: 'send_notification',
+      integration_id: 'slack_finance_channel',
+      message: '💰 Large payment received: {{amount}} {{currency}} from {{customer_email}}'
+    },
+    {
+      type: 'send_email',
+      template_id: 'vip_thank_you_note',
+      to: '{{customer_email}}'
+    }
+  ]
+});
+```
+
+---
+
+## ✅ Best Practices
+
+1.  **Use Variable Injection**: Use dynamic tags like `{{amount}}` and `{{customer_name}}` in your templates to make communications personal and accurate.
+2.  **Set Up "Dead Letter" Webhooks**: Always have a [Standard Webhook](/docs/reevit/webhooks) for your core database updates. Use Workflows for the secondary "noisy" actions.
+3.  **Validate in Sandbox**: Test your workflow logic with [Test API Keys](/docs/reevit/test-mode) to ensure your message templates look perfect before emailing real customers.
+
+---
+
+## 📚 Related Resources
+
+<Cards columns={2}>
+  <Card title="Payments Guide" href="/docs/reevit/payments" icon={<HugeiconsIcon icon={CreditCardIcon} />}>
+    Learn which payment statuses can trigger your workflows.
+  </Card>
+  <Card title="Connections" href="/docs/reevit/connections" icon={<HugeiconsIcon icon={LinkIcon} />}>
+    Manage the API keys for your Email and SMS providers.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/webhooks" icon={<HugeiconsIcon icon={WebhookIcon} />}>
+    Understand the difference between a direct Webhook and a Workflow action.
+  </Card>
+  <Card title="Subscriptions" href="/docs/reevit/subscriptions" icon={<HugeiconsIcon icon={RepeatIcon} />}>
+    Automate renewal reminders and win-back flows for recurring revenue.
+  </Card>
+</Cards>

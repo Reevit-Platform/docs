@@ -1,0 +1,97 @@
+---
+title: Payments
+description: Process unified payments with smart routing and automated failover
+icon: CreditCard
+---
+
+import { Route01Icon as ShuffleIcon, GlobeIcon as WebhookIcon, Link01Icon as LinkIcon, RepeatIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Unified Payments
+
+Reevit Payments allows you to accept funds from customers globally via a single API. We abstract away the technical debt of integrating multiple Gateways, Mobile Money providers, and Bank Transfer systems into one standardized flow.
+
+<DocShowcase type="payments" />
+
+---
+
+## 🏆 The Reevit Advantage
+
+### 🏢 For Business Growth
+*   **Maximized Acceptance**: If a card fails on one provider, we instantly retry on another. Never lose a sale to a gateway outage again.
+*   **Optimized Fees**: Route transactions to providers with the lowest processing fees based on the customer's region.
+*   **Unified Reporting**: View your consolidated revenue across Hubtel, Paystack, and Stripe in a single dashboard.
+
+### 💻 For Engineering Velocity
+*   **Standardized Lifecycle**: No more mapping "Success" from paystack to "Completed" from Hubtel. Every transaction follows a [unified state machine](#the-transaction-lifecycle).
+*   **Developer-First SDKs**: Use our typed libraries to handle payment intents, idempotency, and error handling out of the box.
+*   **One Integration**: Add a new country or payment method by simply toggling a switch in the dashboard—no code changes required.
+
+---
+
+## 🔄 The Transaction Lifecycle
+
+Every payment on Reevit follows a secure, 5-step lifecycle:
+
+1.  **Intent Created**: Your server requests a [Payment Intent](#creating-a-payment).
+2.  **Smart Routing**: Reevit selects the optimal connection based on your [Routing Rules](/docs/reevit/routing-rules).
+3.  **Customer Action**: The customer completes the required action (OTP, PIN, or 3DS).
+4.  **Transaction Finalized**: The PSP confirms success to Reevit.
+5.  **Verified Webhook**: Your application receives a [standardized notification](/docs/reevit/webhooks) to fulfill the order.
+
+---
+
+## 🛠️ Implementation
+
+### Creating a Payment Intent
+
+To start a transaction, use the `create` method in the SDK. This reserves the payment and returns a `client_secret` if frontend action is needed.
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const payment = await reevit.payments.create({
+  amount: 1000,           // 10.00 GHS
+  currency: 'GHS',
+  method: 'card',         // 'card', 'momo', or 'bank'
+  country: 'GH',
+  customer_id: 'user_1',
+  metadata: { cart_id: '99' }
+});
+
+// Response status: 'requires_action' | 'succeeded' | 'failed'
+```
+
+### Handling Next Actions
+
+If a payment requires user input (like a 3D Secure redirect or a Mobile Money prompt), the status will be `requires_action`.
+
+*   **Redirect**: For cards, the SDK provides a URL to redirect the user to finish the secure check.
+*   **Asynchronous (MoMo)**: For mobile money, the payment stays in a `processing` state until the customer approves the prompt on their phone.
+
+---
+
+## ✅ Best Practices
+
+1.  **Always use Idempotency**: Provide an `idempotency_key` (like an Order ID) to prevent double-charging customers during network retries.
+2.  **Fulfill on Webhooks**: Never fulfill an order based solely on a frontend redirect. Wait for the `payment.succeeded` [webhook event](/docs/reevit/webhooks).
+3.  **Use Test Mode**: Develop your integration using `sk_test_` keys to simulate different success and failure scenarios.
+
+---
+
+## 📚 Related Resources
+
+<Cards columns={2}>
+  <Card title="Smart Routing" href="/docs/reevit/routing-rules" icon={<HugeiconsIcon icon={ShuffleIcon} />}>
+    Configure priority rules to optimize for success rates and fees.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/webhooks" icon={<HugeiconsIcon icon={WebhookIcon} />}>
+    Learn how to securely handle real-time payment notifications.
+  </Card>
+  <Card title="Connections" href="/docs/reevit/connections" icon={<HugeiconsIcon icon={LinkIcon} />}>
+    Connect your own PSP keys using our BYOK model.
+  </Card>
+  <Card title="Subscriptions" href="/docs/reevit/subscriptions" icon={<HugeiconsIcon icon={RepeatIcon} />}>
+    Automate recurring billing for your SaaS or membership business.
+  </Card>
+</Cards>

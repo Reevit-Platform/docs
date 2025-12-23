@@ -1,0 +1,614 @@
+---
+title: Subscriptions
+description: Manage recurring billing and automated dunning
+icon: Repeat
+---
+
+import { CreditCardIcon, GlobeIcon as WebhookIcon, WorkflowSquare01Icon as WorkflowIcon, Link01Icon as LinkIcon, RepeatIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Subscriptions
+
+Automate recurring billing for your SaaS, membership, or subscription business. Reevit handles invoice generation, payment collection, retry logic, and dunning—so you can focus on building your product instead of managing billing infrastructure.
+
+<DocShowcase type="payments" />
+
+## Why Automated Subscriptions?
+
+### The Challenge
+
+Building subscription billing is complex:
+
+- **Invoice Generation**: Create invoices on schedule (monthly, yearly)
+- **Payment Collection**: Charge customers automatically
+- **Retry Logic**: Handle failed payments with smart retry strategies
+- **Dunning**: Manage customers whose payments fail repeatedly
+- **Proration**: Handle upgrades, downgrades, and mid-cycle changes
+- **Multiple Providers**: Different PSPs have different subscription APIs
+
+**Without Reevit**, you'd need to:
+- Build scheduling infrastructure
+- Implement retry logic for each provider
+- Handle dunning manually
+- Manage subscription state across providers
+- Write provider-specific code
+
+**Result**: Months of development, ongoing maintenance, and missed revenue from failed payments.
+
+### The Solution
+
+Reevit provides **one API** for subscription billing that:
+- **Generates invoices automatically** on your schedule
+- **Charges customers** using their preferred payment method
+- **Retries failed payments** with configurable policies
+- **Handles dunning** automatically
+- **Works across all providers** with unified API
+
+**Result**: Launch subscriptions faster, reduce failed payments, increase revenue.
+
+---
+
+## How Subscriptions Work
+
+### The Subscription Lifecycle
+
+```
+1. Create Subscription → 2. Invoice Generated → 3. Payment Attempted → 4. Success/Failure → 5. Retry (if failed)
+```
+
+1. **Create Subscription**: Define customer, plan, amount, and billing interval
+2. **Invoice Generated**: Reevit creates invoice on schedule (e.g., monthly on the 10th)
+3. **Payment Attempted**: Reevit charges customer using their payment method
+4. **Success/Failure**: Payment succeeds or fails
+5. **Retry (if failed)**: If payment fails, Reevit retries according to your policy
+
+### Key Concepts
+
+- **Subscription**: The recurring billing agreement with a customer
+- **Invoice**: A billing record for a specific billing period
+- **Payment**: The actual charge attempt for an invoice
+- **Retry Policy**: Rules for how failed payments are retried
+- **Dunning**: Process of managing customers with failed payments
+
+---
+
+## Creating Your First Subscription
+
+Let's create a subscription for a customer signing up for your premium plan:
+
+```bash
+curl -X POST https://api.reevit.com/v1/subscriptions \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: sub-cust_456-premium" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_id": "cust_456",
+    "plan_id": "premium",
+    "amount": 9900,
+    "currency": "GHS",
+    "method": "momo",
+    "interval": "monthly",
+    "metadata": {
+      "tier": "premium",
+      "signup_source": "website"
+    }
+  }'
+```
+
+### Understanding the Request
+
+| Field | Description | Example | Why It Matters |
+|-------|-------------|---------|----------------|
+| `customer_id` | Your customer identifier | `cust_456` | Links subscription to your customer |
+| `plan_id` | Your plan identifier | `premium` | Helps track which plan customer has |
+| `amount` | Amount in minor units | `9900` = GHS 99.00 | The recurring charge amount |
+| `currency` | ISO 4217 code | `GHS` | Currency for billing |
+| `method` | Payment method | `momo`, `card`, `bank` | How customer will be charged |
+| `interval` | Billing frequency | `monthly`, `yearly` | How often to charge |
+| `metadata` | Custom data | `{"tier": "premium"}` | Store additional context |
+
+### Response
+
+```json
+{
+  "id": "sub_abc123",
+  "customer_id": "cust_456",
+  "plan_id": "premium",
+  "amount": 9900,
+  "currency": "GHS",
+  "method": "momo",
+  "interval": "monthly",
+  "status": "active",
+  "next_renewal_at": "2025-03-10T10:00:00Z",
+  "created_at": "2025-02-10T10:00:00Z"
+}
+```
+
+### What Happens Next
+
+1. **Subscription Created**: Customer is now subscribed
+2. **First Invoice**: Invoice created immediately (or on next billing date)
+3. **Payment Attempted**: Reevit charges customer
+4. **Success**: Customer gains access, subscription continues
+5. **Failure**: Retry according to your retry policy
+
+---
+
+## Subscription Statuses
+
+Understanding subscription statuses helps you manage customer access:
+
+| Status | Description | Customer Access | What Happens |
+|--------|-------------|-----------------|--------------|
+| `active` | Subscription is active and billing | **Full access** | Invoices generated, payments attempted |
+| `paused` | Billing paused | **Access maintained** | No invoices generated, customer keeps access |
+| `canceled` | Subscription ended | **Access revoked** | No more invoices, subscription terminated |
+
+### Status Transitions
+
+**Active → Paused**: 
+- Customer requests pause
+- Max retries reached (configurable)
+- Manual pause via API
+
+**Paused → Active**: 
+- Customer resumes
+- Manual resume via API
+
+**Active → Canceled**: 
+- Customer cancels
+- Manual cancellation via API
+- Non-payment after grace period
+
+---
+
+## Managing Subscriptions
+
+### List Subscriptions
+
+```bash
+curl "https://api.reevit.com/v1/subscriptions?status=active" \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Use Cases**:
+- **Dashboard**: Show all active subscriptions
+- **Reporting**: Generate subscription reports
+- **Customer lookup**: Find customer's subscription
+
+### Query Parameters
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `limit` | integer | Results per page | `20` |
+| `offset` | integer | Pagination offset | `0` |
+| `status` | string | Filter by status | `active`, `paused`, `canceled` |
+| `customer_id` | string | Filter by customer | `cust_456` |
+| `plan_id` | string | Filter by plan | `premium` |
+
+### Get Single Subscription
+
+```bash
+curl https://api.reevit.com/v1/subscriptions/sub_abc123 \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Use Cases**:
+- **Customer portal**: Show subscription details
+- **Support**: Look up subscription for support ticket
+- **Billing**: Check subscription status before charging
+
+---
+
+## Updating Subscriptions
+
+### Change Plan or Amount
+
+```bash
+curl -X PATCH https://api.reevit.com/v1/subscriptions/sub_abc123 \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: sub-update-001" \
+  -d '{
+    "amount": 14900,
+    "plan_id": "enterprise"
+  }'
+```
+
+**What Happens**:
+- **Immediate**: Subscription updated with new plan/amount
+- **Next Invoice**: New amount charged on next billing cycle
+- **Proration**: Reevit can handle proration (if supported)
+
+**Use Cases**:
+- **Upgrades**: Customer upgrades to higher tier
+- **Downgrades**: Customer downgrades to lower tier
+- **Price changes**: Update subscription price
+
+---
+
+## Canceling Subscriptions
+
+### Cancel Subscription
+
+```bash
+curl -X POST https://api.reevit.com/v1/subscriptions/sub_abc123/cancel \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: sub-cancel-001"
+```
+
+**What Happens**:
+- **Status**: Subscription status changes to `canceled`
+- **Access**: Revoke customer access immediately or at period end
+- **Invoices**: No more invoices generated
+- **Webhook**: `subscription.canceled` event sent
+
+**Use Cases**:
+- **Customer cancellation**: Customer cancels subscription
+- **Non-payment**: Cancel after grace period
+- **Policy violation**: Cancel due to terms violation
+
+---
+
+## Resuming Subscriptions
+
+Resume a paused subscription:
+
+```bash
+curl -X POST https://api.reevit.com/v1/subscriptions/sub_abc123/resume \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: sub-resume-001"
+```
+
+**What Happens**:
+- **Status**: Subscription status changes to `active`
+- **Billing**: Invoices resume on next billing date
+- **Access**: Customer regains full access
+- **Webhook**: `subscription.resumed` event sent
+
+**Use Cases**:
+- **Customer request**: Customer wants to resume
+- **Payment updated**: Customer updates payment method
+- **Issue resolved**: Problem that caused pause is fixed
+
+---
+
+## Invoices
+
+Invoices are billing records for subscription renewals. Each billing cycle generates a new invoice.
+
+### Invoice Lifecycle
+
+```
+Draft → Due → Paid/Failed → Canceled (if needed)
+```
+
+1. **Draft**: Invoice created, not yet due
+2. **Due**: Payment due, Reevit attempts charge
+3. **Paid**: Payment succeeded
+4. **Failed**: Payment failed, may retry
+5. **Canceled**: Invoice canceled (e.g., subscription canceled)
+
+### Invoice Statuses
+
+| Status | Description | What Happens Next |
+|--------|-------------|-------------------|
+| `draft` | Invoice created, not yet due | Waits until due date |
+| `due` | Payment pending | Reevit attempts charge |
+| `paid` | Payment succeeded | Invoice complete, subscription continues |
+| `failed` | Payment failed | Retry according to policy |
+| `canceled` | Invoice canceled | No payment attempted |
+
+---
+
+## Managing Invoices
+
+### List Invoices
+
+```bash
+curl "https://api.reevit.com/v1/invoices?subscription_id=sub_abc123" \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Use Cases**:
+- **Customer portal**: Show billing history
+- **Accounting**: Export invoices for accounting
+- **Support**: Review invoice history for customer
+
+### Query Parameters
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `limit` | integer | Results per page | `20` |
+| `offset` | integer | Pagination offset | `0` |
+| `status` | string | Filter by status | `paid`, `failed` |
+| `subscription_id` | string | Filter by subscription | `sub_abc123` |
+| `from` | datetime | Start date | `2025-02-01T00:00:00Z` |
+| `to` | datetime | End date | `2025-02-28T23:59:59Z` |
+
+### Get Single Invoice
+
+```bash
+curl https://api.reevit.com/v1/invoices/inv_xyz789 \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123"
+```
+
+**Response:**
+```json
+{
+  "id": "inv_xyz789",
+  "subscription_id": "sub_abc123",
+  "payment_id": "pay_def456",
+  "amount": 9900,
+  "currency": "GHS",
+  "status": "paid",
+  "due_at": "2025-02-10T10:00:00Z",
+  "paid_at": "2025-02-10T10:05:00Z",
+  "retry_count": 0,
+  "created_at": "2025-02-10T00:00:00Z"
+}
+```
+
+---
+
+## Retrying Failed Invoices
+
+### Manual Retry
+
+Manually retry a failed invoice:
+
+```bash
+curl -X POST https://api.reevit.com/v1/invoices/inv_xyz789/retry \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: inv-retry-001"
+```
+
+**Use Cases**:
+- **Customer updated payment**: Retry after customer fixes payment method
+- **Temporary issue resolved**: Retry after provider issue resolved
+- **Manual intervention**: Support team retries on behalf of customer
+
+### Automatic Retries
+
+Reevit automatically retries failed invoices according to your retry policy (see Retry Policies below).
+
+---
+
+## Retry Policies
+
+Retry policies define how failed subscription payments are retried. This is crucial for recovering revenue from failed payments.
+
+### Why Retry Policies Matter
+
+**Without retry policies**:
+- Failed payment = lost revenue
+- Customer may not notice payment failed
+- Manual intervention required
+- Revenue leakage
+
+**With retry policies**:
+- Automatic retries recover most failed payments
+- Customers notified before final retry
+- Minimal manual intervention
+- Higher revenue recovery
+
+### Setting Retry Policy
+
+```bash
+curl -X POST https://api.reevit.com/v1/policies/retry \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: retry-policy-001" \
+  -d '{
+    "plan_id": "premium",
+    "delays": ["15m", "1h", "24h"],
+    "max_retries": 3
+  }'
+```
+
+### Delay Format
+
+Delays specify when to retry after failure:
+
+| Format | Duration | Use Case |
+|--------|----------|----------|
+| `15m` | 15 minutes | Quick retry for temporary issues |
+| `1h` | 1 hour | Give customer time to fix payment |
+| `24h` | 24 hours | Daily retry for persistent issues |
+| `7d` | 7 days | Weekly retry for long-term issues |
+
+### Policy Hierarchy
+
+Retry policies are applied in order of specificity:
+
+1. **Plan-level**: Specific to a subscription plan (most specific)
+2. **Org-level**: Default for your organization (empty `plan_id`)
+3. **Global**: System default (least specific)
+
+**Example**:
+- Premium plan: 4 retries at `15m`, `1h`, `24h`, `72h`
+- Basic plan: 3 retries at `1h`, `24h`, `7d`
+- Default (no plan): 3 retries at `15m`, `1h`, `24h`
+
+### Real-World Example
+
+**Scenario**: Customer's card expires
+
+1. **Day 1, 10:00 AM**: Invoice due, payment fails (expired card)
+2. **Day 1, 10:15 AM**: First retry (15m delay) - still fails
+3. **Day 1, 11:15 AM**: Second retry (1h delay) - still fails
+4. **Day 2, 11:15 AM**: Third retry (24h delay) - customer updated card, succeeds!
+
+**Result**: Revenue recovered automatically without manual intervention.
+
+---
+
+## Webhook Events
+
+Subscriptions trigger webhook events you can use to automate your business logic.
+
+### Subscription Events
+
+| Event | When It Fires | Use Case |
+|-------|---------------|----------|
+| `subscription.created` | New subscription created | Activate access, send welcome email |
+| `subscription.updated` | Subscription modified | Update access level, notify customer |
+| `subscription.canceled` | Subscription canceled | Revoke access, send cancellation email |
+| `subscription.paused` | Subscription paused | Suspend access, notify customer |
+| `subscription.resumed` | Subscription resumed | Reactivate access, notify customer |
+
+### Invoice Events
+
+| Event | When It Fires | Use Case |
+|-------|---------------|----------|
+| `invoice.created` | Invoice generated | Notify customer of upcoming charge |
+| `invoice.paid` | Invoice payment succeeded | Extend access, send receipt |
+| `invoice.failed` | Invoice payment failed | Notify customer, allow payment update |
+| `invoice.canceled` | Invoice canceled | Update subscription status |
+
+### Example: Automating Access
+
+```javascript
+// When subscription is created
+if (event.type === 'subscription.created') {
+  const subscription = event.data;
+  await activateAccess(subscription.customer_id);
+  await sendWelcomeEmail(subscription.customer_id);
+}
+
+// When invoice is paid
+if (event.type === 'invoice.paid') {
+  const invoice = event.data;
+  await extendAccess(invoice.subscription_id);
+  await sendReceipt(invoice);
+}
+
+// When subscription is canceled
+if (event.type === 'subscription.canceled') {
+  const subscription = event.data;
+  await revokeAccess(subscription.customer_id);
+  await sendCancellationEmail(subscription.customer_id);
+}
+```
+
+---
+
+## Business Value
+
+### Revenue Recovery
+
+**Without Reevit**: 
+- 10% of subscription payments fail
+- No automatic retries
+- Manual intervention required
+- **Result**: 10% revenue loss
+
+**With Reevit**:
+- 10% of payments fail initially
+- Automatic retries recover 70% of failures
+- Minimal manual intervention
+- **Result**: Only 3% revenue loss
+
+### Time Savings
+
+**Without Reevit**:
+- Build scheduling infrastructure: 2-4 weeks
+- Implement retry logic: 1-2 weeks
+- Handle dunning: 1 week
+- Ongoing maintenance: Ongoing
+
+**With Reevit**:
+- Integrate API: 1-2 days
+- Configure retry policies: 1 hour
+- Ongoing maintenance: Minimal
+
+### Customer Experience
+
+**Without Reevit**:
+- Payment fails → Customer loses access immediately
+- No notification → Customer confused
+- Manual retry → Friction
+
+**With Reevit**:
+- Payment fails → Retry automatically
+- Customer notified → Clear communication
+- Automatic recovery → Seamless experience
+
+---
+
+## Best Practices
+
+### 1. Set Appropriate Retry Policies
+
+- **High-value plans**: More retries, longer delays
+- **Low-value plans**: Fewer retries, shorter delays
+- **Consider customer behavior**: When do customers typically fix payments?
+
+### 2. Notify Customers
+
+- **Before final retry**: Give customers chance to update payment
+- **After failure**: Clear instructions on how to fix
+- **After success**: Confirm payment and thank customer
+
+### 3. Handle Cancellations Gracefully
+
+- **Immediate vs. end of period**: Choose based on your business model
+- **Proration**: Handle partial refunds if needed
+- **Feedback**: Ask why customer canceled
+
+### 4. Monitor Failed Payments
+
+- **Track failure rates**: Identify patterns
+- **Review retry success**: Optimize retry policies
+- **Customer support**: Proactive outreach for repeated failures
+
+### 5. Use Metadata
+
+Store useful information in subscription metadata:
+- Signup source
+- Promo code used
+- Customer tier
+- Custom flags
+
+---
+
+## Next Steps
+
+<Cards columns={2}>
+  <Card
+    title="Payments"
+    href="/docs/reevit/payments"
+    icon={<HugeiconsIcon icon={CreditCardIcon} />}
+  >
+    See how payment intents, statuses, and refunds work end-to-end.
+  </Card>
+  <Card
+    title="Webhooks"
+    href="/docs/reevit/webhooks"
+    icon={<HugeiconsIcon icon={WebhookIcon} />}
+  >
+    Consume `invoice.*` and `subscription.*` events to sync billing state.
+  </Card>
+  <Card
+    title="Workflows"
+    href="/docs/reevit/workflows"
+    icon={<HugeiconsIcon icon={WorkflowIcon} />}
+  >
+    Automate emails, CRM updates, and dunning nudges when renewals fail.
+  </Card>
+  <Card
+    title="Connections"
+    href="/docs/reevit/connections"
+    icon={<HugeiconsIcon icon={LinkIcon} />}
+  >
+    Ensure your PSP connections are healthy for recurring charges.
+  </Card>
+</Cards>

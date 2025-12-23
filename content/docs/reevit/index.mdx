@@ -1,33 +1,149 @@
 ---
-title: Reevit
+title: Introduction
 description: Unified Payments, Billing, and Orchestration for Africa
-icon: Zap
+icon: Book
 ---
 
-import { CreditCard, FileCode, ArrowRight } from "lucide-react"
+import { 
+  CreditCardIcon, 
+  Link01Icon as LinkIcon, 
+  RepeatIcon, 
+  GlobeIcon as WebhookIcon, 
+  WorkflowSquare01Icon as WorkflowIcon, 
+  Shield01Icon as ShieldCheckIcon, 
+  CodeIcon, 
+  LabsIcon as FlaskConicalIcon,
+  Route01Icon as RouteIcon,
+  AlertCircleIcon as AlertTriangleIcon
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
-# Reevit
+# Introduction
 
-Welcome to the Reevit documentation. Choose your starting point below.
+Reevit is the unified payment orchestration platform built for African businesses. We abstract the complexity of integrating multiple payment providers (Paystack, Hubtel, Flutterwave, Stripe, etc.) into a single, powerful API.
+
+## Why Reevit?
+
+Integrating payments in Africa is fragmented. You have to deal with:
+- **Multiple APIs**: Different request/response formats for every provider
+- **Maintenance Hell**: Constant API updates and breaking changes
+- **Failures**: No easy way to failover when a provider goes down
+- **Complex Reporting**: Scattered data across multiple dashboards
+
+**Reevit solves this** by giving you:
+- **One API**: Connect once, access all providers
+- **Smart Routing**: Automatically route payments to the best provider
+- **Auto-Failover**: Zero downtime payment processing
+- **Unified Data**: Single source of truth for all transactions
+
+---
+
+## Quick Start
 
 <Cards>
   <Card 
-    title="Documentation" 
-    href="/docs/reevit/docs"
-    icon={<ArrowRight />}
+    title="Getting Started" 
+    href="/docs/reevit/getting-started"
+    icon={<HugeiconsIcon icon={CodeIcon} />}
   >
-    Guides, tutorials, and getting started resources.
+    Accept your first payment in under 10 minutes.
   </Card>
   <Card 
-    title="API Reference" 
-    href="/docs/reevit/openapi"
-    icon={<FileCode />}
+    title="Test Mode" 
+    href="/docs/reevit/test-mode"
+    icon={<HugeiconsIcon icon={FlaskConicalIcon} />}
   >
-    Interactive OpenAPI documentation for all endpoints.
+    Develop and test without processing real payments.
   </Card>
 </Cards>
 
+---
 
+## Core Features
 
+<Cards>
+  <Card 
+    title="Payments" 
+    href="/docs/reevit/payments"
+    icon={<HugeiconsIcon icon={CreditCardIcon} />}
+  >
+    Accept mobile money, cards, and bank transfers with a unified API.
+  </Card>
+  <Card 
+    title="Connections" 
+    href="/docs/reevit/connections"
+    icon={<HugeiconsIcon icon={LinkIcon} />}
+  >
+    Bring Your Own Key (BYOK) - connect your existing provider accounts.
+  </Card>
+  <Card 
+    title="Subscriptions" 
+    href="/docs/reevit/subscriptions"
+    icon={<HugeiconsIcon icon={RepeatIcon} />}
+  >
+    Automated recurring billing, invoicing, and dunning management.
+  </Card>
+  <Card 
+    title="Webhooks" 
+    href="/docs/reevit/webhooks"
+    icon={<HugeiconsIcon icon={WebhookIcon} />}
+  >
+    Real-time event notifications with robust retry logic.
+  </Card>
+  <Card 
+    title="Workflows" 
+    href="/docs/reevit/workflows"
+    icon={<HugeiconsIcon icon={WorkflowIcon} />}
+  >
+    No-code automation triggered by payment events.
+  </Card>
+  <Card 
+    title="Routing Rules" 
+    href="/docs/reevit/routing-rules"
+    icon={<HugeiconsIcon icon={RouteIcon} />}
+  >
+    Control which provider handles payments by country or method.
+  </Card>
+  <Card 
+    title="Fraud Policies" 
+    href="/docs/reevit/fraud-policies"
+    icon={<HugeiconsIcon icon={ShieldCheckIcon} />}
+  >
+    Customizable fraud detection and prevention rules.
+  </Card>
+</Cards>
 
+---
 
+## Developer Resources
+
+<Cards>
+  <Card 
+    title="Authentication" 
+    href="/docs/reevit/authentication"
+    icon={<HugeiconsIcon icon={ShieldCheckIcon} />}
+  >
+    API keys, sessions, and security best practices.
+  </Card>
+  <Card 
+    title="API Reference" 
+    href="/docs/reevit/api-reference"
+    icon={<HugeiconsIcon icon={CodeIcon} />}
+  >
+    Complete OpenAPI documentation for all endpoints.
+  </Card>
+  <Card 
+    title="Error Codes" 
+    href="/docs/reevit/error-codes"
+    icon={<HugeiconsIcon icon={AlertTriangleIcon} />}
+  >
+    Understanding and handling API errors.
+  </Card>
+  <Card 
+    title="SDKs" 
+    href="/docs/reevit/sdks"
+    icon={<HugeiconsIcon icon={CodeIcon} />}
+  >
+    Official libraries for TypeScript, Python, Go, and PHP.
+  </Card>
+</Cards>
