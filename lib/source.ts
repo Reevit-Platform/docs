@@ -1,7 +1,8 @@
 import { docs } from '@/.source';
 import { loader } from 'fumadocs-core/source';
 import { resolveFiles } from 'fumadocs-mdx';
-import { icons } from 'lucide-react';
+import * as allIcons from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { createElement } from 'react';
 
 // Create source with resolved files
@@ -14,8 +15,8 @@ export const reevitSource = loader({
     return '/docs/reevit/' + slugs.slice(1).join('/');
   },
   icon(icon) {
-    if (icon && icon in icons)
-      return createElement(icons[icon as keyof typeof icons]);
+    if (icon && icon in allIcons)
+      return createElement(HugeiconsIcon, { icon: allIcons[icon as keyof typeof allIcons] as any });
   },
   source: { files },
 });
@@ -27,8 +28,8 @@ export const source = loader({
     return '/docs/' + slugs.join('/');
   },
   icon(icon) {
-    if (icon && icon in icons)
-      return createElement(icons[icon as keyof typeof icons]);
+    if (icon && icon in allIcons)
+      return createElement(HugeiconsIcon, { icon: allIcons[icon as keyof typeof allIcons] as any });
   },
   source: { files },
 });

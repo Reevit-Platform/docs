@@ -1,6 +1,6 @@
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { MDXComponents } from 'mdx/types';
-import * as icons from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { Button } from '@/components/ui/button';
 import { IntroDiagram } from '@/components/IntroDiagram';
 import { ShopDiagram } from '@/components/ShopDiagram';
@@ -9,11 +9,12 @@ import { LinkDiagram } from '@/components/LinkDiagram';
 import { MatchDiagram } from '@/components/MatchDiagram';
 import { DocShowcase } from '@/components/ui/showcase';
 import { APIPage } from 'fumadocs-openapi/ui';
+import { ApiExplorer } from '@/components/ApiExplorer';
 
 export function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
     ...defaultMdxComponents,
-    ...(icons as unknown as MDXComponents),
+    HugeiconsIcon: (props: any) => <HugeiconsIcon {...props} />,
     Button,
     IntroDiagram,
     ShopDiagram,
@@ -22,6 +23,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     MatchDiagram,
     DocShowcase,
     APIPage,
+    ApiExplorer,
     ...components,
   };
 }
