@@ -1,12 +1,13 @@
 'use client';
 import { useMemo, useState } from 'react';
 import {
-  Check,
-  ChevronDown,
-  Copy,
-  ExternalLinkIcon,
-  MessageCircleIcon,
-} from 'lucide-react';
+  Tick01Icon as Check,
+  ArrowDown01Icon as ChevronDown,
+  CopyIcon as Copy,
+  Link01Icon as ExternalLinkIcon,
+  ChatIcon as MessageCircleIcon,
+} from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { cn } from '@/lib/utils';
 import { useCopyButton } from 'fumadocs-ui/utils/use-copy-button';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
@@ -62,7 +63,7 @@ export function LLMCopyButton({
       )}
       onClick={onClick}
     >
-      {checked ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      {checked ? <HugeiconsIcon icon={Check} className="size-3.5" /> : <HugeiconsIcon icon={Copy} className="size-3.5" />}
       Copy Markdown
     </button>
   );
@@ -154,7 +155,7 @@ export function ViewOptions({
         )}
       >
         Open
-        <ChevronDown className="size-3.5 text-fd-muted-foreground" />
+        <HugeiconsIcon icon={ChevronDown} className="size-3.5 text-fd-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent className="flex flex-col overflow-auto p-1 min-w-0">
         {items.map((item) => (
@@ -167,7 +168,7 @@ export function ViewOptions({
           >
             {item.icon}
             {item.title}
-            <ExternalLinkIcon className="text-fd-muted-foreground size-3.5 ms-auto" />
+            <HugeiconsIcon icon={ExternalLinkIcon} className="text-fd-muted-foreground size-3.5 ms-auto" />
           </a>
         ))}
       </PopoverContent>

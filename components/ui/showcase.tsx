@@ -4,36 +4,44 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  CreditCard,
-  Workflow,
-  Clock,
-  ExternalLink,
-  Plus,
-  ArrowRight,
-  Filter,
-  Activity,
-  Globe,
-  Settings,
-  Database,
-  Terminal,
-  Webhook,
-  DollarSign,
-  TrendingUp,
-  XCircle,
-  CheckCircle2,
-  Link,
-  Play,
-  Sparkles,
-  ShoppingBag,
-  Store,
-  Laptop,
-  AlertCircle,
-  Users,
-  Check,
-  X,
-  Zap,
-  Clock as ClockIcon
-} from "lucide-react";
+  CreditCardIcon as CreditCard,
+  WorkflowSquare01Icon as Workflow,
+  Clock01Icon as Clock,
+  SquareArrowRight01Icon as ExternalLink,
+  PlusSignIcon as Plus,
+  ArrowRight02Icon as ArrowRight,
+  FilterIcon as Filter,
+  Activity01Icon as Activity,
+  GlobeIcon as Globe,
+  Settings02Icon as Settings,
+  Database01Icon as Database,
+  ComputerTerminal01Icon as Terminal,
+  GlobeIcon as Webhook,
+  Dollar02Icon as DollarSign,
+  Chart01Icon as TrendingUp,
+  CancelCircleIcon as XCircle,
+  CheckmarkCircle02Icon as CheckCircle2,
+  Link01Icon as Link,
+  PlayIcon as Play,
+  SparklesIcon as Sparkles,
+  ShoppingBag01Icon as ShoppingBag,
+  Store01Icon as Store,
+  ComputerIcon as Laptop,
+  AlertCircleIcon as AlertCircle,
+  UserGroupIcon as Users,
+  Tick01Icon as Check,
+  Cancel01Icon as X,
+  ZapIcon as Zap,
+  Mail01Icon as Mail,
+  DeliveryTruck01Icon as Delivery,
+  GoogleSheetIcon as Sheets,
+  SlackIcon as Slack,
+  Notion01Icon as Notion,
+  Message01Icon as SMS,
+  Shield01Icon as Shield,
+  CloudIcon as Cloud,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -105,10 +113,10 @@ const WORKFLOW_CONFIGS: Record<string, { nodes: any[]; edges: Edge[] }> = {
   ecommerce: {
     nodes: [
       { id: "trigger-1", type: "trigger", position: { x: 50, y: 180 }, data: { label: "Payment Success", triggerType: "payment.success", status: "idle" } },
-      { id: "action-delivery", type: "action", position: { x: 300, y: 50 }, data: { label: "Create Delivery", provider: "yango", status: "idle" } },
-      { id: "action-email", type: "action", position: { x: 300, y: 180 }, data: { label: "Send Email", provider: "resend", status: "idle" } },
-      { id: "action-sheets", type: "action", position: { x: 550, y: 120 }, data: { label: "Log Order", provider: "google-sheets", status: "idle" } },
-      { id: "action-slack", type: "action", position: { x: 550, y: 240 }, data: { label: "Notify Slack", provider: "slack", status: "idle" } },
+      { id: "action-delivery", type: "action", position: { x: 300, y: 50 }, data: { label: "Create Delivery", provider: "yango", icon: Delivery, status: "idle" } },
+      { id: "action-email", type: "action", position: { x: 300, y: 180 }, data: { label: "Send Email", provider: "resend", icon: Mail, status: "idle" } },
+      { id: "action-sheets", type: "action", position: { x: 550, y: 120 }, data: { label: "Log Order", provider: "google-sheets", icon: Sheets, status: "idle" } },
+      { id: "action-slack", type: "action", position: { x: 550, y: 240 }, data: { label: "Notify Slack", provider: "slack", icon: Slack, status: "idle" } },
     ],
     edges: [
       { id: "e1", source: "trigger-1", target: "action-delivery", animated: true, style: { stroke: "var(--color-fd-primary)", strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: "var(--color-fd-primary)" } },
@@ -120,9 +128,9 @@ const WORKFLOW_CONFIGS: Record<string, { nodes: any[]; edges: Edge[] }> = {
   merchants: {
     nodes: [
       { id: "trigger-1", type: "trigger", position: { x: 50, y: 180 }, data: { label: "Payment Success", triggerType: "payment.success", status: "idle" } },
-      { id: "action-hubspot", type: "action", position: { x: 300, y: 80 }, data: { label: "Update Contact", provider: "hubspot", status: "idle" } },
-      { id: "action-slack", type: "action", position: { x: 300, y: 280 }, data: { label: "Notify Sales", provider: "slack", status: "idle" } },
-      { id: "action-salesforce", type: "action", position: { x: 550, y: 180 }, data: { label: "Create Lead", provider: "salesforce", status: "idle" } },
+      { id: "action-hubspot", type: "action", position: { x: 300, y: 80 }, data: { label: "Update Contact", provider: "hubspot", icon: Users, status: "idle" } },
+      { id: "action-slack", type: "action", position: { x: 300, y: 280 }, data: { label: "Notify Sales", provider: "slack", icon: Slack, status: "idle" } },
+      { id: "action-salesforce", type: "action", position: { x: 550, y: 180 }, data: { label: "Create Lead", provider: "salesforce", icon: Cloud, status: "idle" } },
     ],
     edges: [
       { id: "e1", source: "trigger-1", target: "action-hubspot", animated: true, style: { stroke: "var(--color-fd-primary)", strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: "var(--color-fd-primary)" } },
@@ -133,8 +141,8 @@ const WORKFLOW_CONFIGS: Record<string, { nodes: any[]; edges: Edge[] }> = {
   saas: {
     nodes: [
       { id: "trigger-1", type: "trigger", position: { x: 50, y: 180 }, data: { label: "Subscription Renewed", triggerType: "subscription.renewed", status: "idle" } },
-      { id: "action-invoice", type: "action", position: { x: 300, y: 180 }, data: { label: "Send Invoice", provider: "resend", status: "idle" } },
-      { id: "action-billing", type: "action", position: { x: 550, y: 180 }, data: { label: "Log Revenue", provider: "notion", status: "idle" } },
+      { id: "action-invoice", type: "action", position: { x: 300, y: 180 }, data: { label: "Send Invoice", provider: "resend", icon: Mail, status: "idle" } },
+      { id: "action-billing", type: "action", position: { x: 550, y: 180 }, data: { label: "Log Revenue", provider: "notion", icon: Notion, status: "idle" } },
     ],
     edges: [
       { id: "e1", source: "trigger-1", target: "action-invoice", animated: true, style: { stroke: "var(--color-fd-primary)", strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: "var(--color-fd-primary)" } },
@@ -144,9 +152,9 @@ const WORKFLOW_CONFIGS: Record<string, { nodes: any[]; edges: Edge[] }> = {
   risk: {
     nodes: [
       { id: "trigger-1", type: "trigger", position: { x: 50, y: 180 }, data: { label: "High Risk Score", triggerType: "high_risk_score", status: "idle" } },
-      { id: "action-fraud", type: "action", position: { x: 300, y: 80 }, data: { label: "Fraud Check", provider: "fraud", status: "idle" } },
-      { id: "action-pagerduty", type: "action", position: { x: 300, y: 280 }, data: { label: "Create Incident", provider: "pagerduty", status: "idle" } },
-      { id: "action-security", type: "action", position: { x: 550, y: 180 }, data: { label: "Alert Security", provider: "slack", status: "idle" } },
+      { id: "action-fraud", type: "action", position: { x: 300, y: 80 }, data: { label: "Fraud Check", provider: "fraud", icon: Shield, status: "idle" } },
+      { id: "action-pagerduty", type: "action", position: { x: 300, y: 280 }, data: { label: "Create Incident", provider: "pagerduty", icon: AlertCircle, status: "idle" } },
+      { id: "action-security", type: "action", position: { x: 550, y: 180 }, data: { label: "Alert Security", provider: "slack", icon: Slack, status: "idle" } },
     ],
     edges: [
       { id: "e1", source: "trigger-1", target: "action-fraud", animated: true, style: { stroke: "var(--color-fd-primary)", strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: "var(--color-fd-primary)" } },
@@ -157,9 +165,9 @@ const WORKFLOW_CONFIGS: Record<string, { nodes: any[]; edges: Edge[] }> = {
   cart: {
     nodes: [
       { id: "trigger-1", type: "trigger", position: { x: 50, y: 180 }, data: { label: "Cart Abandoned", triggerType: "cart.abandoned", status: "idle" } },
-      { id: "action-email", type: "action", position: { x: 300, y: 80 }, data: { label: "Recovery Email", provider: "resend", status: "idle" } },
-      { id: "action-sms", type: "action", position: { x: 300, y: 280 }, data: { label: "Recovery SMS", provider: "twilio", status: "idle" } },
-      { id: "action-hubspot", type: "action", position: { x: 550, y: 180 }, data: { label: "Update CRM", provider: "hubspot", status: "idle" } },
+      { id: "action-email", type: "action", position: { x: 300, y: 80 }, data: { label: "Recovery Email", provider: "resend", icon: Mail, status: "idle" } },
+      { id: "action-sms", type: "action", position: { x: 300, y: 280 }, data: { label: "Recovery SMS", provider: "twilio", icon: SMS, status: "idle" } },
+      { id: "action-hubspot", type: "action", position: { x: 550, y: 180 }, data: { label: "Update CRM", provider: "hubspot", icon: Users, status: "idle" } },
     ],
     edges: [
       { id: "e1", source: "trigger-1", target: "action-email", animated: true, style: { stroke: "var(--color-fd-primary)", strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: "var(--color-fd-primary)" } },
@@ -200,7 +208,7 @@ const TriggerNode = ({ data, selected }: NodeProps) => {
     >
       <div className="flex flex-col items-center gap-2 p-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-blue-500 to-purple-600 shadow-lg">
-          <Zap className="h-5 w-5 text-white" />
+          <HugeiconsIcon icon={Zap} className="h-5 w-5 text-white" />
         </div>
         <div className="text-center">
           <NodeTitle>{data.label as string}</NodeTitle>
@@ -209,7 +217,7 @@ const TriggerNode = ({ data, selected }: NodeProps) => {
       </div>
       {status === "success" && (
         <div className="absolute top-1.5 right-1.5 rounded-full bg-emerald-500 p-0.5">
-          <Check className="h-2.5 w-2.5 text-white" />
+          <HugeiconsIcon icon={Check} className="h-2.5 w-2.5 text-white" />
         </div>
       )}
     </WorkflowNode>
@@ -226,7 +234,7 @@ const ActionNode = ({ data, selected }: NodeProps) => {
     >
       <div className="flex flex-col items-center gap-2 p-3">
         <div className="bg-muted/50 flex h-10 w-10 items-center justify-center rounded-lg border shadow-sm">
-          <TrendingUp className="h-5 w-5 text-muted-foreground" />
+          <HugeiconsIcon icon={(data.icon as any) || TrendingUp} className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="text-center">
           <NodeTitle>{data.label as string}</NodeTitle>
@@ -235,7 +243,7 @@ const ActionNode = ({ data, selected }: NodeProps) => {
       </div>
       {status === "success" && (
         <div className="absolute top-1.5 right-1.5 rounded-full bg-emerald-500 p-0.5">
-          <Check className="h-2.5 w-2.5 text-white" />
+          <HugeiconsIcon icon={Check} className="h-2.5 w-2.5 text-white" />
         </div>
       )}
     </WorkflowNode>
@@ -313,7 +321,7 @@ function PaymentsView() {
               <CardTitle className="text-muted-foreground font-mono text-xs font-medium tracking-wider uppercase">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <HugeiconsIcon icon={stat.icon} className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="pt-0">
               <div className="font-mono text-2xl font-semibold tracking-tight">{stat.value}</div>
@@ -343,7 +351,7 @@ function PaymentsView() {
             </CardTitle>
             <div className="flex items-center gap-1 text-muted-foreground font-mono text-[10px] uppercase cursor-pointer hover:text-foreground transition-colors">
               View all
-              <ArrowRight className="h-3 w-3" />
+              <HugeiconsIcon icon={ArrowRight} className="h-3 w-3" />
             </div>
           </div>
         </CardHeader>
@@ -418,7 +426,7 @@ function ConnectionsView() {
               <CardTitle className="text-muted-foreground font-mono text-xs font-medium tracking-wider uppercase">
                 {metric.label}
               </CardTitle>
-              <metric.icon className="h-4 w-4 text-muted-foreground" />
+              <HugeiconsIcon icon={metric.icon} className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="pt-0">
               <div className="font-mono text-2xl font-semibold tracking-tight">{metric.value}</div>
@@ -564,7 +572,7 @@ function RoutingView() {
         <h3 className="text-sm font-bold">Smart Routing Rules</h3>
         <div className="flex items-center gap-2">
           <div className="text-[10px] text-muted-foreground font-mono">Priority Evaluation</div>
-          <ArrowRight className="h-3 w-3 text-muted-foreground" />
+          <HugeiconsIcon icon={ArrowRight} className="h-3 w-3 text-muted-foreground" />
         </div>
       </div>
 
@@ -593,12 +601,12 @@ function RoutingView() {
 
             <div className="flex items-center gap-4 text-[10px]">
               <div className="flex grow items-center gap-2 rounded bg-muted/50 border border-border px-2 py-1.5">
-                <Filter className="h-3 w-3 text-muted-foreground" />
+                <HugeiconsIcon icon={Filter} className="h-3 w-3 text-muted-foreground" />
                 <span className="font-medium">{rule.filters}</span>
               </div>
-              <ArrowRight className="h-3 w-3 text-muted-foreground" />
+              <HugeiconsIcon icon={ArrowRight} className="h-3 w-3 text-muted-foreground" />
               <div className="flex grow items-center gap-2 rounded bg-primary/5 border border-primary/20 px-2 py-1.5 text-primary">
-                <Database className="h-3 w-3" />
+                <HugeiconsIcon icon={Database} className="h-3 w-3" />
                 <span className="font-bold">{rule.connection}</span>
               </div>
             </div>
@@ -652,18 +660,18 @@ function WorkflowShowcaseInner() {
   return (
     <div className="p-4 md:p-6">
       {/* Browser-style frame */}
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[rgb(23,23,23)] shadow-2xl">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card/80 shadow-2xl backdrop-blur-xs">
         {/* Top Bar */}
-        <div className="flex items-center justify-between border-b border-white/5 bg-white/5 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
               <div className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
               <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
               <div className="h-2.5 w-2.5 rounded-full bg-green-500/80" />
             </div>
-            <span className="ml-2 font-mono text-[10px] text-gray-500">Workflow Canvas</span>
+            <span className="ml-2 font-mono text-[10px] text-muted-foreground">Workflow Canvas</span>
           </div>
-          <Sparkles className="h-3 w-3 text-gray-500" />
+          <HugeiconsIcon icon={Sparkles} className="h-3 w-3 text-muted-foreground" />
         </div>
 
         <div className="p-4">
@@ -685,7 +693,7 @@ function WorkflowShowcaseInner() {
                     isSimulating && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  <Icon className="h-3 w-3" />
+                  <HugeiconsIcon icon={Icon} className="h-3 w-3" />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -693,7 +701,7 @@ function WorkflowShowcaseInner() {
           </div>
 
           {/* Flow Area */}
-          <div className="relative h-[350px] overflow-hidden rounded-xl border border-white/5 bg-black/40">
+          <div className="relative h-[350px] overflow-hidden rounded-xl border border-border/50 bg-muted/20">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -719,7 +727,7 @@ function WorkflowShowcaseInner() {
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5">
-                      <Play className="h-3 w-3" />
+                      <HugeiconsIcon icon={Play} className="h-3 w-3" />
                       Run Live Flow
                     </span>
                   )}
@@ -727,9 +735,9 @@ function WorkflowShowcaseInner() {
               </Panel>
 
               <Panel position="bottom-left" className="m-4">
-                <div className="max-w-[240px] rounded-xl border border-white/10 bg-black/60 p-3 shadow-2xl backdrop-blur-md">
+                <div className="max-w-[240px] rounded-xl border border-border bg-card/60 p-3 shadow-2xl backdrop-blur-md">
                   <div className="text-primary mb-1 flex items-center gap-2">
-                    <Sparkles className="h-2.5 w-2.5" />
+                    <HugeiconsIcon icon={Sparkles} className="h-2.5 w-2.5" />
                     <span className="font-mono text-[9px] font-bold tracking-widest uppercase">
                       {activeTabInfo.panelTitle}
                     </span>
@@ -796,7 +804,7 @@ function WebhooksView() {
               </label>
               <div className="bg-muted/50 flex items-center justify-between rounded-sm p-2 font-mono text-xs">
                 <span>whsec_9l2k...••••••••••••••••</span>
-                <Terminal className="h-3 w-3 opacity-30" />
+                <HugeiconsIcon icon={Terminal} className="h-3 w-3 opacity-30" />
               </div>
             </div>
           </CardContent>
