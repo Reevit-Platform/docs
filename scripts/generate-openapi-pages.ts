@@ -2,6 +2,8 @@ import { join } from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import fs from 'fs';
+import yaml from 'js-yaml';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -11,22 +13,56 @@ const require = createRequire(import.meta.url);
 const fumadocsOpenAPI = require(join(__dirname, '../node_modules/fumadocs-openapi/dist/index.js'));
 const { generateFiles } = fumadocsOpenAPI;
 
-// ========================================
-// CONFIGURATION - Update this URL to your production OpenAPI spec
-// ========================================
-const OPENAPI_SPEC_URL = 'https://api.reevit.com/openapi.yaml';
-// You can also use a local file path for development:
-// const OPENAPI_SPEC_URL = 'content/docs/reevit/openapi/openapi.yaml';
+const INPUT_SPEC = 'content/docs/reevit/openapi/openapi.yaml';
+const OUTPUT_SPEC = 'public/openapi-public.yaml';
+
+const allowedTags = [
+  'Payments',
+  'Subscriptions',
+  'Invoices',
+  'Connections',
+  'Webhooks',
+  'Routing Rules',
+  'Fraud',
+  'Retry Policies',
+  'Workflows',
+  'API Keys',
+];
 
 async function generate() {
+  console.log('Filtering OpenAPI spec...');
+  const spec = yaml.load(fs.readFileSync(INPUT_SPEC, 'utf8')) as any;
+
+  if (spec.paths) {
+    const filteredPaths: any = {};
+    for (const [path, pathItem] of Object.entries(spec.paths)) {
+      const filteredPathItem: any = {};
+      let hasAllowedOp = false;
+
+      for (const [method, operation] of Object.entries(pathItem as any)) {
+        if (typeof operation !== 'object' || operation === null) continue;
+        const opTags = (operation as any).tags || [];
+        if (opTags.some((tag: string) => allowedTags.includes(tag))) {
+          filteredPathItem[method] = operation;
+          hasAllowedOp = true;
+        }
+      }
+
+      if (hasAllowedOp) {
+        filteredPaths[path] = filteredPathItem;
+      }
+    }
+    spec.paths = filteredPaths;
+  }
+
+  fs.writeFileSync(OUTPUT_SPEC, yaml.dump(spec));
+  console.log('✅ Filtered spec saved to:', OUTPUT_SPEC);
+
   console.log('Generating OpenAPI documentation pages...');
-  console.log('Input:', OPENAPI_SPEC_URL);
-  console.log('CWD:', process.cwd());
 
   await generateFiles({
-    input: [OPENAPI_SPEC_URL],
+    input: [OUTPUT_SPEC],
     output: 'content/docs/reevit/openapi',
-    // Generate a page for each operation, grouped by tag
     per: 'operation',
     groupBy: 'tag',
     cwd: process.cwd(),
