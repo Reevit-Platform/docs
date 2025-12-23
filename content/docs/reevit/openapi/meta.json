@@ -3,20 +3,8 @@
   "description": "Interactive OpenAPI documentation",
   "icon": "FileCode",
   "root": true,
+  "defaultOpen": false,
   "pages": [
-    "index",
-    "---Payments---",
-    "payments",
-    "subscriptions",
-    "invoices",
-    "---Connections---",
-    "connections",
-    "---Webhooks---",
-    "webhooks",
-    "---Rules & Policies---",
-    "routing-rules",
-    "fraud",
-    "retry-policies",
-    "workflows"
+    "index"
   ]
 }

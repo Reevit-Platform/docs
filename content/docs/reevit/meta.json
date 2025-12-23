@@ -2,8 +2,25 @@
   "title": "Reevit",
   "root": true,
   "pages": [
+    "---Get Started---",
     "index",
-    "docs",
+    "what-is-reevit",
+    "getting-started",
+    "test-mode",
+    "---Core Features---",
+    "payments",
+    "connections",
+    "subscriptions",
+    "webhooks",
+    "workflows",
+    "routing-rules",
+    "fraud-policies",
+    "---Developer Resources---",
+    "authentication",
+    "api-reference",
+    "error-codes",
+    "sdks",
+    "---Reference---",
     "openapi"
   ]
 }
