@@ -411,6 +411,116 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/billing/subscription:
+    get:
+      summary: Get current subscription, plan, and usage for the calling org
+      operationId: getBillingSubscription
+      tags:
+        - Billing
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscriptionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Update subscription plan for the calling org
+      operationId: updateBillingSubscription
+      tags:
+        - Billing
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubscriptionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/billing/plans:
+    get:
+      summary: List available billing plans
+      operationId: listBillingPlans
+      tags:
+        - Billing
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingPlansResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/billing/usage:
+    get:
+      summary: Get usage for the calling org (mode-aware)
+      operationId: getBillingUsage
+      tags:
+        - Billing
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - in: query
+          name: mode
+          required: false
+          schema:
+            type: string
+            enum:
+              - sandbox
+              - live
+          description: >-
+            Optional mode override for session users (defaults to principal
+            mode)
+        - in: query
+          name: start
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Start of range (RFC3339). Defaults to start of current month.
+        - in: query
+          name: end
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: End of range (RFC3339). Defaults to end of current month.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingUsageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/routing-rules:
     get:
       summary: List routing rules for the organization
@@ -2804,6 +2914,522 @@ paths:
       responses:
         '200':
           description: Fraud rule disabled
+
+  # Payment Links
+  /v1/payment-links:
+    get:
+      summary: List payment links
+      description: Retrieve all payment links for your organization
+      operationId: listPaymentLinks
+      tags:
+        - Payment Links
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of payment links
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_links:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentLink'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Create a payment link
+      description: |
+        Create a shareable payment link that customers can use to make payments.
+        The link will use your organization's connected payment providers.
+      operationId: createPaymentLink
+      tags:
+        - Payment Links
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentLinkInput'
+      responses:
+        '201':
+          description: Payment link created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLink'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/payment-links/{id}:
+    get:
+      summary: Get a payment link
+      description: Retrieve details of a specific payment link
+      operationId: getPaymentLink
+      tags:
+        - Payment Links
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment link details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLink'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update a payment link
+      description: Update an existing payment link's settings
+      operationId: updatePaymentLink
+      tags:
+        - Payment Links
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePaymentLinkInput'
+      responses:
+        '200':
+          description: Payment link updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLink'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete a payment link
+      description: Permanently delete a payment link
+      operationId: deletePaymentLink
+      tags:
+        - Payment Links
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Payment link deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/payment-links/{id}/stats:
+    get:
+      summary: Get payment link statistics
+      description: Retrieve usage statistics for a payment link
+      operationId: getPaymentLinkStats
+      tags:
+        - Payment Links
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment link statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLinkStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/payment-links/{id}/payments:
+    get:
+      summary: List payments made via a payment link
+      description: Retrieve all payments made through a specific payment link
+      operationId: listPaymentLinkPayments
+      tags:
+        - Payment Links
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentLinkPayment'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/pay/{code}:
+    get:
+      summary: Get payment link by code (Public)
+      description: |
+        Public endpoint to retrieve payment link details by its short code.
+        Used by the hosted payment page to display payment information.
+        No authentication required.
+      operationId: getPaymentLinkByCode
+      tags:
+        - Payment Links
+      security: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: The payment link's short code (e.g., pl_abc123)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment link details for hosted page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicPaymentLink'
+        '404':
+          description: Payment link not found or inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Customers
+  /v1/customers:
+    get:
+      summary: List customers
+      description: |
+        Retrieve customers with aggregated payment statistics.
+        Customers are automatically created from payment data.
+      operationId: listCustomers
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: search
+          in: query
+          description: Search by email, name, or external ID
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [created_at, total_spent, payment_count, last_payment_at]
+            default: created_at
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Create a customer
+      description: Create a customer record to associate with future payments
+      operationId: createCustomer
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerInput'
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Customer with this external_id already exists
+
+  /v1/customers/{id}:
+    get:
+      summary: Get a customer
+      description: Retrieve a customer by ID with aggregated payment statistics
+      operationId: getCustomer
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update a customer
+      description: Update customer information
+      operationId: updateCustomer
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerInput'
+      responses:
+        '200':
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete a customer
+      description: Delete a customer record (does not delete associated payments)
+      operationId: deleteCustomer
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Customer deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/customers/lookup:
+    get:
+      summary: Lookup customer by external ID
+      description: Find a customer using your external system's ID
+      operationId: getCustomerByExternalId
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: external_id
+          in: query
+          required: true
+          description: Your system's customer ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/customers/{id}/payments:
+    get:
+      summary: Get customer payment history
+      description: Retrieve all payments made by a customer
+      operationId: getCustomerPayments
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: status
+          in: query
+          description: Filter by payment status
+          schema:
+            type: string
+            enum: [pending, succeeded, failed, refunded]
+      responses:
+        '200':
+          description: Customer payment history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payment'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/customers/top:
+    get:
+      summary: Get top customers
+      description: Retrieve top customers by total spent or payment count
+      operationId: getTopCustomers
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+        - name: metric
+          in: query
+          description: Metric to rank by
+          schema:
+            type: string
+            enum: [total_spent, payment_count]
+            default: total_spent
+        - name: period
+          in: query
+          description: Time period for ranking
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, all]
+            default: 30d
+      responses:
+        '200':
+          description: Top customers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+
 components:
   schemas:
     Money:
@@ -4582,6 +5208,312 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    # Payment Links Schemas
+    PaymentLink:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          description: Short code for the payment link URL
+          example: pl_abc123xyz
+        name:
+          type: string
+          description: Display name for the payment link
+          example: Product Purchase
+        description:
+          type: string
+          description: Optional description shown to customers
+        amount:
+          type: integer
+          description: Fixed amount in minor units (e.g., cents/pesewas). Null for variable amount.
+          example: 10000
+        currency:
+          type: string
+          description: ISO 4217 currency code
+          example: GHS
+        allow_custom_amount:
+          type: boolean
+          description: Whether customers can enter their own amount
+          default: false
+        redirect_url:
+          type: string
+          format: uri
+          description: URL to redirect after successful payment
+        max_uses:
+          type: integer
+          description: Maximum number of successful payments allowed. Null for unlimited.
+        use_count:
+          type: integer
+          description: Number of successful payments made
+        total_collected:
+          type: integer
+          description: Total amount collected in minor units
+        is_active:
+          type: boolean
+          description: Whether the link is currently active
+        expires_at:
+          type: string
+          format: date-time
+          description: When the link expires. Null for no expiration.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom key-value metadata
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - org_id
+        - code
+        - name
+        - currency
+        - is_active
+        - use_count
+        - total_collected
+
+    CreatePaymentLinkInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Display name for the payment link
+          example: Product Purchase
+        description:
+          type: string
+          description: Optional description shown to customers
+        amount:
+          type: integer
+          description: Fixed amount in minor units. Omit for variable amount.
+          example: 10000
+        currency:
+          type: string
+          description: ISO 4217 currency code
+          example: GHS
+        allow_custom_amount:
+          type: boolean
+          description: Whether customers can enter their own amount
+          default: false
+        redirect_url:
+          type: string
+          format: uri
+          description: URL to redirect after successful payment
+        max_uses:
+          type: integer
+          description: Maximum number of successful payments allowed
+        expires_at:
+          type: string
+          format: date-time
+          description: When the link should expire
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - name
+        - currency
+
+    UpdatePaymentLinkInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        is_active:
+          type: boolean
+        redirect_url:
+          type: string
+          format: uri
+        max_uses:
+          type: integer
+        expires_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    PaymentLinkStats:
+      type: object
+      properties:
+        total_payments:
+          type: integer
+          description: Total number of payments
+        successful_payments:
+          type: integer
+          description: Number of successful payments
+        failed_payments:
+          type: integer
+          description: Number of failed payments
+        total_collected:
+          type: integer
+          description: Total amount collected in minor units
+        avg_amount:
+          type: integer
+          description: Average payment amount in minor units
+        conversion_rate:
+          type: number
+          format: float
+          description: Success rate as percentage
+
+    PaymentLinkPayment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [pending, succeeded, failed, refunded]
+        payer_email:
+          type: string
+        payer_name:
+          type: string
+        provider:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    PublicPaymentLink:
+      type: object
+      description: Public-facing payment link details (no sensitive org data)
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        amount:
+          type: integer
+          description: Null if variable amount
+        currency:
+          type: string
+        allow_custom_amount:
+          type: boolean
+        merchant_name:
+          type: string
+          description: Organization display name
+        merchant_logo:
+          type: string
+          format: uri
+          description: Organization logo URL
+        available_methods:
+          type: array
+          description: Payment methods available for this currency
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [card, mobile_money, bank_transfer, ussd]
+              provider:
+                type: string
+              name:
+                type: string
+                description: Display name for the method
+
+    # Customer Schemas
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+          description: Your system's customer identifier
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        total_spent:
+          type: integer
+          description: Total amount spent in minor units (aggregated)
+        payment_count:
+          type: integer
+          description: Total number of successful payments
+        last_payment_at:
+          type: string
+          format: date-time
+          description: Timestamp of most recent payment
+        preferred_currency:
+          type: string
+          description: Most used currency
+        preferred_method:
+          type: string
+          description: Most used payment method
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - org_id
+
+    CreateCustomerInput:
+      type: object
+      properties:
+        external_id:
+          type: string
+          description: Your system's customer identifier (must be unique per org)
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    UpdateCustomerInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
     Error:
       type: object
       properties:
