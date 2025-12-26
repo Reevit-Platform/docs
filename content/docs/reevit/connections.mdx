@@ -70,6 +70,40 @@ Reevit is built to support the most reliable providers in African and Global mar
 
 ---
 
+## 📋 Field Reference
+
+| Field | Type | Required | Description |
+| :--- | :--- | :---: | :--- |
+| `id` | string | ✅ | Your custom identifier for the connection (e.g., `paystack_gh_primary`). Must be unique within your organization. |
+| `provider` | string | ✅ | The PSP type. Supported: `paystack`, `hubtel`, `flutterwave`, `monnify`, `stripe`, `mpesa`. |
+| `mode` | string | ✅ | `live` for production, `sandbox` for testing. Must match your PSP key environment. |
+| `status` | string | | `active` or `inactive`. Inactive connections are ignored by the router. Default: `active`. |
+| `credentials` | object | ✅ | Provider-specific API keys (e.g., `secret_key`, `public_key`). Encrypted at rest. |
+| `labels` | string[] | | Tags for categorization and routing (e.g., `["primary", "ghana", "fallback"]`). |
+| `capabilities` | object | | Defines supported `methods` (e.g., `card`, `momo`) and `countries` (e.g., `GH`, `NG`). Auto-detected if omitted. |
+| `routing_hints` | object | | Advanced: hints for cost/latency optimization. |
+
+### Understanding `labels`
+
+Labels are **metadata tags** that power intelligent routing and organization:
+
+*   **Routing Hints**: Tag connections as `primary` or `fallback` to influence failover behavior.
+*   **Regional Grouping**: Use labels like `ghana`, `nigeria` to logically group connections by market.
+*   **Custom Segmentation**: Apply any label that makes sense for your business, such as `high-volume` or `testing-only`.
+
+```typescript
+// Example: Creating a connection with labels
+await reevit.connections.create({
+  id: 'hubtel_gh_fallback',
+  provider: 'hubtel',
+  mode: 'live',
+  credentials: { client_id: '...', secret: '...' },
+  labels: ['fallback', 'ghana', 'momo-only']
+});
+```
+
+---
+
 ## ✅ Best Practices
 
 1.  **Redundancy is Key**: Always have at least two connections for your primary market (e.g., Hubtel + Paystack for Ghana). This enables [Smart Routing](/docs/reevit/routing-rules).
