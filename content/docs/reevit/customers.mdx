@@ -1,0 +1,139 @@
+---
+title: Customers
+description: Centralized customer profiles for unified payment tracking
+icon: Users
+---
+
+import { CreditCardIcon, Link01Icon as LinkIcon, Mail01Icon as MailIcon, ChartHistogramIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Customers
+
+The Customers feature provides a centralized registry for your users. By linking payments to customer profiles, you unlock unified analytics, personalized communications, and streamlined recurring billing.
+
+<Callout type="info">
+  Creating customers is optional. Payments can be processed without them, but linking payments to customers enables powerful features like lifetime value tracking and automated email workflows.
+</Callout>
+
+---
+
+## 🎯 Why Use Customer Profiles?
+
+| Benefit | Description |
+| :--- | :--- |
+| **Unified History** | See all payments, subscriptions, and invoices for a single customer in one place. |
+| **Lifetime Value (LTV)** | Automatically track how much revenue each customer has generated. |
+| **Personalized Workflows** | Use customer data in [Workflows](/docs/reevit/workflows) to send targeted emails. |
+| **Faster Checkout** | Store customer details to pre-fill checkout forms for returning users. |
+
+---
+
+## 🛠️ Creating a Customer
+
+### Via SDK
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const customer = await reevit.customers.create({
+  external_id: 'usr_1234', // Your internal user ID
+  email: 'ada@example.com',
+  name: 'Ada Lovelace',
+  phone: '+233501234567',
+  tags: ['premium', 'early-adopter'],
+  metadata: { plan: 'pro', signup_source: 'referral' }
+});
+```
+
+### Linking a Payment to a Customer
+
+When creating a payment, include the `customer_id`:
+
+```typescript
+await reevit.payments.create({
+  amount: 15000,
+  currency: 'GHS',
+  customer_id: customer.id, // Link to customer profile
+  // ...
+});
+```
+
+---
+
+## 📋 Field Reference
+
+| Field | Type | Required | Description |
+| :--- | :--- | :---: | :--- |
+| `external_id` | string | | Your internal identifier for this customer (e.g., your database user ID). |
+| `email` | string | | Customer's email address. Used for receipts and workflow triggers. |
+| `phone` | string | | Customer's phone number in E.164 format. |
+| `name` | string | | Full name or display name. |
+| `tags` | string[] | | Labels for segmentation (e.g., `["vip", "newsletter"]`). |
+| `metadata` | object | | Attach arbitrary key-value pairs for your own tracking. |
+
+---
+
+## 📊 Customer Analytics
+
+The customer profile automatically aggregates:
+*   **Total Spent**: Sum of all successful payments.
+*   **Payment Count**: Number of transactions.
+*   **Last Payment Date**: When they last paid.
+*   **Subscription Status**: Active/cancelled recurring plans.
+
+Fetch a customer's payment history:
+
+```typescript
+const history = await reevit.customers.getPaymentHistory('cus_xyz123');
+// [
+//   { id: 'pay_001', amount: 5000, status: 'succeeded', created_at: '...' },
+//   { id: 'pay_002', amount: 10000, status: 'succeeded', created_at: '...' }
+// ]
+```
+
+Find your top customers by revenue:
+
+```typescript
+const topCustomers = await reevit.customers.getTopCustomers({ limit: 10 });
+```
+
+---
+
+## 🔗 The `external_id` Field
+
+The `external_id` is critical for syncing Reevit with your internal systems.
+
+*   **What it is**: A unique identifier from *your* database (e.g., `usr_abc123`).
+*   **Why use it**: When a webhook fires, you can use the `external_id` to immediately look up the customer in your database without needing to map Reevit IDs.
+*   **Lookup**: `GET /v1/customers?external_id=usr_abc123`
+
+<Callout type="warning">
+  The `external_id` must be unique within your organization. An attempt to create a customer with a duplicate `external_id` will return an error.
+</Callout>
+
+---
+
+## ✅ Best Practices
+
+1.  **Always Set `external_id`**: Use your internal user ID to keep systems in sync.
+2.  **Use Tags for Segmentation**: Apply tags like `churned`, `active`, `trial` to power analytics and workflows.
+3.  **Store Contact Info**: Providing `email` and `phone` enables automated receipt sending and SMS notifications.
+
+---
+
+## 📚 Related Resources
+
+<Cards columns={2}>
+  <Card title="Subscriptions" href="/docs/reevit/subscriptions" icon={<HugeiconsIcon icon={ChartHistogramIcon} />}>
+    Create recurring billing plans linked to customers.
+  </Card>
+  <Card title="Payments" href="/docs/reevit/payments" icon={<HugeiconsIcon icon={CreditCardIcon} />}>
+    Link individual payments to customer profiles.
+  </Card>
+  <Card title="Workflows" href="/docs/reevit/workflows" icon={<HugeiconsIcon icon={MailIcon} />}>
+    Send automated emails based on customer events.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/webhooks" icon={<HugeiconsIcon icon={LinkIcon} />}>
+    Get notified when customer data changes.
+  </Card>
+</Cards>

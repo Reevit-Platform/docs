@@ -1,0 +1,160 @@
+---
+title: SDKs Overview
+description: Official client libraries for integrating Reevit payments
+icon: Code
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# SDKs
+
+Official client libraries for integrating Reevit payments into your applications.
+
+<Cards>
+  <Card
+    title="React SDK"
+    description="React components and hooks for checkout UI"
+    href="/docs/reevit/sdks/react"
+  />
+  <Card
+    title="Vue SDK"
+    description="Vue 3 components and composables"
+    href="/docs/reevit/sdks/vue"
+  />
+  <Card
+    title="Svelte SDK"
+    description="Svelte 5 components and stores"
+    href="/docs/reevit/sdks/svelte"
+  />
+  <Card
+    title="Node.js SDK"
+    description="TypeScript/JavaScript SDK for server-side"
+    href="/docs/reevit/sdks/nodejs"
+  />
+  <Card
+    title="Python SDK"
+    description="Python SDK with async support"
+    href="/docs/reevit/sdks/python"
+  />
+  <Card
+    title="Go SDK"
+    description="Go client library"
+    href="/docs/reevit/sdks/go"
+  />
+  <Card
+    title="PHP SDK"
+    description="PHP library with Composer"
+    href="/docs/reevit/sdks/php"
+  />
+</Cards>
+
+---
+
+## Frontend SDKs (UI Components)
+
+Pre-built checkout widgets with customizable themes for React, Vue, and Svelte.
+
+| Package | NPM | GitHub |
+|---------|-----|--------|
+| **@reevit/react** | [![npm](https://img.shields.io/npm/v/@reevit/react.svg)](https://www.npmjs.com/package/@reevit/react) | [Reevit-Platform/react-sdk](https://github.com/Reevit-Platform/react-sdk) |
+| **@reevit/vue** | [![npm](https://img.shields.io/npm/v/@reevit/vue.svg)](https://www.npmjs.com/package/@reevit/vue) | [Reevit-Platform/vue-sdk](https://github.com/Reevit-Platform/vue-sdk) |
+| **@reevit/svelte** | [![npm](https://img.shields.io/npm/v/@reevit/svelte.svg)](https://www.npmjs.com/package/@reevit/svelte) | [Reevit-Platform/svelte-sdk](https://github.com/Reevit-Platform/svelte-sdk) |
+| **@reevit/core** | [![npm](https://img.shields.io/npm/v/@reevit/core.svg)](https://www.npmjs.com/package/@reevit/core) | [Reevit-Platform/core](https://github.com/Reevit-Platform/core) |
+
+### Features
+
+- ✅ Pre-built checkout UI with modal
+- ✅ PSP bridge integrations (Paystack, Stripe, Flutterwave, Monnify, M-Pesa)
+- ✅ Theming and dark mode support
+- ✅ Mobile-responsive design
+- ✅ TypeScript support
+
+---
+
+## Backend SDKs (API Clients)
+
+Server-side libraries for the Reevit REST API with full type safety.
+
+| Language | Package | GitHub |
+|----------|---------|--------|
+| **TypeScript/Node.js** | `@reevit/node` | [Reevit-Platform/node](https://github.com/Reevit-Platform/node-sdk) |
+| **Python** | `reevit` | [Reevit-Platform/python](https://github.com/Reevit-Platform/python-sdk) |
+| **Go** | `github.com/Reevit-Platform/go` | [Reevit-Platform/go](https://github.com/Reevit-Platform/go-sdk) |
+| **PHP** | `reevit/reevit-php` | [Reevit-Platform/php](https://github.com/Reevit-Platform/php-sdk) |
+
+### Features
+
+- ✅ Full API coverage (Payments, Connections, Subscriptions, Webhooks)
+- ✅ Type safety (TypeScript types, Python hints, Go structs)
+- ✅ Automatic retries with exponential backoff
+- ✅ Idempotency key support
+- ✅ Webhook signature verification
+
+---
+
+## Supported Payment Providers
+
+All SDKs support the following payment providers:
+
+| Provider | Countries | Payment Methods |
+|----------|-----------|-----------------|
+| **Paystack** | NG, GH, ZA, KE | Card, Mobile Money, Bank |
+| **Flutterwave** | NG, GH, KE, ZA+ | Card, Mobile Money, Bank |
+| **Hubtel** | GH | Mobile Money |
+| **Stripe** | Global (50+) | Card, Apple Pay, Google Pay |
+| **Monnify** | NG | Card, Bank Transfer, USSD |
+| **M-Pesa** | KE, TZ | Mobile Money (STK Push) |
+
+---
+
+## Quick Start
+
+### Frontend (React)
+
+```bash
+npm install @reevit/react
+```
+
+```tsx
+import { ReevitCheckout } from '@reevit/react';
+import '@reevit/react/styles.css';
+
+<ReevitCheckout
+  publicKey="pk_test_xxx"
+  amount={5000}
+  currency="GHS"
+  onSuccess={(result) => console.log('Paid!', result)}
+>
+  <button>Pay Now</button>
+</ReevitCheckout>
+```
+
+### Backend (Node.js)
+
+```bash
+npm install @reevit/node
+```
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const client = new Reevit('pfk_live_xxx', 'org_123');
+
+const payment = await client.payments.createIntent({
+  amount: 5000,
+  currency: 'GHS',
+  method: 'momo',
+  country: 'GH',
+});
+```
+
+---
+
+## Configuration Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `apiKey` / `publicKey` | Your API key | Required |
+| `orgId` | Organization ID (backend only) | Required |
+| `baseUrl` / `apiBaseUrl` | API base URL | `https://api.reevit.io` |
+| `timeout` | Request timeout | `30s` |

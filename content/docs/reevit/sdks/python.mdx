@@ -1,0 +1,294 @@
+---
+title: Python SDK
+description: Python SDK for Reevit API with async support
+---
+
+# Python SDK
+
+[![PyPI version](https://img.shields.io/pypi/v/reevit.svg)](https://pypi.org/project/reevit/)
+[![GitHub](https://img.shields.io/badge/GitHub-Reevit--Platform%2Fpython-blue)](https://github.com/Reevit-Platform/python-sdk)
+
+The official Python SDK for the Reevit payment orchestration platform.
+
+## Installation
+
+```bash
+pip install reevit
+```
+
+## Quick Start
+
+```python
+from reevit import Reevit
+
+client = Reevit(api_key="pfk_live_xxx")
+
+# Create a payment
+payment = client.payments.create_intent({
+    "amount": 5000,  # 50.00 GHS
+    "currency": "GHS",
+    "method": "momo",
+    "country": "GH",
+    "customer_id": "cust_123",
+    "metadata": {
+        "order_id": "12345"
+    }
+})
+
+print(f"Payment created: {payment['id']}")
+```
+
+---
+
+## Configuration
+
+### Environment Variables
+
+```python
+import os
+from reevit import Reevit
+
+client = Reevit(
+    api_key=os.environ["REEVIT_API_KEY"],
+    org_id=os.environ["REEVIT_ORG_ID"],
+    base_url=os.environ.get("REEVIT_BASE_URL", "https://api.reevit.io")
+)
+```
+
+---
+
+## Payments
+
+### Create Payment Intent
+
+```python
+payment = client.payments.create_intent({
+    "amount": 10000,
+    "currency": "GHS",
+    "method": "momo",
+    "country": "GH",
+    "customer_id": "cust_123",
+    "metadata": {
+        "order_id": "ORD-2024-001"
+    }
+})
+```
+
+### Get Payment
+
+```python
+payment = client.payments.get("pay_abc123")
+print(f"Status: {payment['status']}")
+```
+
+### List Payments
+
+```python
+payments = client.payments.list()
+for p in payments:
+    print(f"{p['id']}: {p['status']}")
+```
+
+### Refund Payment
+
+```python
+# Full refund
+refund = client.payments.refund("pay_abc123")
+
+# Partial refund
+refund = client.payments.refund("pay_abc123", amount=2500, reason="Customer requested")
+```
+
+---
+
+## Async Support
+
+```python
+import asyncio
+from reevit import AsyncReevit
+
+async def main():
+    client = AsyncReevit(
+        api_key="pfk_live_xxx",
+        org_id="org_123"
+    )
+    
+    payment = await client.payments.create_intent({
+        "amount": 5000,
+        "currency": "GHS",
+        "method": "momo",
+        "country": "GH"
+    })
+    
+    print(f"Payment ID: {payment['id']}")
+
+asyncio.run(main())
+```
+
+---
+
+## Webhook Verification
+
+Reevit sends webhooks to notify your application of payment events. Always verify signatures.
+
+### Signature Format
+
+- **Header**: `X-Reevit-Signature: sha256=<hex-signature>`
+- **Signature**: `HMAC-SHA256(request_body, signing_secret)`
+
+### Flask Handler
+
+```python
+import hmac
+import hashlib
+import os
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+def verify_signature(payload: bytes, signature: str, secret: str) -> bool:
+    if not signature.startswith('sha256='):
+        return False
+    
+    expected = hmac.new(
+        secret.encode('utf-8'),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    
+    received = signature[7:]  # Remove "sha256=" prefix
+    return hmac.compare_digest(received, expected)
+
+@app.route('/webhooks/reevit', methods=['POST'])
+def webhook():
+    payload = request.get_data()
+    signature = request.headers.get('X-Reevit-Signature', '')
+    secret = os.environ.get('REEVIT_WEBHOOK_SECRET', '')
+    
+    if secret and not verify_signature(payload, signature, secret):
+        return jsonify({'error': 'Invalid signature'}), 401
+    
+    event = request.get_json()
+    event_type = event.get('type')
+    
+    if event_type == 'payment.succeeded':
+        data = event.get('data', {})
+        order_id = data.get('metadata', {}).get('order_id')
+        # Fulfill order, send confirmation email
+        print(f"Payment succeeded for order {order_id}")
+    
+    elif event_type == 'payment.failed':
+        # Notify customer, allow retry
+        pass
+    
+    return jsonify({'received': True})
+```
+
+### FastAPI Handler
+
+```python
+from fastapi import FastAPI, Request, HTTPException
+import hmac
+import hashlib
+import os
+
+app = FastAPI()
+
+def verify_signature(payload: bytes, signature: str, secret: str) -> bool:
+    if not signature.startswith('sha256='):
+        return False
+    
+    expected = hmac.new(
+        secret.encode('utf-8'),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    
+    received = signature[7:]
+    return hmac.compare_digest(received, expected)
+
+@app.post('/webhooks/reevit')
+async def webhook(request: Request):
+    payload = await request.body()
+    signature = request.headers.get('X-Reevit-Signature', '')
+    secret = os.environ.get('REEVIT_WEBHOOK_SECRET', '')
+    
+    if secret and not verify_signature(payload, signature, secret):
+        raise HTTPException(status_code=401, detail='Invalid signature')
+    
+    event = await request.json()
+    event_type = event.get('type')
+    
+    if event_type == 'payment.succeeded':
+        data = event.get('data', {})
+        # Process payment
+    
+    return {'received': True}
+```
+
+### Django Handler
+
+```python
+import hmac
+import hashlib
+import json
+import os
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+def verify_signature(payload: bytes, signature: str, secret: str) -> bool:
+    if not signature.startswith('sha256='):
+        return False
+    
+    expected = hmac.new(
+        secret.encode('utf-8'),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    
+    received = signature[7:]
+    return hmac.compare_digest(received, expected)
+
+@csrf_exempt
+@require_POST
+def reevit_webhook(request):
+    payload = request.body
+    signature = request.headers.get('X-Reevit-Signature', '')
+    secret = os.environ.get('REEVIT_WEBHOOK_SECRET', '')
+    
+    if secret and not verify_signature(payload, signature, secret):
+        return JsonResponse({'error': 'Invalid signature'}, status=401)
+    
+    event = json.loads(payload)
+    event_type = event.get('type')
+    
+    if event_type == 'payment.succeeded':
+        # Handle success
+        pass
+    
+    return JsonResponse({'received': True})
+```
+
+---
+
+## Environment Variables
+
+```bash
+export REEVIT_API_KEY=pfk_live_xxx
+export REEVIT_ORG_ID=org_xxx
+export REEVIT_WEBHOOK_SECRET=whsec_xxx
+```
+
+---
+
+## Supported Providers
+
+| Provider | Countries | Methods |
+|----------|-----------|---------|
+| **Paystack** | NG, GH, ZA, KE | Card, Mobile Money, Bank |
+| **Flutterwave** | NG, GH, KE, ZA+ | Card, Mobile Money, Bank |
+| **Hubtel** | GH | Mobile Money |
+| **Stripe** | Global | Card, Apple Pay, Google Pay |
+| **Monnify** | NG | Bank Transfer, Card |
+| **M-Pesa** | KE, TZ | Mobile Money |
