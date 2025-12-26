@@ -314,3 +314,145 @@ body:has([data-full-width="true"]) main {
   max-width: 100% !important;
   width: 100% !important;
 }
+
+/* =================================
+   MOBILE RESPONSIVENESS FIXES
+   ================================= */
+
+/* Mobile-first: Reset aggressive desktop overrides for small screens */
+@media (max-width: 768px) {
+  :root {
+    --fd-page-width: 100% !important;
+    --fd-toc-width: 0px !important;
+    --fd-layout-width: 100% !important;
+  }
+
+  /* Typography scaling for mobile */
+  h1, .text-mega, .text-h1 {
+    font-size: clamp(1.75rem, 8vw, 3rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  h2, .text-h2 {
+    font-size: clamp(1.5rem, 6vw, 2.25rem) !important;
+    line-height: 1.25 !important;
+  }
+
+  h3, .text-h3 {
+    font-size: clamp(1.25rem, 5vw, 1.75rem) !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Fix layout containers on mobile */
+  .fd-article,
+  .fd-page,
+  main div[class*="mx-auto"] {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide TOC on mobile completely */
+  .fd-toc {
+    display: none !important;
+  }
+
+  /* Ensure tables scroll horizontally on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  /* Fix code blocks overflow */
+  pre, code {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    font-size: 0.8rem !important;
+  }
+
+  pre {
+    padding: 0.75rem !important;
+  }
+
+  /* Cards stack vertically on mobile */
+  [class*="Cards"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Fix sidebar toggle area */
+  .fd-sidebar-trigger {
+    padding: 0.5rem !important;
+  }
+
+  /* Ensure callouts don't overflow */
+  [class*="Callout"], 
+  .callout,
+  [data-callout] {
+    padding: 0.75rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Better spacing for list items */
+  ul, ol {
+    padding-left: 1.25rem !important;
+  }
+
+  /* Fix description text wrapping */
+  p {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Page hero section improvements */
+  .fd-page-header {
+    padding: 1rem 0 !important;
+  }
+
+  .fd-page-header h1 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .fd-page-header p {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+  }
+}
+
+/* Small mobile (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .fd-article,
+  .fd-page,
+  main div[class*="mx-auto"] {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  h1, .text-mega, .text-h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2, .text-h2 {
+    font-size: 1.25rem !important;
+  }
+
+  pre, code {
+    font-size: 0.7rem !important;
+  }
+}
+
+/* Tablet breakpoint refinements */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :root {
+    --fd-toc-width: 200px !important;
+  }
+
+  .fd-article {
+    padding-right: 1.5rem !important;
+  }
+}
