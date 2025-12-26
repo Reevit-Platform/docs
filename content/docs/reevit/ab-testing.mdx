@@ -1,0 +1,136 @@
+---
+title: A/B Testing
+description: Compare provider performance with controlled routing experiments
+icon: TestTube
+---
+
+import { CreditCardIcon, Route01Icon as RouteIcon, ChartHistogramIcon, Link01Icon as LinkIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Routing A/B Tests
+
+A/B tests let you compare the performance of different PSP connections under real traffic. Instead of guessing which provider is best for a region or payment method, you can run a controlled experiment and let the data decide.
+
+<Callout type="info">
+  A/B Tests are an advanced feature for optimizing your payment stack. Use them when you have multiple connections for the same region and want to find the highest-performing option.
+</Callout>
+
+---
+
+## 🎯 When to Use A/B Tests
+
+| Use Case | Why A/B Tests Help |
+| :--- | :--- |
+| **Selecting a new provider** | Test a new PSP alongside your current one to compare success rates before fully switching. |
+| **Optimizing by region** | Compare Paystack vs. Hubtel for Ghana mobile money payments. |
+| **Fee comparison** | Determine if a slightly more expensive provider has better success rates that offset its cost. |
+
+---
+
+## ⚙️ How It Works
+
+1.  **Create an Experiment**: Define at least two `variants`, each pointing to a different `connection_id` with a `weight` (traffic allocation).
+2.  **Set Targeting**: Optionally limit the experiment to specific currencies, countries, or payment methods.
+3.  **Start the Test**: Activate the experiment. Reevit's router will split traffic according to your weights.
+4.  **Analyze Results**: View real-time success rates, latency, and costs per variant.
+5.  **Declare a Winner**: Complete the test and apply the winning connection to a permanent routing rule.
+
+---
+
+## 🛠️ Creating an A/B Test
+
+### Via SDK
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const test = await reevit.abTests.create({
+  name: 'Ghana MoMo Provider Comparison',
+  description: 'Hubtel vs Paystack for MTN Mobile Money',
+  variants: [
+    { connection_id: 'hubtel_gh_live', weight: 50 },
+    { connection_id: 'paystack_gh_live', weight: 50 }
+  ],
+  traffic_percentage: 20, // Route 20% of eligible traffic to this test
+  target_countries: ['GH'],
+  target_methods: ['momo']
+});
+```
+
+---
+
+## 📋 Field Reference
+
+| Field | Type | Required | Description |
+| :--- | :--- | :---: | :--- |
+| `name` | string | ✅ | A descriptive name for the experiment. |
+| `description` | string | | Explain the purpose of the test. |
+| `variants` | array | ✅ | At least two objects, each with `connection_id` (string) and `weight` (integer percentage). |
+| `traffic_percentage` | integer | | Percentage of eligible traffic (1-100) to route through the test. Default: `100`. |
+| `target_currencies` | string[] | | Limit test to specific currencies (e.g., `["GHS"]`). |
+| `target_countries` | string[] | | Limit test to specific country codes (e.g., `["GH", "NG"]`). |
+| `target_methods` | string[] | | Limit test to specific methods (e.g., `["card", "momo"]`). |
+| `start_at` | string | | ISO 8601 timestamp to automatically start the test. |
+| `end_at` | string | | ISO 8601 timestamp to automatically complete the test. |
+
+---
+
+## 📊 Test Lifecycle
+
+| Status | Description |
+| :--- | :--- |
+| `draft` | Test is created but not yet active. Traffic is not being routed. |
+| `running` | Test is live. Traffic is being split among variants. |
+| `paused` | Test is temporarily stopped. Traffic reverts to default routing. |
+| `completed` | Test is finished. Results are frozen for analysis. |
+
+### Managing the Lifecycle
+
+```typescript
+await reevit.abTests.start('abt_xyz123');
+await reevit.abTests.pause('abt_xyz123');
+await reevit.abTests.complete('abt_xyz123');
+```
+
+---
+
+## 📈 Analyzing Results
+
+Fetch the comparison report:
+
+```typescript
+const comparison = await reevit.abTests.getComparison('abt_xyz123');
+// {
+//   variants: [
+//     { connection_id: 'hubtel_gh_live', success_rate: 0.94, avg_latency_ms: 450, total_payments: 1200 },
+//     { connection_id: 'paystack_gh_live', success_rate: 0.91, avg_latency_ms: 520, total_payments: 1180 }
+//   ],
+//   winner: 'hubtel_gh_live',
+//   statistical_significance: 0.95
+// }
+```
+
+---
+
+## ✅ Best Practices
+
+1.  **Sufficient Volume**: Run tests long enough to gather statistically significant data (usually 1,000+ transactions per variant).
+2.  **One Variable at a Time**: Only compare connections; don't change targeting rules mid-experiment.
+3.  **Start with Low Traffic**: Use `traffic_percentage` to initially test with 10-20% of traffic, then scale up.
+4.  **Apply Learnings**: After completing a test, create a [Routing Rule](/docs/reevit/routing-rules) to make the winning connection your primary.
+
+---
+
+## 📚 Related Resources
+
+<Cards columns={2}>
+  <Card title="Smart Routing" href="/docs/reevit/routing-rules" icon={<HugeiconsIcon icon={RouteIcon} />}>
+    Apply your test results as permanent routing rules.
+  </Card>
+  <Card title="Connections" href="/docs/reevit/connections" icon={<HugeiconsIcon icon={LinkIcon} />}>
+    Manage the PSP accounts you're comparing.
+  </Card>
+  <Card title="Payments" href="/docs/reevit/payments" icon={<HugeiconsIcon icon={CreditCardIcon} />}>
+    See how individual payments are attributed to test variants.
+  </Card>
+</Cards>

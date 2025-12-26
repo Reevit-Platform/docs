@@ -1,0 +1,115 @@
+---
+title: Payment Links
+description: Generate shareable payment pages without writing code
+icon: Link
+---
+
+import { CreditCardIcon, Link01Icon as LinkIcon, Shield01Icon as ShieldCheckIcon, User02Icon as UsersIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Payment Links
+
+Payment Links let you generate a unique URL that displays a branded checkout page. Share it via email, SMS, or embed it on your website—no coding required. Each link tracks its own stats, usage limits, and associated payments.
+
+<Callout type="info">
+  Payment Links are ideal for invoicing, donations, event tickets, or any one-off transaction where you don't want to build a custom checkout flow.
+</Callout>
+
+---
+
+## 🎯 When to Use Payment Links
+
+| Use Case | Why Payment Links Work |
+| :--- | :--- |
+| **Invoices** | Send a payment link to a client instead of chasing bank transfers. |
+| **Donations** | Create a shareable donation page with optional custom amounts. |
+| **Events & Tickets** | Generate a link for event registration with a fixed price. |
+| **Quick Sales** | Share a link on social media for one-off product sales. |
+
+---
+
+## 🛠️ Creating a Payment Link
+
+### Via the Dashboard
+Navigate to **Payment Links** in your dashboard and click "Create Link". Fill in the required fields and share the generated URL.
+
+### Via SDK
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const link = await reevit.paymentLinks.create({
+  name: 'Event Ticket - Q1 Meetup',
+  description: 'Entry for the Jan 2025 Developer Meetup',
+  amount: 5000, // 50.00 GHS in minor units
+  currency: 'GHS',
+  redirect_url: 'https://yoursite.com/thank-you',
+  max_uses: 100,
+  expires_at: '2025-01-31T23:59:59Z'
+});
+
+console.log(link.url); // https://pay.reevit.dev/lnk_xyz123
+```
+
+---
+
+## 📋 Field Reference
+
+| Field | Type | Required | Description |
+| :--- | :--- | :---: | :--- |
+| `name` | string | ✅ | Internal name for the link (e.g., "Jan Invoice for Client A"). |
+| `description` | string | | Customer-facing text shown on the checkout page. |
+| `amount` | integer | | Fixed amount in minor currency units. Omit if using `allow_custom_amount`. |
+| `currency` | string | ✅ | ISO 4217 currency code (e.g., `GHS`, `NGN`, `USD`). |
+| `allow_custom_amount` | boolean | | If `true`, the customer can enter their own amount. |
+| `min_amount` | integer | | Minimum amount when custom amounts are enabled. |
+| `max_amount` | integer | | Maximum amount when custom amounts are enabled. |
+| `redirect_url` | string | | URL to redirect customer after successful payment. |
+| `webhook_url` | string | | Optional override for webhooks related to this link. |
+| `expires_at` | string | | ISO 8601 timestamp after which the link becomes unusable. |
+| `max_uses` | integer | | Maximum number of successful payments before the link deactivates. |
+| `custom_fields` | array | | Collect extra data (e.g., name, email) before payment. |
+| `branding` | object | | Customize the checkout page's logo and colors. |
+| `metadata` | object | | Attach your own key-value pairs for tracking. |
+
+---
+
+## 📊 Tracking & Stats
+
+Each Payment Link has its own analytics:
+*   **Total Views**: How many times the checkout page was loaded.
+*   **Successful Payments**: Number of completed transactions.
+*   **Conversion Rate**: `Successful Payments / Total Views`.
+*   **Total Revenue**: Sum of all successful payments.
+
+Fetch stats programmatically:
+
+```typescript
+const stats = await reevit.paymentLinks.getStats('lnk_xyz123');
+// { views: 150, payments: 45, conversion_rate: 0.30, total_revenue: 225000 }
+```
+
+---
+
+## ✅ Best Practices
+
+1.  **Set Expiry Dates**: For time-sensitive campaigns, always set an `expires_at` to prevent stale links.
+2.  **Use Descriptive Names**: Make internal names searchable (e.g., "Invoice #1234 - Acme Corp").
+3.  **Custom Branding**: Use the `branding` field to match the checkout page to your brand.
+4.  **Limit Usage**: For limited promotions, set `max_uses` to control how many payments can be processed.
+
+---
+
+## 📚 Related Resources
+
+<Cards columns={2}>
+  <Card title="Payments Guide" href="/docs/reevit/payments" icon={<HugeiconsIcon icon={CreditCardIcon} />}>
+    See how payments created from links appear in your main payment flow.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/webhooks" icon={<HugeiconsIcon icon={ShieldCheckIcon} />}>
+    Get notified when a payment link is used.
+  </Card>
+  <Card title="Customers" href="/docs/reevit/customers" icon={<HugeiconsIcon icon={UsersIcon} />}>
+    Link payments to your customer profiles.
+  </Card>
+</Cards>
