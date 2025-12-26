@@ -1,0 +1,308 @@
+---
+title: Node.js SDK
+description: TypeScript/JavaScript SDK for Reevit API
+---
+
+# Node.js SDK
+
+[![npm version](https://img.shields.io/npm/v/@reevit/node-sdk.svg)](https://www.npmjs.com/package/@reevit/node-sdk)
+[![GitHub](https://img.shields.io/badge/GitHub-Reevit--Platform%2Fnode-sdk-blue)](https://github.com/Reevit-Platform/node-sdk)
+
+The official Node.js/TypeScript SDK for the Reevit payment orchestration platform.
+
+## Installation
+
+```bash
+npm install @reevit/node
+# or
+yarn add @reevit/node
+# or
+pnpm add @reevit/node
+```
+
+## Quick Start
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+// Initialize the client
+const reevit = new Reevit(
+  'pfk_live_your_api_key',  // Your API key
+  'org_your_org_id'          // Your organization ID
+);
+
+// Create a payment
+const payment = await reevit.payments.createIntent({
+  amount: 5000,      // 50.00 GHS (amount in smallest currency unit)
+  currency: 'GHS',
+  method: 'momo',
+  country: 'GH',
+  customer_id: 'cust_123'
+});
+
+console.log('Payment ID:', payment.id);
+console.log('Status:', payment.status);
+```
+
+---
+
+## Configuration
+
+### Environment Variables (Recommended)
+
+```typescript
+import { Reevit } from '@reevit/node';
+
+const reevit = new Reevit(
+  process.env.REEVIT_API_KEY!,
+  process.env.REEVIT_ORG_ID!,
+  process.env.REEVIT_BASE_URL || 'https://api.reevit.io'
+);
+```
+
+### API Key Types
+
+| Key Prefix | Environment | Description |
+|------------|-------------|-------------|
+| `pfk_live_` | Production | Live transactions, real money |
+| `pfk_test_` | Sandbox | Test transactions, no real charges |
+
+---
+
+## Payments
+
+### Create Payment Intent
+
+```typescript
+const payment = await reevit.payments.createIntent({
+  amount: 10000,           // 100.00 in smallest currency unit
+  currency: 'GHS',         // Currency code (GHS, NGN, KES, USD)
+  method: 'momo',          // Payment method
+  country: 'GH',           // ISO country code
+  customer_id: 'cust_123', // Optional: Your customer reference
+  metadata: {              // Optional: Custom metadata
+    order_id: 'order_456',
+    product: 'Premium Plan'
+  }
+});
+```
+
+### Payment Methods by Country
+
+| Country | Code | Supported Methods |
+|---------|------|-------------------|
+| Ghana | `GH` | `momo`, `card`, `bank_transfer` |
+| Nigeria | `NG` | `card`, `bank_transfer`, `ussd` |
+| Kenya | `KE` | `mpesa`, `card` |
+
+### Get Payment
+
+```typescript
+const payment = await reevit.payments.get('pay_abc123');
+
+console.log('Payment Details:', {
+  id: payment.id,
+  status: payment.status,
+  amount: payment.amount,
+  currency: payment.currency,
+  fee: payment.fee_amount,
+  provider: payment.provider,
+});
+```
+
+### List Payments
+
+```typescript
+// Basic listing (default: 50 payments)
+const payments = await reevit.payments.list();
+
+// With pagination
+const page1 = await reevit.payments.list(10, 0);   // First 10
+const page2 = await reevit.payments.list(10, 10);  // Next 10
+```
+
+### Refund Payment
+
+```typescript
+// Full refund
+const fullRefund = await reevit.payments.refund('pay_abc123');
+
+// Partial refund
+const partialRefund = await reevit.payments.refund(
+  'pay_abc123',
+  2500,                    // Refund 25.00
+  'Customer requested'     // Reason (optional)
+);
+```
+
+---
+
+## Connections
+
+Manage your PSP integrations.
+
+### Create Connection
+
+```typescript
+// Paystack Connection
+const paystackConnection = await reevit.connections.create({
+  provider: 'paystack',
+  mode: 'live',
+  credentials: {
+    secret_key: 'sk_live_xxxxx'
+  },
+  labels: ['nigeria', 'primary'],
+  routing_hints: {
+    country_preference: ['NG'],
+    method_bias: { card: 'high', bank_transfer: 'medium' },
+    fallback_only: false
+  }
+});
+```
+
+### List Connections
+
+```typescript
+const connections = await reevit.connections.list();
+
+connections.forEach(conn => {
+  console.log(`${conn.provider} (${conn.mode}): ${conn.status}`);
+});
+```
+
+### Test Connection
+
+```typescript
+const isValid = await reevit.connections.test({
+  provider: 'paystack',
+  mode: 'live',
+  credentials: {
+    secret_key: 'sk_live_xxxxx'
+  }
+});
+```
+
+---
+
+## Subscriptions
+
+```typescript
+// Create subscription
+const subscription = await reevit.subscriptions.create({
+  customer_id: 'cust_123',
+  plan_id: 'plan_premium',
+  amount: 9900,           // 99.00 per month
+  currency: 'GHS',
+  method: 'momo',
+  interval: 'monthly',
+  metadata: {
+    plan_name: 'Premium',
+  }
+});
+
+// List subscriptions
+const subscriptions = await reevit.subscriptions.list();
+```
+
+---
+
+## Fraud Protection
+
+```typescript
+// Get current policy
+const policy = await reevit.fraud.get();
+
+// Update policy
+const updatedPolicy = await reevit.fraud.update({
+  prefer: ['paystack', 'flutterwave'],
+  max_amount: 500000,
+  blocked_bins: ['123456'],
+  velocity_max_per_minute: 10
+});
+```
+
+---
+
+## Webhook Verification
+
+```typescript
+import { verifyWebhook } from '@reevit/node';
+
+app.post('/webhooks/reevit', (req, res) => {
+  const signature = req.headers['x-reevit-signature'];
+  
+  if (!verifyWebhook(req.rawBody, signature, webhookSecret)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  const event = req.body;
+  
+  switch (event.type) {
+    case 'payment.succeeded':
+      // Handle success
+      break;
+    case 'payment.failed':
+      // Handle failure
+      break;
+  }
+  
+  res.status(200).send('OK');
+});
+```
+
+---
+
+## Error Handling
+
+```typescript
+import { AxiosError } from 'axios';
+
+try {
+  const payment = await reevit.payments.createIntent({
+    amount: 5000,
+    currency: 'GHS',
+    method: 'momo',
+    country: 'GH'
+  });
+} catch (error) {
+  if (error instanceof AxiosError) {
+    console.error('API Error:', {
+      status: error.response?.status,
+      message: error.response?.data?.message,
+      code: error.response?.data?.code
+    });
+  }
+}
+```
+
+---
+
+## TypeScript Types
+
+```typescript
+import {
+  Payment,
+  PaymentSummary,
+  PaymentIntentRequest,
+  Connection,
+  Subscription,
+  FraudPolicy,
+} from '@reevit/node';
+
+function processPayment(payment: Payment): void {
+  console.log(`Processing ${payment.id}`);
+}
+```
+
+---
+
+## Supported Providers
+
+| Provider | Countries | Methods |
+|----------|-----------|---------|
+| **Paystack** | NG, GH, ZA, KE | Card, Mobile Money, Bank |
+| **Flutterwave** | NG, GH, KE, ZA+ | Card, Mobile Money, Bank |
+| **Hubtel** | GH | Mobile Money |
+| **Stripe** | Global | Card, Apple Pay, Google Pay |
+| **Monnify** | NG | Bank Transfer, Card |
+| **M-Pesa** | KE, TZ | Mobile Money |

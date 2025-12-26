@@ -1,0 +1,313 @@
+---
+title: React SDK
+description: React components and hooks for Reevit payments
+---
+
+# React SDK
+
+[![npm version](https://img.shields.io/npm/v/@reevit/react.svg)](https://www.npmjs.com/package/@reevit/react)
+[![GitHub](https://img.shields.io/badge/GitHub-Reevit--Platform%2Freact-blue)](https://github.com/Reevit-Platform/react-sdk)
+
+Pre-built React components for integrating Reevit payments with beautiful, customizable checkout UI.
+
+## Installation
+
+```bash
+npm install @reevit/react
+```
+
+## Quick Start
+
+The simplest way to integrate Reevit is using the `ReevitCheckout` component.
+
+```tsx
+import { ReevitCheckout } from '@reevit/react';
+import '@reevit/react/styles.css';
+
+function App() {
+  return (
+    <ReevitCheckout
+      publicKey="pk_test_your_key"
+      amount={10000} // Amount in smallest unit (pesewas for GHS)
+      currency="GHS"
+      email="customer@example.com"
+      onSuccess={(result) => {
+        console.log('Payment success!', result);
+        alert(`Payment of ${result.currency} ${result.amount/100} successful!`);
+      }}
+      onError={(error) => {
+        console.error('Payment failed:', error.message);
+      }}
+    >
+      <button className="my-pay-button">Pay GHS 100.00</button>
+    </ReevitCheckout>
+  );
+}
+```
+
+> **Note:** Always import the styles CSS file to get the built-in checkout modal styling.
+
+---
+
+## Props Reference
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `publicKey` | `string` | ✅ | Your project's public key (`pk_test_...` or `pk_live_...`) |
+| `amount` | `number` | ✅ | Amount in smallest unit (e.g., 500 for 5.00) |
+| `currency` | `string` | ✅ | 3-letter ISO currency code (GHS, NGN, USD, etc.) |
+| `email` | `string` | | Customer's email address |
+| `phone` | `string` | | Customer's phone (recommended for Mobile Money) |
+| `reference` | `string` | | Your own unique transaction reference |
+| `metadata` | `object` | | Key-value pairs to store with the transaction |
+| `paymentMethods` | `string[]` | | Enabled methods: `['card', 'mobile_money', 'bank_transfer']` |
+| `theme` | `ReevitTheme` | | Customization options |
+| `apiBaseUrl` | `string` | | Custom API URL (for self-hosted or testing) |
+| `onSuccess` | `function` | | Called when payment is successful |
+| `onError` | `function` | | Called when an error occurs |
+| `onClose` | `function` | | Called when user dismisses the widget |
+
+---
+
+## Theming
+
+Customize the checkout widget to match your brand:
+
+```tsx
+<ReevitCheckout
+  publicKey="pk_test_xxx"
+  amount={5000}
+  currency="GHS"
+  theme={{
+    primaryColor: '#6200EE',
+    backgroundColor: '#F5F5F5',
+    textColor: '#000000',
+    borderRadius: '12px',
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    darkMode: true,
+  }}
+  onSuccess={handleSuccess}
+>
+  <button>Secure Checkout</button>
+</ReevitCheckout>
+```
+
+### Theme Options
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `primaryColor` | `string` | Primary button and accent color |
+| `backgroundColor` | `string` | Modal background color |
+| `textColor` | `string` | Text color |
+| `borderRadius` | `string` | Border radius for buttons and inputs |
+| `fontFamily` | `string` | Custom font family |
+| `darkMode` | `boolean` | Enable dark mode styling |
+
+---
+
+## useReevit Hook
+
+For full control over the payment flow, use the `useReevit` hook to build your own custom UI.
+
+```tsx
+import { useReevit } from '@reevit/react';
+
+function CustomCheckout() {
+  const {
+    status,        // 'idle' | 'loading' | 'ready' | 'method_selected' | 'processing' | 'success' | 'failed'
+    paymentIntent, // Created payment intent details
+    error,         // Error object if failed
+    initialize,    // Start the checkout process
+    selectMethod,  // Pick 'card' or 'mobile_money'
+    processPayment,// Confirm payment with PSP data
+    reset,         // Reset to initial state
+    isLoading,     // Loading state boolean
+  } = useReevit({
+    config: {
+      publicKey: 'pk_test_xxx',
+      amount: 5000,
+      currency: 'GHS',
+      email: 'customer@example.com',
+    },
+    apiBaseUrl: 'http://localhost:8080', // Optional: for local development
+    onSuccess: (result) => console.log('Payment complete!', result),
+    onError: (error) => console.error('Payment failed:', error),
+  });
+
+  if (status === 'loading') return <div>Loading...</div>;
+  if (status === 'success') return <div>Payment successful! ✅</div>;
+
+  return (
+    <div>
+      {status === 'idle' && (
+        <button onClick={() => initialize()}>Start Checkout</button>
+      )}
+      
+      {status === 'ready' && (
+        <>
+          <h3>Select Payment Method</h3>
+          <button onClick={() => selectMethod('card')}>💳 Card</button>
+          <button onClick={() => selectMethod('mobile_money')}>📱 Mobile Money</button>
+        </>
+      )}
+      
+      {error && (
+        <div className="error">
+          {error.message}
+          <button onClick={reset}>Try Again</button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## PSP Bridges
+
+For advanced use cases, use individual PSP bridges directly.
+
+### Paystack Bridge
+
+The default bridge for card and mobile money payments in Ghana/Nigeria:
+
+```tsx
+import { PaystackBridge } from '@reevit/react';
+
+<PaystackBridge
+  publicKey="pk_test_xxx"
+  email="customer@example.com"
+  amount={5000}
+  currency="GHS"
+  reference="TXN_12345"
+  channels={['card', 'mobile_money']}
+  onSuccess={(result) => console.log('Paid:', result)}
+  onError={(err) => console.error(err.message)}
+  onClose={() => console.log('Closed')}
+/>
+```
+
+### Stripe Bridge
+
+For card payments including Apple Pay and Google Pay:
+
+```tsx
+import { StripeBridge } from '@reevit/react';
+
+<StripeBridge
+  publishableKey="pk_test_xxx"
+  clientSecret="pi_xxx_secret_xxx" // From your backend
+  amount={5000}
+  currency="USD"
+  onSuccess={(result) => console.log('Paid:', result.paymentIntentId)}
+  onError={(err) => console.error(err.message)}
+/>
+```
+
+### Monnify Bridge (Nigeria)
+
+For bank transfers and cards in Nigeria:
+
+```tsx
+import { MonnifyBridge } from '@reevit/react';
+
+<MonnifyBridge
+  apiKey="MK_TEST_xxx"
+  contractCode="1234567890"
+  amount={5000}
+  currency="NGN"
+  reference="TXN_12345"
+  customerName="John Doe"
+  customerEmail="john@example.com"
+  isTestMode={true}
+  onSuccess={(result) => console.log('Paid:', result.transactionReference)}
+  onError={(err) => console.error(err.message)}
+/>
+```
+
+### M-Pesa Bridge (Kenya/Tanzania)
+
+M-Pesa uses STK Push - the customer receives a prompt on their phone:
+
+```tsx
+import { MPesaBridge, useMPesaStatusPolling } from '@reevit/react';
+
+function MpesaPayment() {
+  const [checkoutId, setCheckoutId] = useState(null);
+  
+  const { startPolling } = useMPesaStatusPolling(
+    '/api/mpesa/status',
+    checkoutId,
+    {
+      onSuccess: (result) => console.log('Paid:', result.transactionId),
+      onFailed: (err) => console.error(err.message),
+      onTimeout: () => console.log('Timed out'),
+    }
+  );
+
+  return (
+    <MPesaBridge
+      apiEndpoint="/api/mpesa/stk-push"
+      phoneNumber="254712345678"
+      amount={500}
+      currency="KES"
+      reference="TXN_12345"
+      onInitiated={(id) => {
+        setCheckoutId(id);
+        startPolling();
+      }}
+      onSuccess={(result) => console.log('Paid!')}
+      onError={(err) => console.error(err.message)}
+    />
+  );
+}
+```
+
+---
+
+## Supported Providers
+
+| Provider | Countries | Payment Methods |
+|----------|-----------|-----------------|
+| **Paystack** | NG, GH, ZA, KE | Card, Mobile Money, Bank |
+| **Flutterwave** | NG, GH, KE, ZA+ | Card, Mobile Money, Bank |
+| **Hubtel** | GH | Mobile Money |
+| **Stripe** | Global (50+) | Card, Apple Pay, Google Pay |
+| **Monnify** | NG | Card, Bank Transfer, USSD |
+| **M-Pesa** | KE, TZ | Mobile Money (STK Push) |
+
+---
+
+## Troubleshooting
+
+### CORS Errors
+
+If you see CORS errors when connecting to your local backend:
+
+1. Ensure your backend includes your frontend origin in `FRONTEND_ALLOWED_ORIGINS`
+2. Check that the `apiBaseUrl` prop points to the correct backend URL
+3. Verify your API key is valid and registered in the database
+
+### Styles Not Loading
+
+Make sure you import the styles:
+
+```tsx
+import '@reevit/react/styles.css';
+```
+
+### Payment Failed: Network Error
+
+This usually means the SDK cannot reach the backend:
+
+1. Check your `apiBaseUrl` is correct
+2. Ensure the backend is running
+3. For test keys (`pk_test_*`), the SDK defaults to sandbox API unless `apiBaseUrl` is set
+
+---
+
+## Browser Support
+
+- Chrome, Firefox, Safari, Edge (latest 2 versions)
+- Mobile Safari and Chrome on Android/iOS

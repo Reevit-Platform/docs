@@ -1,0 +1,246 @@
+---
+title: Svelte SDK
+description: Svelte 5 components and stores for Reevit payments
+---
+
+# Svelte SDK
+
+[![npm version](https://img.shields.io/npm/v/@reevit/svelte.svg)](https://www.npmjs.com/package/@reevit/svelte)
+[![GitHub](https://img.shields.io/badge/GitHub-Reevit--Platform%2Fsvelte-blue)](https://github.com/Reevit-Platform/svelte-sdk)
+
+Svelte SDK for integrating Reevit unified payments with reactive stores.
+
+## Installation
+
+```bash
+npm install @reevit/svelte @reevit/core
+```
+
+## Quick Start
+
+The simplest way to integrate Reevit is using the `ReevitCheckout` component.
+
+```svelte
+<script lang="ts">
+  import { ReevitCheckout } from '@reevit/svelte';
+  import '@reevit/svelte/styles.css';
+
+  const handleSuccess = (event) => {
+    console.log('Payment success!', event.detail);
+  };
+
+  const handleError = (event) => {
+    console.error('Payment failed:', event.detail);
+  };
+</script>
+
+<ReevitCheckout
+  publicKey="pk_test_xxx"
+  amount={10000}
+  currency="GHS"
+  email="customer@example.com"
+  on:success={handleSuccess}
+  on:error={handleError}
+>
+  <button slot="default" let:handleOpen let:isLoading on:click={handleOpen} disabled={isLoading}>
+    {isLoading ? 'Loading...' : 'Pay GHS 100.00'}
+  </button>
+</ReevitCheckout>
+```
+
+---
+
+## Props Reference
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `publicKey` | `string` | ✅ | Your project's public key |
+| `amount` | `number` | ✅ | Amount in smallest unit |
+| `currency` | `string` | ✅ | 3-letter currency code |
+| `email` | `string` | | Customer's email |
+| `phone` | `string` | | Customer's phone number |
+| `reference` | `string` | | Your transaction reference |
+| `metadata` | `object` | | Custom metadata |
+| `paymentMethods` | `string[]` | | Enabled payment methods |
+| `theme` | `ReevitTheme` | | Customization options |
+| `isOpen` | `boolean` | | Control modal visibility manually |
+| `apiBaseUrl` | `string` | | Custom API URL |
+
+## Events
+
+| Event | Type | Description |
+|-------|------|-------------|
+| `on:success` | `CustomEvent<PaymentResult>` | Fired on successful payment |
+| `on:error` | `CustomEvent<PaymentError>` | Fired on error |
+| `on:close` | `CustomEvent<void>` | Fired when widget is closed |
+
+---
+
+## Theming
+
+```svelte
+<ReevitCheckout
+  theme={{
+    primaryColor: '#FF3E00',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '10px'
+  }}
+  publicKey="pk_test_xxx"
+  amount={5000}
+  currency="GHS"
+  on:success={handleSuccess}
+>
+  <button slot="default" let:handleOpen on:click={handleOpen}>
+    Secure Pay
+  </button>
+</ReevitCheckout>
+```
+
+---
+
+## createReevitStore
+
+For full control over the payment flow, use the `createReevitStore` factory.
+
+```svelte
+<script lang="ts">
+  import { createReevitStore } from '@reevit/svelte';
+
+  const store = createReevitStore({
+    config: {
+      publicKey: 'pk_test_xxx',
+      amount: 5000,
+      currency: 'GHS',
+      email: 'customer@example.com',
+    },
+    apiBaseUrl: 'http://localhost:8080',
+    onSuccess: (res) => console.log('Payment done!', res),
+    onError: (err) => console.error('Payment failed:', err),
+  });
+
+  $: state = $store;
+</script>
+
+<button on:click={() => store.initialize()}>Start Payment</button>
+
+{#if state.status === 'ready'}
+  <div>
+    <h3>Select Payment Method</h3>
+    <button on:click={() => store.selectMethod('card')}>💳 Card</button>
+    <button on:click={() => store.selectMethod('mobile_money')}>📱 Mobile Money</button>
+  </div>
+{/if}
+
+{#if state.status === 'success'}
+  <div>✅ Payment successful!</div>
+{/if}
+
+{#if state.error}
+  <div class="error">
+    {state.error.message}
+    <button on:click={() => store.reset()}>Try Again</button>
+  </div>
+{/if}
+```
+
+---
+
+## PSP Bridge Functions
+
+For advanced use cases, use PSP bridge functions directly.
+
+### Stripe
+
+```ts
+import { createStripeInstance, confirmStripePayment } from '@reevit/svelte';
+
+const stripe = await createStripeInstance('pk_test_xxx');
+const elements = stripe.elements({ clientSecret: 'pi_xxx_secret_xxx' });
+const paymentElement = elements.create('payment');
+paymentElement.mount('#payment-element');
+
+// Later, confirm payment
+await confirmStripePayment({
+  publishableKey: 'pk_test_xxx',
+  clientSecret: 'pi_xxx_secret_xxx',
+  elements,
+  onSuccess: (result) => console.log('Paid:', result.paymentIntentId),
+  onError: (err) => console.error(err.message),
+});
+```
+
+### Monnify (Nigeria)
+
+```ts
+import { openMonnifyModal } from '@reevit/svelte';
+
+await openMonnifyModal({
+  apiKey: 'MK_TEST_xxx',
+  contractCode: '1234567890',
+  amount: 5000,
+  currency: 'NGN',
+  reference: 'TXN_12345',
+  customerName: 'John Doe',
+  customerEmail: 'john@example.com',
+  onSuccess: (result) => console.log('Paid:', result.transactionReference),
+  onClose: () => console.log('Closed'),
+});
+```
+
+### M-Pesa (Kenya/Tanzania)
+
+```ts
+import { initiateMPesaSTKPush } from '@reevit/svelte';
+
+const result = await initiateMPesaSTKPush(
+  {
+    phoneNumber: '254712345678',
+    amount: 500,
+    reference: 'TXN_12345',
+    onInitiated: () => console.log('STK Push sent'),
+    onSuccess: (result) => console.log('Paid:', result.transactionId),
+    onError: (err) => console.error(err.message),
+  },
+  '/api/mpesa/stk-push'
+);
+```
+
+---
+
+## SvelteKit Integration
+
+For SvelteKit applications, use the component in `+page.svelte`:
+
+```svelte
+<script>
+  import { ReevitCheckout } from '@reevit/svelte';
+  import '@reevit/svelte/styles.css';
+  import { browser } from '$app/environment';
+</script>
+
+{#if browser}
+  <ReevitCheckout
+    publicKey="pk_test_xxx"
+    amount={5000}
+    currency="GHS"
+    on:success={(e) => console.log('Paid!', e.detail)}
+  >
+    <button slot="default" let:handleOpen on:click={handleOpen}>
+      Pay Now
+    </button>
+  </ReevitCheckout>
+{/if}
+```
+
+---
+
+## Supported Providers
+
+| Provider | Countries | Payment Methods |
+|----------|-----------|-----------------|
+| **Paystack** | NG, GH, ZA, KE | Card, Mobile Money, Bank |
+| **Flutterwave** | NG, GH, KE, ZA+ | Card, Mobile Money, Bank |
+| **Hubtel** | GH | Mobile Money |
+| **Stripe** | Global (50+) | Card, Apple Pay, Google Pay |
+| **Monnify** | NG | Card, Bank Transfer, USSD |
+| **M-Pesa** | KE, TZ | Mobile Money (STK Push) |

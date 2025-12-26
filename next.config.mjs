@@ -9,6 +9,10 @@ const config = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'img.shields.io',
+      },
+      {
+        protocol: 'https',
         hostname: 'vercel.com',
       },
       {

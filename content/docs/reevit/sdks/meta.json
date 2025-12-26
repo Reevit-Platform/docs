@@ -1,0 +1,15 @@
+{
+  "title": "SDKs",
+  "pages": [
+    "index",
+    "---Frontend SDKs---",
+    "react",
+    "vue",
+    "svelte",
+    "---Backend SDKs---",
+    "nodejs",
+    "python",
+    "go",
+    "php"
+  ]
+}

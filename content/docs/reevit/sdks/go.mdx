@@ -1,0 +1,241 @@
+---
+title: Go SDK
+description: Go client library for Reevit API
+---
+
+# Go SDK
+
+[![GitHub](https://img.shields.io/badge/GitHub-Reevit--Platform%2Fgo-blue)](https://github.com/Reevit-Platform/go-sdk)
+
+The official Go SDK for the Reevit payment orchestration platform.
+
+## Installation
+
+```bash
+go get github.com/Reevit-Platform/go-sdk
+```
+
+## Quick Start
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/Reevit-Platform/go/reevit"
+)
+
+func main() {
+    client := reevit.NewClient(
+        reevit.WithAPIKey("pfk_live_xxx"),
+        reevit.WithOrgID("org_123"),
+    )
+
+    // Create payment intent
+    intent, err := client.Payments.CreateIntent(context.Background(), &reevit.CreateIntentRequest{
+        Amount:     5000,
+        Currency:   "GHS",
+        Method:     "momo",
+        Country:    "GH",
+        CustomerID: "cust_456",
+        Metadata: map[string]string{
+            "order_id": "12345",
+        },
+    })
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Printf("Payment ID: %s, Status: %s\n", intent.ID, intent.Status)
+}
+```
+
+---
+
+## Configuration
+
+```go
+client := reevit.NewClient(
+    reevit.WithAPIKey("pfk_live_xxx"),
+    reevit.WithOrgID("org_123"),
+    reevit.WithBaseURL("https://api.reevit.io"),
+    reevit.WithTimeout(30 * time.Second),
+)
+```
+
+### Environment Variables
+
+```go
+import "os"
+
+client := reevit.NewClient(
+    reevit.WithAPIKey(os.Getenv("REEVIT_API_KEY")),
+    reevit.WithOrgID(os.Getenv("REEVIT_ORG_ID")),
+)
+```
+
+---
+
+## Payments
+
+### Create Payment Intent
+
+```go
+intent, err := client.Payments.CreateIntent(ctx, &reevit.CreateIntentRequest{
+    Amount:     10000,
+    Currency:   "GHS",
+    Method:     "momo",
+    Country:    "GH",
+    CustomerID: "cust_123",
+    Metadata: map[string]string{
+        "order_id": "ORD-2024-001",
+    },
+})
+```
+
+### Get Payment
+
+```go
+payment, err := client.Payments.Get(ctx, "pay_abc123")
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("Status: %s, Amount: %d\n", payment.Status, payment.Amount)
+```
+
+### List Payments
+
+```go
+payments, err := client.Payments.List(ctx, 50, 0) // limit, offset
+for _, p := range payments {
+    fmt.Printf("%s: %s\n", p.ID, p.Status)
+}
+```
+
+### Refund Payment
+
+```go
+// Full refund
+refund, err := client.Payments.Refund(ctx, "pay_abc123", nil)
+
+// Partial refund
+refund, err := client.Payments.Refund(ctx, "pay_abc123", &reevit.RefundRequest{
+    Amount: 2500,
+    Reason: "Customer requested",
+})
+```
+
+---
+
+## Connections
+
+### Create Connection
+
+```go
+conn, err := client.Connections.Create(ctx, &reevit.CreateConnectionRequest{
+    Provider: "paystack",
+    Mode:     "live",
+    Credentials: map[string]string{
+        "secret_key": "sk_live_xxxxx",
+    },
+    Labels: []string{"nigeria", "primary"},
+    RoutingHints: &reevit.RoutingHints{
+        CountryPreference: []string{"NG"},
+        MethodBias: map[string]string{
+            "card": "high",
+        },
+    },
+})
+```
+
+### List Connections
+
+```go
+connections, err := client.Connections.List(ctx)
+for _, c := range connections {
+    fmt.Printf("%s (%s): %s\n", c.Provider, c.Mode, c.Status)
+}
+```
+
+---
+
+## Webhook Verification
+
+```go
+import "github.com/Reevit-Platform/go/webhooks"
+
+func handleWebhook(w http.ResponseWriter, r *http.Request) {
+    body, _ := io.ReadAll(r.Body)
+    signature := r.Header.Get("X-Reevit-Signature")
+    
+    if !webhooks.Verify(body, signature, webhookSecret) {
+        http.Error(w, "Invalid signature", 401)
+        return
+    }
+    
+    var event webhooks.Event
+    json.Unmarshal(body, &event)
+    
+    switch event.Type {
+    case "payment.succeeded":
+        // Handle success
+        log.Printf("Payment succeeded: %s", event.Data.ID)
+    case "payment.failed":
+        // Handle failure
+    }
+    
+    w.WriteHeader(200)
+}
+```
+
+---
+
+## Error Handling
+
+```go
+intent, err := client.Payments.CreateIntent(ctx, req)
+if err != nil {
+    if apiErr, ok := err.(*reevit.APIError); ok {
+        fmt.Printf("API Error: %s (code: %s)\n", apiErr.Message, apiErr.Code)
+        fmt.Printf("HTTP Status: %d\n", apiErr.StatusCode)
+    } else {
+        fmt.Printf("Error: %v\n", err)
+    }
+    return
+}
+```
+
+---
+
+## Types
+
+```go
+import "github.com/Reevit-Platform/go/reevit"
+
+func processPayment(payment *reevit.Payment) {
+    fmt.Printf("Processing %s\n", payment.ID)
+}
+
+func buildRequest() *reevit.CreateIntentRequest {
+    return &reevit.CreateIntentRequest{
+        Amount:   5000,
+        Currency: "GHS",
+        Method:   "momo",
+        Country:  "GH",
+    }
+}
+```
+
+---
+
+## Supported Providers
+
+| Provider | Countries | Methods |
+|----------|-----------|---------|
+| **Paystack** | NG, GH, ZA, KE | Card, Mobile Money, Bank |
+| **Flutterwave** | NG, GH, KE, ZA+ | Card, Mobile Money, Bank |
+| **Hubtel** | GH | Mobile Money |
+| **Stripe** | Global | Card, Apple Pay, Google Pay |
+| **Monnify** | NG | Bank Transfer, Card |
+| **M-Pesa** | KE, TZ | Mobile Money |

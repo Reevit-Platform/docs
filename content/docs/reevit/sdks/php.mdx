@@ -1,0 +1,261 @@
+---
+title: PHP SDK
+description: PHP library for Reevit API
+---
+
+# PHP SDK
+
+[![GitHub](https://img.shields.io/badge/GitHub-Reevit--Platform%2Fphp-blue)](https://github.com/Reevit-Platform/php-sdk)
+
+The official PHP SDK for the Reevit payment orchestration platform.
+
+## Installation
+
+```bash
+composer require reevit/reevit-php
+```
+
+## Quick Start
+
+```php
+<?php
+require_once 'vendor/autoload.php';
+
+use Reevit\Client;
+
+$client = new Client([
+    'api_key' => 'pfk_live_xxx',
+    'org_id' => 'org_123',
+]);
+
+// Create payment intent
+$intent = $client->payments->createIntent([
+    'amount' => 5000,
+    'currency' => 'GHS',
+    'method' => 'momo',
+    'country' => 'GH',
+    'customer_id' => 'cust_456',
+    'metadata' => [
+        'order_id' => '12345',
+    ],
+]);
+
+echo "Payment ID: {$intent->id}, Status: {$intent->status}\n";
+```
+
+---
+
+## Configuration
+
+```php
+$client = new Client([
+    'api_key' => getenv('REEVIT_API_KEY'),
+    'org_id' => getenv('REEVIT_ORG_ID'),
+    'base_url' => getenv('REEVIT_BASE_URL') ?: 'https://api.reevit.io',
+    'timeout' => 30,
+]);
+```
+
+---
+
+## Payments
+
+### Create Payment Intent
+
+```php
+$intent = $client->payments->createIntent([
+    'amount' => 10000,
+    'currency' => 'GHS',
+    'method' => 'momo',
+    'country' => 'GH',
+    'customer_id' => 'cust_123',
+    'metadata' => [
+        'order_id' => 'ORD-2024-001',
+    ],
+]);
+```
+
+### Get Payment
+
+```php
+$payment = $client->payments->get('pay_abc123');
+echo "Status: {$payment->status}\n";
+```
+
+### List Payments
+
+```php
+$payments = $client->payments->list(['limit' => 50, 'offset' => 0]);
+foreach ($payments as $payment) {
+    echo "{$payment->id}: {$payment->status}\n";
+}
+```
+
+### Refund Payment
+
+```php
+// Full refund
+$refund = $client->payments->refund('pay_abc123');
+
+// Partial refund
+$refund = $client->payments->refund('pay_abc123', [
+    'amount' => 2500,
+    'reason' => 'Customer requested',
+]);
+```
+
+---
+
+## Connections
+
+### Create Connection
+
+```php
+$connection = $client->connections->create([
+    'provider' => 'paystack',
+    'mode' => 'live',
+    'credentials' => [
+        'secret_key' => 'sk_live_xxxxx',
+    ],
+    'labels' => ['nigeria', 'primary'],
+    'routing_hints' => [
+        'country_preference' => ['NG'],
+        'method_bias' => ['card' => 'high'],
+    ],
+]);
+```
+
+### List Connections
+
+```php
+$connections = $client->connections->list();
+foreach ($connections as $conn) {
+    echo "{$conn->provider} ({$conn->mode}): {$conn->status}\n";
+}
+```
+
+---
+
+## Webhook Verification
+
+```php
+<?php
+use Reevit\Webhook;
+
+$payload = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_REEVIT_SIGNATURE'] ?? '';
+$webhookSecret = getenv('REEVIT_WEBHOOK_SECRET');
+
+if (!Webhook::verify($payload, $signature, $webhookSecret)) {
+    http_response_code(401);
+    exit('Invalid signature');
+}
+
+$event = json_decode($payload, true);
+
+switch ($event['type']) {
+    case 'payment.succeeded':
+        $data = $event['data'];
+        $orderId = $data['metadata']['order_id'] ?? null;
+        // Fulfill order, send confirmation email
+        error_log("Payment succeeded for order {$orderId}");
+        break;
+        
+    case 'payment.failed':
+        // Notify customer, allow retry
+        break;
+        
+    case 'subscription.renewed':
+        // Extend access
+        break;
+        
+    case 'subscription.canceled':
+        // Revoke access
+        break;
+}
+
+http_response_code(200);
+echo 'OK';
+```
+
+### Laravel Webhook Handler
+
+```php
+// routes/api.php
+Route::post('/webhooks/reevit', [WebhookController::class, 'handle']);
+
+// app/Http/Controllers/WebhookController.php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Reevit\Webhook;
+
+class WebhookController extends Controller
+{
+    public function handle(Request $request)
+    {
+        $payload = $request->getContent();
+        $signature = $request->header('X-Reevit-Signature', '');
+        $secret = config('services.reevit.webhook_secret');
+        
+        if (!Webhook::verify($payload, $signature, $secret)) {
+            return response()->json(['error' => 'Invalid signature'], 401);
+        }
+        
+        $event = $request->all();
+        
+        switch ($event['type']) {
+            case 'payment.succeeded':
+                $orderId = $event['data']['metadata']['order_id'] ?? null;
+                // Fulfill order
+                break;
+        }
+        
+        return response()->json(['received' => true]);
+    }
+}
+```
+
+---
+
+## Error Handling
+
+```php
+try {
+    $payment = $client->payments->createIntent([
+        'amount' => 5000,
+        'currency' => 'GHS',
+        'method' => 'momo',
+        'country' => 'GH',
+    ]);
+} catch (\Reevit\Exception\ApiException $e) {
+    echo "API Error: {$e->getMessage()}\n";
+    echo "Code: {$e->getCode()}\n";
+    echo "HTTP Status: {$e->getHttpStatus()}\n";
+} catch (\Exception $e) {
+    echo "Error: {$e->getMessage()}\n";
+}
+```
+
+---
+
+## Environment Variables
+
+```bash
+export REEVIT_API_KEY=pfk_live_xxx
+export REEVIT_ORG_ID=org_xxx
+export REEVIT_WEBHOOK_SECRET=whsec_xxx
+```
+
+---
+
+## Supported Providers
+
+| Provider | Countries | Methods |
+|----------|-----------|---------|
+| **Paystack** | NG, GH, ZA, KE | Card, Mobile Money, Bank |
+| **Flutterwave** | NG, GH, KE, ZA+ | Card, Mobile Money, Bank |
+| **Hubtel** | GH | Mobile Money |
+| **Stripe** | Global | Card, Apple Pay, Google Pay |
+| **Monnify** | NG | Bank Transfer, Card |
+| **M-Pesa** | KE, TZ | Mobile Money |
