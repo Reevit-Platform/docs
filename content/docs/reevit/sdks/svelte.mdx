@@ -60,11 +60,41 @@ The simplest way to integrate Reevit is using the `ReevitCheckout` component.
 | `email` | `string` | | Customer's email |
 | `phone` | `string` | | Customer's phone number |
 | `reference` | `string` | | Your transaction reference |
-| `metadata` | `object` | | Custom metadata |
+| `metadata` | `object` | ⚠️ | **Required for webhooks** - See below |
 | `paymentMethods` | `string[]` | | Enabled payment methods |
 | `theme` | `ReevitTheme` | | Customization options |
 | `isOpen` | `boolean` | | Control modal visibility manually |
 | `apiBaseUrl` | `string` | | Custom API URL |
+
+### Required Metadata for Webhook Routing
+
+<Callout type="warning">
+For webhooks to route correctly, your payments must include `org_id`, `connection_id`, and optionally `payment_id` in the metadata.
+</Callout>
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID |
+| `connection_id` | ✅ Yes | The payment provider connection ID |
+| `payment_id` | Recommended | Your internal order/payment ID |
+
+```svelte
+<ReevitCheckout
+  publicKey="pk_test_xxx"
+  amount={5000}
+  currency="GHS"
+  metadata={{
+    org_id: 'org_xxx',
+    connection_id: 'conn_xxx',
+    payment_id: 'order_123'
+  }}
+  on:success={handleSuccess}
+>
+  <button slot="default" let:handleOpen on:click={handleOpen}>
+    Pay Now
+  </button>
+</ReevitCheckout>
+```
 
 ## Events
 

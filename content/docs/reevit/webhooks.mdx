@@ -43,6 +43,62 @@ These are webhooks from payment providers (Paystack, Flutterwave, M-Pesa, etc.) 
 You configure these URLs in the **payment provider's dashboard** (e.g., Paystack Dashboard), NOT in Reevit.
 </Callout>
 
+#### Required Metadata for Webhook Routing
+
+<Callout type="warning">
+**Critical**: For inbound webhooks to route correctly, your payments must include specific metadata fields when created. Without these fields, webhooks will fail with a **400 Bad Request** error.
+</Callout>
+
+When creating payments (via SDK or API), you **must** include the following metadata fields:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID (from Reevit Dashboard) |
+| `connection_id` | ✅ Yes | The connection ID used for the payment |
+| `payment_id` | Recommended | Your internal payment/order ID for correlation |
+| `customer_email` | Optional | Customer email for receipts |
+
+**Example: SDK Usage**
+
+```tsx
+<ReevitCheckout
+  publicKey="pk_live_xxx"
+  amount={5000}
+  currency="GHS"
+  email="customer@example.com"
+  metadata={{
+    org_id: "org_abc123",           // Required for webhook routing
+    connection_id: "conn_xyz789",    // Required for webhook routing
+    payment_id: "order_12345",       // Your internal reference
+    customer_email: "customer@example.com"
+  }}
+  // ...
+/>
+```
+
+**Example: API Usage**
+
+```bash
+curl -X POST https://api.reevit.com/v1/payments/intents \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_abc123" \
+  -d '{
+    "amount": 5000,
+    "currency": "GHS",
+    "method": "card",
+    "country": "GH",
+    "metadata": {
+      "org_id": "org_abc123",
+      "connection_id": "conn_xyz789",
+      "payment_id": "order_12345"
+    }
+  }'
+```
+
+<Callout type="tip">
+When using **Payment Links**, Reevit automatically populates these fields from the payment link configuration. You don't need to manually set them.
+</Callout>
+
 ### Outbound Webhooks (Reevit → Your App)
 
 These are webhooks **from Reevit to your application**.

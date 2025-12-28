@@ -56,11 +56,34 @@ const payment = await reevit.payments.create({
   method: 'card',         // 'card', 'momo', or 'bank'
   country: 'GH',
   customer_id: 'user_1',
-  metadata: { cart_id: '99' }
+  metadata: { 
+    cart_id: '99',
+    // Required for webhook routing - see below
+    org_id: process.env.REEVIT_ORG_ID,
+    connection_id: 'conn_xxx',
+    payment_id: 'order_12345'
+  }
 });
 
 // Response status: 'requires_action' | 'succeeded' | 'failed'
 ```
+
+### Required Metadata for Webhook Routing
+
+<Callout type="warning">
+**Critical**: For payment provider webhooks (Paystack, Flutterwave, etc.) to route back to Reevit correctly, you **must** include specific fields in the `metadata` object. Without these, webhooks will fail with a **400 Bad Request** error.
+</Callout>
+
+| Metadata Field | Required | Description |
+|---------------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID (from Reevit Dashboard → Settings) |
+| `connection_id` | ✅ Yes | The connection ID for the payment provider |
+| `payment_id` | Recommended | Your internal order/payment ID for correlation |
+| `customer_email` | Optional | Customer email for receipts |
+
+<Callout type="tip">
+**Payment Links**: If you're using Reevit [Payment Links](/docs/reevit/payment-links), these metadata fields are automatically included. You only need to set them manually when creating payments via API or SDK.
+</Callout>
 
 ### Handling Next Actions
 

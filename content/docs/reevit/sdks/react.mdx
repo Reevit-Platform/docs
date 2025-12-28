@@ -59,13 +59,58 @@ function App() {
 | `email` | `string` | | Customer's email address |
 | `phone` | `string` | | Customer's phone (recommended for Mobile Money) |
 | `reference` | `string` | | Your own unique transaction reference |
-| `metadata` | `object` | | Key-value pairs to store with the transaction |
+| `metadata` | `object` | ⚠️ | **Required for webhooks** - Key-value pairs including routing fields |
 | `paymentMethods` | `string[]` | | Enabled methods: `['card', 'mobile_money', 'bank_transfer']` |
 | `theme` | `ReevitTheme` | | Customization options |
 | `apiBaseUrl` | `string` | | Custom API URL (for self-hosted or testing) |
 | `onSuccess` | `function` | | Called when payment is successful |
 | `onError` | `function` | | Called when an error occurs |
 | `onClose` | `function` | | Called when user dismisses the widget |
+
+### Required Metadata Fields
+
+<Callout type="warning">
+**Important**: For payment provider webhooks (Paystack, Flutterwave, etc.) to route correctly back to Reevit, you must include specific fields in the `metadata` prop. Without these, webhooks will fail with a **400 Bad Request** error.
+</Callout>
+
+| Metadata Field | Required | Description |
+|---------------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID (from Reevit Dashboard → Settings) |
+| `connection_id` | ✅ Yes | The connection ID for the payment provider |
+| `payment_id` | Recommended | Your internal payment/order ID for tracing |
+| `customer_email` | Optional | Customer email for receipts and notifications |
+
+**Example with Required Metadata:**
+
+```tsx
+<ReevitCheckout
+  publicKey="pk_live_your_key"
+  amount={10000}
+  currency="GHS"
+  email="customer@example.com"
+  metadata={{
+    // Required for webhook routing
+    org_id: process.env.NEXT_PUBLIC_REEVIT_ORG_ID,
+    connection_id: "conn_your_connection_id",
+    
+    // Recommended for tracing
+    payment_id: `order_${orderId}`,
+    customer_email: "customer@example.com",
+    
+    // Your custom fields
+    order_items: "product_123,product_456",
+    customer_name: "John Doe",
+  }}
+  onSuccess={handleSuccess}
+  onError={handleError}
+>
+  <button>Pay Now</button>
+</ReevitCheckout>
+```
+
+<Callout type="tip">
+**Payment Links**: If you're using Reevit Payment Links, the `org_id` and `connection_id` are automatically included in the metadata. You only need to pass these manually when using the SDK directly.
+</Callout>
 
 ---
 
