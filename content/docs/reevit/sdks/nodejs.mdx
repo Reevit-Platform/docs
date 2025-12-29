@@ -165,7 +165,7 @@ const paystackConnection = await reevit.connections.create({
   provider: 'paystack',
   mode: 'live',
   credentials: {
-    secret_key: 'sk_live_xxxxx'
+    secret_key: 'pfk_live_xxxxx'
   },
   labels: ['nigeria', 'primary'],
   routing_hints: {
@@ -193,7 +193,7 @@ const isValid = await reevit.connections.test({
   provider: 'paystack',
   mode: 'live',
   credentials: {
-    secret_key: 'sk_live_xxxxx'
+    secret_key: 'pfk_live_xxxxx'
   }
 });
 ```
