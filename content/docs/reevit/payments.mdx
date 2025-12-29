@@ -56,6 +56,7 @@ const payment = await reevit.payments.create({
   method: 'card',         // 'card', 'momo', or 'bank'
   country: 'GH',
   customer_id: 'user_1',
+  reference: 'ORD-12345',
   metadata: { 
     cart_id: '99',
     // Required for webhook routing - see below
@@ -78,7 +79,7 @@ const payment = await reevit.payments.create({
 |---------------|----------|-------------|
 | `org_id` | ✅ Yes | Your organization ID (from Reevit Dashboard → Settings) |
 | `connection_id` | ✅ Yes | The connection ID for the payment provider |
-| `payment_id` | Recommended | Your internal order/payment ID for correlation |
+| `payment_id` | ✅ Yes | Your internal payment/order ID (Required for Stripe & Webhook routing) |
 | `customer_email` | Optional | Customer email for receipts |
 
 <Callout type="tip">

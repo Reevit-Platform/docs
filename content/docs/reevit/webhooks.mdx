@@ -55,7 +55,7 @@ When creating payments (via SDK or API), you **must** include the following meta
 |-------|----------|-------------|
 | `org_id` | ✅ Yes | Your organization ID (from Reevit Dashboard) |
 | `connection_id` | ✅ Yes | The connection ID used for the payment |
-| `payment_id` | Recommended | Your internal payment/order ID for correlation |
+| `payment_id` | ✅ Yes | Your internal payment/order ID (Required for Stripe & routing) |
 | `customer_email` | Optional | Customer email for receipts |
 
 **Example: SDK Usage**

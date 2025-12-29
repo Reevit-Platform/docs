@@ -40,6 +40,7 @@ const handleError = (error: any) => {
     :amount="10000"
     currency="GHS"
     email="customer@example.com"
+    reference="ORD-12345"
     @success="handleSuccess"
     @error="handleError"
   >
@@ -72,6 +73,7 @@ const handleError = (error: any) => {
 | `paymentMethods` | `string[]` | | Enabled payment methods |
 | `theme` | `ReevitTheme` | | Customization options |
 | `isOpen` | `boolean` | | Control modal visibility manually |
+| `initialPaymentIntent` | `PaymentIntent` | | Pre-created intent for controlled mode |
 | `apiBaseUrl` | `string` | | Custom API URL |
 
 ### Required Metadata for Webhook Routing
@@ -84,7 +86,7 @@ For webhooks to route correctly, your payments must include `org_id`, `connectio
 |-------|----------|-------------|
 | `org_id` | ✅ Yes | Your organization ID |
 | `connection_id` | ✅ Yes | The payment provider connection ID |
-| `payment_id` | Recommended | Your internal order/payment ID |
+| `payment_id` | ✅ Yes | Your internal order/payment ID (Required for Stripe & routing) |
 
 ```vue
 <ReevitCheckout
@@ -132,7 +134,27 @@ For webhooks to route correctly, your payments must include `org_id`, `connectio
 
 ---
 
-## useReevit Composable
+## Controlled Mode
+
+If you prefer to create the payment intent on your backend before opening the checkout, you can use **Controlled Mode**.
+
+```vue
+<template>
+  <ReevitCheckout
+    publicKey="pk_test_xxx"
+    :initialPaymentIntent="myPreCreatedIntent"
+    @success="handleSuccess"
+  >
+    <template #default="{ open }">
+      <button @click="open">Open Pre-paid Checkout</button>
+    </template>
+  </ReevitCheckout>
+</template>
+```
+
+In this mode, the SDK skips the initial intent creation step and proceeds directly to payment method selection or provider confirmation.
+
+---
 
 For full control over the payment flow, use the `useReevit` composable.
 
