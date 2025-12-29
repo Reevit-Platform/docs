@@ -36,7 +36,7 @@ const handleError = (error: any) => {
 
 <template>
   <ReevitCheckout
-    publicKey="pk_test_xxx"
+    publicKey="pfk_test_xxx"
     :amount="10000"
     currency="GHS"
     email="customer@example.com"
@@ -90,7 +90,7 @@ For webhooks to route correctly, your payments must include `org_id`, `connectio
 
 ```vue
 <ReevitCheckout
-  publicKey="pk_test_xxx"
+  publicKey="pfk_test_xxx"
   :amount="5000"
   currency="GHS"
   :metadata="{
@@ -124,7 +124,7 @@ For webhooks to route correctly, your payments must include `org_id`, `connectio
     darkMode: false,
     borderRadius: '4px'
   }"
-  publicKey="pk_test_xxx"
+  publicKey="pfk_test_xxx"
   :amount="5000"
   currency="GHS"
 >
@@ -141,7 +141,7 @@ If you prefer to create the payment intent on your backend before opening the ch
 ```vue
 <template>
   <ReevitCheckout
-    publicKey="pk_test_xxx"
+    publicKey="pfk_test_xxx"
     :initialPaymentIntent="myPreCreatedIntent"
     @success="handleSuccess"
   >
@@ -173,7 +173,7 @@ const {
   isLoading 
 } = useReevit({
   config: {
-    publicKey: 'pk_test_xxx',
+    publicKey: 'pfk_test_xxx',
     amount: 5000,
     currency: 'GHS',
     email: 'customer@example.com',
@@ -220,14 +220,14 @@ For advanced use cases, use PSP bridge functions directly.
 import { createStripeInstance, confirmStripePayment } from '@reevit/vue';
 
 // Create Stripe instance
-const stripe = await createStripeInstance('pk_test_xxx');
+const stripe = await createStripeInstance('pfk_test_xxx');
 const elements = stripe.elements({ clientSecret: 'pi_xxx_secret_xxx' });
 const paymentElement = elements.create('payment');
 paymentElement.mount('#payment-element');
 
 // Later, confirm the payment
 await confirmStripePayment({
-  publishableKey: 'pk_test_xxx',
+  publishableKey: 'pfk_test_xxx',
   clientSecret: 'pi_xxx_secret_xxx',
   elements,
   onSuccess: (result) => console.log('Paid:', result.paymentIntentId),
@@ -281,7 +281,7 @@ For Nuxt 3 applications, wrap the component in `<ClientOnly>`:
 <template>
   <ClientOnly>
     <ReevitCheckout
-      publicKey="pk_test_xxx"
+      publicKey="pfk_test_xxx"
       :amount="5000"
       currency="GHS"
       @success="handleSuccess"

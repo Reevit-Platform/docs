@@ -154,7 +154,7 @@ conn, err := client.Connections.Create(ctx, &reevit.CreateConnectionRequest{
     Provider: "paystack",
     Mode:     "live",
     Credentials: map[string]string{
-        "secret_key": "sk_live_xxxxx",
+        "secret_key": "pfk_live_xxxxx",
     },
     Labels: []string{"nigeria", "primary"},
     RoutingHints: &reevit.RoutingHints{

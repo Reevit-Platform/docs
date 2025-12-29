@@ -99,7 +99,7 @@ If a payment requires user input (like a 3D Secure redirect or a Mobile Money pr
 
 1.  **Always use Idempotency**: Provide an `idempotency_key` (like an Order ID) to prevent double-charging customers during network retries.
 2.  **Fulfill on Webhooks**: Never fulfill an order based solely on a frontend redirect. Wait for the `payment.succeeded` [webhook event](/docs/reevit/webhooks).
-3.  **Use Test Mode**: Develop your integration using `sk_test_` keys to simulate different success and failure scenarios.
+3.  **Use Test Mode**: Develop your integration using `pfk_test_` keys to simulate different success and failure scenarios.
 
 ---
 

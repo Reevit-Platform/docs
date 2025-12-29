@@ -30,13 +30,15 @@ Your Reevit workspace provides two separate sets of credentials. The mode is det
 
 | Mode | Prefix | Intent |
 | :--- | :--- | :--- |
-| **Sandbox** | `sk_test_...` | For development, QA, and automated testing. |
-| **Production** | `sk_live_...` | For real money transactions. Requires [KYC Approval](#path-to-production). |
+| **Sandbox** | `pfk_test_...` | For development, QA, and automated testing. |
+| **Production** | `pfk_live_...` | For real money transactions. Requires [KYC Approval](#path-to-production). |
 
 ```bash
 # Example Sandbox Request
-curl -X POST https://api.reevit.com/v1/payments \
-  -H "Authorization: Bearer sk_test_your_key" \
+curl -X POST https://api.reevit.com/v1/payments/intents \
+  -H "X-Reevit-Key: pfk_test_your_key" \
+  -H "X-Org-Id: your_org_id" \
+  -H "Content-Type: application/json" \
   -d '{"amount": 1000, "currency": "GHS", "method": "momo"}'
 ```
 
@@ -49,7 +51,7 @@ When you are ready to move from Sandbox to Production, follow this checklist:
 1.  **Identity Verification**: Complete the Organization KYC in [Settings > Business Details](https://dashboard.reevit.com/settings).
 2.  **Live Connections**: Replace your Sandbox PSP keys (e.g., Paystack Test) with Live keys in [Connections](/docs/reevit/connections).
 3.  **Webhook Secret**: Update your server-side environment variables with your **Production** Webhook Signing Secret.
-4.  **Key Rotation**: Swap `sk_test_...` for `sk_live_...` in your production environment.
+4.  **Key Rotation**: Swap `pfk_test_...` for `pfk_live_...` in your production environment.
 
 ---
 

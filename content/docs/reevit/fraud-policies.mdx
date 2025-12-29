@@ -82,6 +82,12 @@ curl -X POST https://api.reevit.com/v1/payments/intents \
     "currency": "GHS",
     "method": "card",
     "country": "GH",
+    "reference": "ORD-12345",
+    "metadata": {
+      "org_id": "your_org_id",
+      "connection_id": "your_conn_id",
+      "payment_id": "ORD-12345"
+    },
     "fraud_override": {
       "max_amount": 20000000,
       "skip_velocity": true
