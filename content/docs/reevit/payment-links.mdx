@@ -71,6 +71,11 @@ console.log(link.url); // https://pay.reevit.dev/lnk_xyz123
 | `custom_fields` | array | | Collect extra data (e.g., name, email) before payment. |
 | `branding` | object | | Customize the checkout page's logo and colors. |
 | `metadata` | object | | Attach your own key-value pairs for tracking. |
+| `reference` | string | | Your internal order ID or reference for the transaction. |
+
+<Callout type="tip">
+  **Webhook Routing**: For payments created via Payment Links, Reevit automatically includes the required `org_id` and `connection_id` in the metadata. The `payment_id` is also automatically set to the unique payment ID generated for the transaction.
+</Callout>
 
 ---
 

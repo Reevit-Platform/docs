@@ -45,7 +45,7 @@ All errors return a consistent JSON structure:
 | Error Code | Description | Resolution |
 |------------|-------------|------------|
 | `unauthorized` | Missing or invalid API key | Check your API key is correct |
-| `invalid_api_key` | API key format is invalid | Use format `sk_test_...` or `sk_live_...` |
+| `invalid_api_key` | API key format is invalid | Use format `pfk_test_...` or `pfk_live_...` |
 | `api_key_revoked` | API key has been revoked | Generate a new API key |
 | `insufficient_scopes` | API key lacks required permissions | Use a key with appropriate scopes |
 
@@ -116,7 +116,13 @@ try {
   const payment = await reevit.payments.create({
     amount: 1000,
     currency: 'GHS',
-    method: 'mobile_money'
+    method: 'mobile_money',
+    reference: 'ORD-12345',
+    metadata: {
+      org_id: 'your_org_id',
+      connection_id: 'your_conn_id',
+      payment_id: 'ORD-12345'
+    }
   });
 } catch (error) {
   if (error.status === 401) {
