@@ -30,6 +30,7 @@ payment = client.payments.create_intent({
     "method": "momo",
     "country": "GH",
     "customer_id": "cust_123",
+    "reference": "ORD-12345",
     "metadata": {
         "order_id": "12345"
     }
@@ -68,11 +69,25 @@ payment = client.payments.create_intent({
     "method": "momo",
     "country": "GH",
     "customer_id": "cust_123",
+    "reference": "ORD-2024-001",
     "metadata": {
+        "org_id": "your_org_id",
+        "connection_id": "your_conn_id",
+        "payment_id": "ORD-2024-001",
         "order_id": "ORD-2024-001"
     }
 })
 ```
+
+### Required Metadata for Webhooks
+
+For inbound webhooks (Paystack, Stripe, etc.) to route correctly back to Reevit, you must include these fields in the `metadata` dictionary:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
+| `connection_id` | ✅ Yes | The connection ID for the provider |
+| `payment_id` | ✅ Yes | Your internal order ID (Required for Stripe) |
 
 ### Get Payment
 
@@ -117,7 +132,8 @@ async def main():
         "amount": 5000,
         "currency": "GHS",
         "method": "momo",
-        "country": "GH"
+        "country": "GH",
+        "reference": "ORD-12345"
     })
     
     print(f"Payment ID: {payment['id']}")

@@ -123,6 +123,12 @@ import '@reevit/react/styles.css';
   publicKey="pk_test_xxx"
   amount={5000}
   currency="GHS"
+  reference="ORD-12345"
+  metadata={{
+    org_id: "your_org_id",
+    connection_id: "your_connection_id",
+    payment_id: "ORD-12345"
+  }}
   onSuccess={(result) => console.log('Paid!', result)}
 >
   <button>Pay Now</button>
@@ -145,6 +151,12 @@ const payment = await client.payments.createIntent({
   currency: 'GHS',
   method: 'momo',
   country: 'GH',
+  reference: 'ORD-12345',
+  metadata: {
+    org_id: 'your_org_id',
+    connection_id: 'your_connection_id',
+    payment_id: 'ORD-12345'
+  }
 });
 ```
 

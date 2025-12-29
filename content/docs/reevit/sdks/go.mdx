@@ -39,6 +39,7 @@ func main() {
         Method:     "momo",
         Country:    "GH",
         CustomerID: "cust_456",
+        Reference:  "ORD-12345",
         Metadata: map[string]string{
             "order_id": "12345",
         },
@@ -88,11 +89,27 @@ intent, err := client.Payments.CreateIntent(ctx, &reevit.CreateIntentRequest{
     Method:     "momo",
     Country:    "GH",
     CustomerID: "cust_123",
+    Reference:  "ORD-2024-001",
     Metadata: map[string]string{
-        "order_id": "ORD-2024-001",
+        "org_id":        "your_org_id",
+        "connection_id": "your_conn_id",
+        "payment_id":    "ORD-2024-001",
+        "order_id":      "ORD-2024-001",
     },
 })
 ```
+
+### Required Metadata for Webhooks
+
+For inbound webhooks (Paystack, Stripe, etc.) to route correctly back to Reevit, you must include these fields in the `Metadata` map:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
+| `connection_id` | ✅ Yes | The connection ID for the provider |
+| `payment_id` | ✅ Yes | Your internal order ID (Required for Stripe) |
+
+---
 
 ### Get Payment
 

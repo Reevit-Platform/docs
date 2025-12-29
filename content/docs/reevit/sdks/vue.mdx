@@ -40,6 +40,7 @@ const handleError = (error: any) => {
     :amount="10000"
     currency="GHS"
     email="customer@example.com"
+    reference="ORD-12345"
     @success="handleSuccess"
     @error="handleError"
   >
@@ -68,11 +69,40 @@ const handleError = (error: any) => {
 | `email` | `string` | | Customer's email |
 | `phone` | `string` | | Customer's phone number |
 | `reference` | `string` | | Your transaction reference |
-| `metadata` | `object` | | Custom metadata |
+| `metadata` | `object` | ⚠️ | **Required for webhooks** - See below |
 | `paymentMethods` | `string[]` | | Enabled payment methods |
 | `theme` | `ReevitTheme` | | Customization options |
 | `isOpen` | `boolean` | | Control modal visibility manually |
+| `initialPaymentIntent` | `PaymentIntent` | | Pre-created intent for controlled mode |
 | `apiBaseUrl` | `string` | | Custom API URL |
+
+### Required Metadata for Webhook Routing
+
+<Callout type="warning">
+For webhooks to route correctly, your payments must include `org_id`, `connection_id`, and optionally `payment_id` in the metadata.
+</Callout>
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID |
+| `connection_id` | ✅ Yes | The payment provider connection ID |
+| `payment_id` | ✅ Yes | Your internal order/payment ID (Required for Stripe & routing) |
+
+```vue
+<ReevitCheckout
+  publicKey="pk_test_xxx"
+  :amount="5000"
+  currency="GHS"
+  :metadata="{
+    org_id: 'org_xxx',
+    connection_id: 'conn_xxx',
+    payment_id: 'order_123'
+  }"
+  @success="handleSuccess"
+>
+  <button>Pay Now</button>
+</ReevitCheckout>
+```
 
 ## Events
 
@@ -104,7 +134,27 @@ const handleError = (error: any) => {
 
 ---
 
-## useReevit Composable
+## Controlled Mode
+
+If you prefer to create the payment intent on your backend before opening the checkout, you can use **Controlled Mode**.
+
+```vue
+<template>
+  <ReevitCheckout
+    publicKey="pk_test_xxx"
+    :initialPaymentIntent="myPreCreatedIntent"
+    @success="handleSuccess"
+  >
+    <template #default="{ open }">
+      <button @click="open">Open Pre-paid Checkout</button>
+    </template>
+  </ReevitCheckout>
+</template>
+```
+
+In this mode, the SDK skips the initial intent creation step and proceeds directly to payment method selection or provider confirmation.
+
+---
 
 For full control over the payment flow, use the `useReevit` composable.
 

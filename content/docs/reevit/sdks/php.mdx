@@ -35,6 +35,7 @@ $intent = $client->payments->createIntent([
     'method' => 'momo',
     'country' => 'GH',
     'customer_id' => 'cust_456',
+    'reference' => 'ORD-12345',
     'metadata' => [
         'order_id' => '12345',
     ],
@@ -69,11 +70,25 @@ $intent = $client->payments->createIntent([
     'method' => 'momo',
     'country' => 'GH',
     'customer_id' => 'cust_123',
+    'reference' => 'ORD-2024-001',
     'metadata' => [
+        'org_id' => 'your_org_id',
+        'connection_id' => 'your_conn_id',
+        'payment_id' => 'ORD-2024-001',
         'order_id' => 'ORD-2024-001',
     ],
 ]);
 ```
+
+### Required Metadata for Webhooks
+
+For inbound webhooks (Paystack, Stripe, etc.) to route correctly back to Reevit, you must include these fields in the `metadata` array:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
+| `connection_id` | ✅ Yes | The connection ID for the provider |
+| `payment_id` | ✅ Yes | Your internal order ID (Required for Stripe) |
 
 ### Get Payment
 

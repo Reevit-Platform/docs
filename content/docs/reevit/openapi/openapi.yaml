@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Reevit API
-  version: 0.3.0
+  version: 0.3.2
   description: |
     Reevit is a unified payments, billing, and orchestration API for Africa.
 
@@ -3730,6 +3730,39 @@ paths:
           $ref: '#/components/responses/InternalServerError'
         '502':
           $ref: '#/components/responses/BadGateway'
+  /v1/payments/{id}/confirm-intent:
+    post:
+      summary: Confirm a payment intent using client secret (Public)
+      description: This endpoint is used by frontend SDKs to confirm a payment intent without requiring an API key.
+      operationId: confirmPaymentIntent
+      tags: [Payments]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: client_secret
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/payments/{id}/retry:
     post:
       summary: Retry a failed payment
@@ -5321,6 +5354,9 @@ components:
             velocity_max_per_minute:
               type: integer
               description: Maximum payment attempts per minute for the same customer_id.
+        reference:
+          type: string
+          description: External reference ID (e.g., your order ID)
         metadata: { type: object, additionalProperties: true }
         description: { type: string }
       required: [amount, currency, method]
@@ -5343,6 +5379,8 @@ components:
         connection_id: { type: string }
         provider: { type: string, enum: [paystack, hubtel, flutterwave, monnify, mpesa, stripe] }
         status: { type: string, enum: [pending, requires_action, succeeded, failed, canceled] }
+        reference: { type: string }
+        psp_public_key: { type: string, description: Public key of the PSP for client-side confirmation }
         client_secret: { type: string }
         amount: { type: integer }
         currency: { type: string }
@@ -5363,6 +5401,7 @@ components:
         fee_currency: { type: string }
         net_amount: { type: integer }
         customer_id: { type: string }
+        reference: { type: string }
         created_at: { type: string, format: date-time }
         metadata:
           type: object

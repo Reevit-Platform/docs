@@ -60,7 +60,12 @@ const payment = await reevit.payments.create({
   method: 'momo',
   country: 'GH',
   customer_id: 'cust_123',
-  metadata: { order_id: 'XYZ-99' }
+  reference: 'ORD-123',
+  metadata: { 
+    org_id: 'your_org_id',
+    connection_id: 'your_connection_id',
+    payment_id: 'ORD-123' 
+  }
 });
 
 console.log('Payment ID:', payment.id);

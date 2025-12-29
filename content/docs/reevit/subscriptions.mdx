@@ -90,11 +90,26 @@ curl -X POST https://api.reevit.com/v1/subscriptions \
     "method": "momo",
     "interval": "monthly",
     "metadata": {
+      "org_id": "your_org_id",
+      "connection_id": "your_conn_id",
+      "payment_id": "sub-cust_456-premium",
       "tier": "premium",
       "signup_source": "website"
     }
   }'
 ```
+
+### Required Metadata for Webhooks
+
+For subscription-related webhooks to route correctly, you should include these fields in the `metadata` object:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
+| `connection_id` | ✅ Yes | The connection ID for the provider |
+| `payment_id` | ✅ Yes | A unique ID for the initial subscription payment |
+
+---
 
 ### Understanding the Request
 
