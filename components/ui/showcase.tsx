@@ -280,7 +280,7 @@ export function DocShowcase({ type, title, className }: ShowcaseProps) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-            <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest font-bold">Live</span>
+            <span className="font-mono text-[9px] text-muted-foreground uppercase  font-bold">Live</span>
           </div>
         </div>
       </div>
@@ -738,7 +738,7 @@ function WorkflowShowcaseInner() {
                 <div className="max-w-[240px] rounded-xl border border-border bg-card/60 p-3 shadow-2xl backdrop-blur-md">
                   <div className="text-primary mb-1 flex items-center gap-2">
                     <HugeiconsIcon icon={Sparkles} className="h-2.5 w-2.5" />
-                    <span className="font-mono text-[9px] font-bold tracking-widest uppercase">
+                    <span className="font-mono text-[9px] font-bold  uppercase">
                       {activeTabInfo.panelTitle}
                     </span>
                   </div>
