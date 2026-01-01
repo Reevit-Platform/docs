@@ -799,8 +799,10 @@ paths:
               - day
               - week
               - month
-            default: day
-          description: Time range to aggregate over
+              - all
+              - all_time
+            default: all
+          description: Time range to aggregate over. Defaults to all-time.
       responses:
         '200':
           description: OK
@@ -829,8 +831,10 @@ paths:
               - day
               - week
               - month
-            default: day
-          description: Time range to aggregate over
+              - all
+              - all_time
+            default: all
+          description: Time range to aggregate over. Defaults to all-time.
         - name: granularity
           in: query
           required: false
@@ -869,8 +873,10 @@ paths:
               - day
               - week
               - month
-            default: day
-          description: Time range to aggregate over
+              - all
+              - all_time
+            default: all
+          description: Time range to aggregate over. Defaults to all-time.
       responses:
         '200':
           description: OK
@@ -899,8 +905,10 @@ paths:
               - day
               - week
               - month
-            default: day
-          description: Time range to aggregate over
+              - all
+              - all_time
+            default: all
+          description: Time range to aggregate over. Defaults to all-time.
       responses:
         '200':
           description: OK
