@@ -769,6 +769,18 @@ paths:
           schema:
             type: string
           description: Filter by payment provider
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          description: Filter payments created on or after this date (RFC3339)
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          description: Filter payments created before this date (RFC3339)
       responses:
         '200':
           description: OK
