@@ -86,8 +86,21 @@ Fetch a customer's payment history:
 ```typescript
 const history = await reevit.customers.getPaymentHistory('cus_xyz123');
 // [
-//   { id: 'pay_001', amount: 5000, status: 'succeeded', created_at: '...' },
-//   { id: 'pay_002', amount: 10000, status: 'succeeded', created_at: '...' }
+//   { 
+//     payment_id: 'pay_001', 
+//     amount: 5000, 
+//     status: 'succeeded', 
+//     source: 'payment_link',
+//     source_description: 'Premium Plan Checkout',
+//     created_at: '...' 
+//   },
+//   { 
+//     payment_id: 'pay_002', 
+//     amount: 10000, 
+//     status: 'succeeded',
+//     source: 'api',
+//     created_at: '...' 
+//   }
 // ]
 ```
 
@@ -95,6 +108,57 @@ Find your top customers by revenue:
 
 ```typescript
 const topCustomers = await reevit.customers.getTopCustomers({ limit: 10 });
+```
+
+---
+
+## 🔍 Payment Source Tracking
+
+Each payment in a customer's history includes **source information** to help you understand where payments originated:
+
+| Field | Description |
+| :--- | :--- |
+| `source` | The origin type: `payment_link`, `api`, or `subscription` |
+| `source_id` | The ID of the source (e.g., payment link ID, subscription ID) |
+| `source_description` | Human-readable name (e.g., payment link title) |
+
+### Source Types
+
+| Source | Description | Use Case |
+| :--- | :--- | :--- |
+| `payment_link` | Payment made through a [Payment Link](/docs/reevit/payment-links) | Track which products/campaigns drive revenue |
+| `api` | Payment created directly via the API | Identify programmatic payments |
+| `subscription` | Payment from a subscription renewal | Track recurring revenue |
+
+### Why Use Source Tracking?
+
+<Callout type="tip">
+  Source tracking helps you answer questions like:
+  - "Which payment link generated the most revenue?"
+  - "What percentage of this customer's payments came from subscriptions vs. one-time purchases?"
+  - "Which marketing campaign (payment link) converted this customer?"
+</Callout>
+
+### Adding Metadata to Payment Links
+
+When creating a payment link, give it a descriptive name that will appear in `source_description`:
+
+```typescript
+const link = await reevit.paymentLinks.create({
+  name: 'Summer Sale - Premium Plan', // This appears in source_description
+  amount: 9900,
+  currency: 'GHS',
+  // ...
+});
+```
+
+When customers pay through this link, their payment history will show:
+```json
+{
+  "source": "payment_link",
+  "source_id": "pl_abc123",
+  "source_description": "Summer Sale - Premium Plan"
+}
 ```
 
 ---
