@@ -316,6 +316,121 @@ if (event.type === 'payment.succeeded') {
 
 ---
 
+## 🔒 Webhook Security
+
+Webhooks deliver sensitive payment data to your application. Follow these security practices to protect your integration.
+
+### Signature Verification (Critical)
+
+<Callout type="warning">
+**Never process webhooks without signature verification**. This is the most critical security step.
+</Callout>
+
+Reevit signs each webhook with HMAC-SHA256. Your server must verify this signature before processing any event.
+
+**What happens without verification?**
+- Attackers could send fake "payment succeeded" events
+- Orders could be fulfilled without actual payment
+- Financial losses and fraud
+
+### Anti-Replay Protection
+
+Reebit's webhooks include a `timestamp` field to prevent replay attacks:
+
+```typescript
+const WEBHOOK_TOLERANCE = 300; // 5 minutes
+
+function verifyWebhook(payload: string, signature: string, secret: string): boolean {
+  // 1. Verify signature
+  if (!verifySignature(payload, signature, secret)) {
+    return false;
+  }
+
+  // 2. Check timestamp to prevent replay attacks
+  const parsed = JSON.parse(payload);
+  const timestamp = parsed.timestamp || 0;
+  const now = Math.floor(Date.now() / 1000);
+
+  if (Math.abs(now - timestamp) > WEBHOOK_TOLERANCE) {
+    console.log('Webhook timestamp outside tolerance window');
+    return false;
+  }
+
+  return true;
+}
+```
+
+### Best Practices
+
+1. **Always use raw request body for verification**
+   ```typescript
+   // ❌ Wrong - Express parses body, breaking signature
+   app.post('/webhooks', (req, res) => {
+     verifySignature(req.body, req.headers['x-reevit-signature'], secret);
+   });
+
+   // ✅ Correct - use raw body
+   app.post('/webhooks', express.raw({ type: 'application/json' }), (req, res) => {
+     const signature = req.headers['x-reevit-signature'];
+     verifySignature(req.body.toString(), signature, secret);
+   });
+   ```
+
+2. **Respond quickly (under 5 seconds)**
+   - Return 2xx immediately after verification
+   - Process events asynchronously
+   - Reevit will retry failed deliveries
+
+3. **Implement idempotent handlers**
+   ```typescript
+   async function handleWebhook(event) {
+     const eventId = event.id;
+
+     // Check if already processed
+     const processed = await db.webhookEvents.findUnique({ where: { id: eventId } });
+     if (processed) {
+       return res.send({ status: 'already_processed' });
+     }
+
+     // Mark as processing
+     await db.webhookEvents.create({ id: eventId, status: 'processing' });
+
+     try {
+       await processEvent(event);
+       await db.webhookEvents.update({ where: { id: eventId }, data: { status: 'completed' } });
+     } catch (err) {
+       await db.webhookEvents.update({ where: { id: eventId }, data: { status: 'failed' } });
+       throw err;
+     }
+   }
+   ```
+
+4. **Use HTTPS endpoints**
+   - Webhook URLs must use HTTPS
+   - Reevit rejects HTTP endpoints
+   - Use valid TLS certificates (not self-signed)
+
+5. **Limit webhook IP ranges**
+   - Reevit webhooks come from Cloudflare IPs
+   - Configure firewall to allow only these ranges
+
+### Security Checklist
+
+<Callout type="tip">
+Review this checklist before going live:
+</Callout>
+
+- [ ] Signature verification implemented
+- [ ] Anti-replay protection (timestamp check)
+- [ ] Idempotent event handlers
+- [ ] HTTPS endpoint with valid certificate
+- [ ] Fast response time (< 5 seconds)
+- [ ] Proper error logging without sensitive data
+- [ ] Webhook secret stored securely (env vars, vault)
+- [ ] Test endpoint configured in Reevit Dashboard
+
+---
+
 ## Verifying Webhooks
 
 **Always verify webhook signatures**. This ensures events are actually from Reevit and haven't been tampered with.
