@@ -132,23 +132,12 @@ All Reevit API responses include security headers to protect against common web 
 | `X-Frame-Options` | `DENY` | Prevents clickjacking attacks |
 | `X-XSS-Protection` | `1; mode=block` | XSS filter for older browsers |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Controls referrer information |
-| `Content-Security-Policy` | `default-src 'none'; frame-ancestors 'none'` | API response CSP |
+| `Content-Security-Policy` | ``default-src 'none'; frame-ancestors 'none'`` | API response CSP |
 | `Permissions-Policy` | `geolocation=(), microphone=(), camera=()` | Restricts browser features |
 
-```http
-HTTP/1.1 200 OK
-Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 1; mode=block
-Referrer-Policy: strict-origin-when-cross-origin
-Content-Security-Policy: default-src 'none'; frame-ancestors 'none'
-Permissions-Policy: geolocation=(), microphone=(), camera=()
-```
-
-<Callout type="tip">
+<Admonition type="tip">
 **Performance**: Security headers add negligible overhead (<0.01ms) to all responses.
-</Callout>
+</Admonition>
 
 ---
 
