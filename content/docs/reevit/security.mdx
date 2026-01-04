@@ -1,0 +1,328 @@
+---
+title: Security
+description: Security practices, compliance, and best practices for the Reevit platform
+icon: Lock
+---
+
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ShieldIcon, KeyIcon, EncryptIcon, AuditIcon, GlobeIcon as WebhookIcon } from "@hugeicons/core-free-icons"
+
+# Security Overview
+
+Reevit is built with security as a foundational principle. As a payment orchestration platform handling sensitive financial data, we employ industry-standard security practices to protect your data and your customers' information.
+
+---
+
+## 🔐 Data Encryption
+
+### Encryption in Transit
+
+All data transmitted to and from Reevit is encrypted using **TLS 1.3** (Transport Layer Security). This ensures that:
+
+- All API communications use HTTPS with modern cipher suites
+- Webhook deliveries are encrypted end-to-end
+- No sensitive data is ever transmitted in plain text
+
+```bash
+# All Reevit endpoints require TLS 1.2+
+curl -https://api.reevit.com/v1/payments
+```
+
+### Encryption at Rest
+
+Sensitive data stored by Reevit is encrypted using **AES-256-GCM**:
+
+- **PSP Credentials**: API keys, secrets, and tokens are encrypted before storage
+- **Payment Metadata**: Customer PII is encrypted at rest
+- **Database Encryption**: All database volumes use full-disk encryption
+
+Credential encryption uses envelope encryption with hardware-backed key management.
+
+---
+
+## 🔑 Credential Management (BYOK)
+
+Reevit operates on a **Bring Your Own Key (BYOK)** model. Your payment provider credentials are:
+
+1. **Never shared** with other organizations
+2. **Encrypted at rest** using AES-256
+3. **Accessed only** during payment processing
+4. **Never logged** in plain text
+
+### Credential Storage
+
+When you create a [Connection](/docs/reevit/connections), your credentials are:
+
+1. Transmitted over TLS to Reevit
+2. Encrypted immediately upon receipt using your organization's encryption key
+3. Stored in a dedicated secrets vault with hardware security module (HSM) protection
+4. Decrypted only when processing payments for your organization
+
+### Supported Credential Formats
+
+| Provider | Required Credentials |
+|----------|---------------------|
+| **Paystack** | `secret_key` |
+| **Hubtel** | `client_id`, `client_secret`, `merchant_account` |
+| **Flutterwave** | `secret_key` |
+| **Monnify** | `apiKey`, `contractCode` |
+| **M-Pesa** | `consumer_key`, `consumer_secret`, `passkey`, `short_code` |
+| **Stripe** | `secret_key` (or `sk_live`, `sk_test`) |
+
+<Callout type="info">
+**Credential Aliases**: Reevit accepts multiple key names for flexibility (e.g., `secretKey` or `secret_key` for Paystack).
+</Callout>
+
+---
+
+## 🛡️ Webhook Security
+
+Reevit verifies all incoming webhooks from payment providers to prevent spoofing attacks.
+
+### Signature Verification
+
+Each provider uses its own signature mechanism:
+
+| Provider | Verification Method |
+|----------|--------------------|
+| **Paystack** | HMAC-SHA512 signature in `x-paystack-signature` header |
+| **Hubtel** | HMAC-SHA256 signature in `hubtel-signature` header |
+| **Flutterwave** | HMAC-SHA256 signature in `verifier-hash` header |
+| **Stripe** | Ed25519 signature in `Stripe-Signature` header |
+| **M-Pesa** | OAuth token + signature verification |
+
+### Webhook Secrets
+
+For Stripe, store your webhook signing secret in connection credentials:
+
+```typescript
+await reevit.connections.create({
+  provider: "stripe",
+  credentials: {
+    secret_key: "sk_live_...",
+    stripe_webhook_secret: "whsec_..."  // Required for webhook verification
+  }
+});
+```
+
+<Callout type="warning">
+**Always verify webhook signatures**: Never process a webhook without signature verification. Reevit rejects all unverified webhooks.
+</Callout>
+
+---
+
+## 🔒 API Authentication
+
+### API Keys
+
+Reevit uses API keys for authentication. Keys are scoped to organizations and can have specific permission scopes.
+
+| Key Type | Purpose | Scope |
+|----------|---------|-------|
+| **Live Keys** (`pfk_live_...`) | Production payments | All operations |
+| **Test Keys** (`pfk_test_...`) | Development & testing | Read-only for some endpoints |
+
+### Authentication Scopes
+
+API keys can be restricted to specific scopes:
+
+| Scope | Description |
+|-------|-------------|
+| `payments:read` | View payment history |
+| `payments:write` | Create and manage payments |
+| `connections:read` | View PSP connections |
+| `connections:write` | Create/update connections |
+| `webhooks:read` | View webhook logs |
+| `webhooks:write` | Configure webhooks |
+
+### Rate Limiting
+
+Reevit implements rate limiting to prevent abuse:
+
+| Plan | Requests/minute | Burst |
+|------|-----------------|-------|
+| Free | 60 | 10 |
+| Pro | 300 | 50 |
+| Enterprise | 1000+ | Custom |
+
+---
+
+## 📋 Audit Logging
+
+All sensitive operations are logged with:
+
+- **Timestamp**: ISO 8601 formatted
+- **Actor**: User/service that performed the action
+- **Action**: What operation was performed
+- **Resource**: Affected entity (e.g., connection ID)
+- **Result**: Success/failure with error details
+
+### Logged Events
+
+| Category | Events |
+|----------|--------|
+| **Connections** | Create, update, delete, test |
+| **Payments** | Create, confirm, refund, cancel |
+| **Webhooks** | Delivery attempts, failures |
+| **Authentication** | Login, key creation, key revocation |
+
+Audit logs are retained for **24 months** and are immutable.
+
+<Callout type="tip">
+**Audit Access**: Enterprise plans can export audit logs via API for compliance reporting.
+</Callout>
+
+---
+
+## 🏢 Compliance
+
+### PCI DSS
+
+Reevit is designed to help you maintain **PCI DSS compliance**:
+
+- **SAQ A Eligible**: If you use Reevit Checkout or Payment Links, you may be eligible for SAQ A
+- **No Card Storage**: Reevit never stores raw card numbers
+- **Tokenized Data**: Card references are PSP-managed tokens
+
+<Callout type="info">
+**Your Responsibility**: You must ensure your integration follows PCI guidelines. Use our hosted payment pages when possible to minimize scope.
+</Callout>
+
+### Data Residency
+
+By default, data is processed in **EU-West (Ireland)**. Enterprise customers can request data residency in:
+
+- **EU**: Ireland (default)
+- **US**: Virginia
+- **APAC**: Singapore
+
+### Data Retention
+
+| Data Type | Retention Period |
+|-----------|------------------|
+| Payment records | 7 years (regulatory requirement) |
+| Audit logs | 24 months |
+| Webhook logs | 90 days |
+| Temporary logs | 7 days |
+
+---
+
+## 🛠️ Security Best Practices
+
+### For Your Application
+
+1. **Never expose API keys in client-side code**
+   ```typescript
+   // ❌ Wrong - exposes key to browser
+   const client = new Reevit('pk_live_xxx');
+
+   // ✅ Correct - use server-side only
+   const client = new Reevit(process.env.REEVIT_SECRET_KEY);
+   ```
+
+2. **Use webhooks for payment confirmation**
+   ```typescript
+   // ❌ Never trust client-side success
+   if (payment.status === 'succeeded') fulfillOrder();
+
+   // ✅ Always verify via webhook
+   app.post('/webhooks/reevit', async (req, res) => {
+     if (verifySignature(req)) {
+       if (req.body.event === 'payment.succeeded') {
+         fulfillOrder(req.body.data.payment_id);
+       }
+     }
+   });
+   ```
+
+3. **Implement idempotency**
+   ```typescript
+   const payment = await reevit.payments.create({
+     idempotency_key: 'order_12345',  // Prevents duplicate charges
+     amount: 5000,
+     currency: 'GHS'
+   });
+   ```
+
+4. **Validate webhooks on your server**
+   ```typescript
+   const signature = req.headers['x-reevit-signature'];
+   if (!verifyWebhookSignature(signature, body, webhookSecret)) {
+     return res.status(401).send('Invalid signature');
+   }
+   ```
+
+### For Your PSP Connections
+
+1. **Use separate credentials per environment**
+   ```typescript
+   // Development
+   await reevit.connections.create({
+     provider: 'paystack',
+     mode: 'sandbox',
+     credentials: { secret_key: 'sk_test_...' }
+   });
+
+   // Production
+   await reevit.connections.create({
+     provider: 'paystack',
+     mode: 'live',
+     credentials: { secret_key: 'sk_live_...' }
+   });
+   ```
+
+2. **Enable connection health monitoring**
+   - Reevit automatically tracks success rates and latency
+   - Configure alerts for degraded connections
+
+3. **Use labels for organization**
+   ```typescript
+   await reevit.connections.create({
+     provider: 'stripe',
+     labels: ['production', 'cards-primary', 'eu'],
+     routing_hints: { priority: 'primary' }
+   });
+   ```
+
+---
+
+## 🚨 Incident Response
+
+### Security Monitoring
+
+Reevit maintains 24/7 security monitoring with:
+
+- **Intrusion Detection**: Automated anomaly detection
+- **DDoS Protection**: Cloudflare-based mitigation
+- **Vulnerability Scanning**: Regular automated scans
+
+### Reporting Security Issues
+
+If you discover a security vulnerability:
+
+1. **Do not disclose publicly**
+2. **Email security@reevit.io** with details
+3. **Expect response within 24 hours**
+
+<Callout type="critical">
+**Responsible Disclosure**: We appreciate responsible vulnerability reporting and will work with you to resolve issues quickly.
+</Callout>
+
+---
+
+## 📚 Related Resources
+
+<Cards columns={2}>
+  <Card title="Connections" href="/docs/reevit/connections" icon={<HugeiconsIcon icon={KeyIcon} />}>
+    Securely manage your PSP credentials with BYOK.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/webhooks" icon={<HugeiconsIcon icon={WebhookIcon} />}>
+    Secure webhook handling and signature verification.
+  </Card>
+  <Card title="Authentication" href="/docs/reevit/authentication" icon={<HugeiconsIcon icon={ShieldIcon} />}>
+    API key management and access scopes.
+  </Card>
+  <Card title="Audit Logs" href="/docs/reevit/api-reference" icon={<HugeiconsIcon icon={AuditIcon} />}>
+    API endpoints for accessing audit and security logs.
+  </Card>
+</Cards>
