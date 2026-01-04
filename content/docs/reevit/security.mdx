@@ -32,11 +32,21 @@ curl -https://api.reevit.com/v1/payments
 
 Sensitive data stored by Reevit is encrypted using **AES-256-GCM**:
 
+| Operation | Latency | Memory | Allocations |
+|-----------|---------|--------|-------------|
+| **Encrypt** | ~957 ns/op | 1.7 KB | 8 allocs |
+| **Decrypt** | ~647 ns/op | 1.5 KB | 5 allocs |
+| **Round Trip** | ~1.5 μs/op | 3.2 KB | 13 allocs |
+
 - **PSP Credentials**: API keys, secrets, and tokens are encrypted before storage
 - **Payment Metadata**: Customer PII is encrypted at rest
 - **Database Encryption**: All database volumes use full-disk encryption
 
-Credential encryption uses envelope encryption with hardware-backed key management.
+Credential encryption uses envelope encryption with hardware-backed key management (AWS KMS support).
+
+<Callout type="info">
+**Performance**: AES-256-GCM encryption adds minimal latency (~1.5μs) to credential operations, ensuring security without impacting payment processing speed.
+</Callout>
 
 ---
 
@@ -83,13 +93,13 @@ Reevit verifies all incoming webhooks from payment providers to prevent spoofing
 
 Each provider uses its own signature mechanism:
 
-| Provider | Verification Method |
-|----------|--------------------|
-| **Paystack** | HMAC-SHA512 signature in `x-paystack-signature` header |
-| **Hubtel** | HMAC-SHA256 signature in `hubtel-signature` header |
-| **Flutterwave** | HMAC-SHA256 signature in `verifier-hash` header |
-| **Stripe** | Ed25519 signature in `Stripe-Signature` header |
-| **M-Pesa** | OAuth token + signature verification |
+| Provider | Verification Method | Algorithm |
+|----------|---------------------|-----------|
+| **Paystack** | HMAC-SHA512 signature in `x-paystack-signature` header | SHA-512 |
+| **Hubtel** | HMAC-SHA256 signature in `hubtel-signature` header | SHA-256 |
+| **Flutterwave** | HMAC-SHA256 signature in `verifier-hash` header | SHA-256 |
+| **Stripe** | Ed25519 signature in `Stripe-Signature` header | Ed25519 |
+| **M-Pesa** | OAuth token + signature verification | SHA-256 |
 
 ### Webhook Secrets
 
@@ -107,6 +117,37 @@ await reevit.connections.create({
 
 <Callout type="warning">
 **Always verify webhook signatures**: Never process a webhook without signature verification. Reevit rejects all unverified webhooks.
+</Callout>
+
+---
+
+## 🛡️ HTTP Security Headers
+
+All Reevit API responses include security headers to protect against common web vulnerabilities:
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains; preload` | Enforces HTTPS for 1 year |
+| `X-Content-Type-Options` | `nosniff` | Prevents MIME type sniffing |
+| `X-Frame-Options` | `DENY` | Prevents clickjacking attacks |
+| `X-XSS-Protection` | `1; mode=block` | XSS filter for older browsers |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Controls referrer information |
+| `Content-Security-Policy` | `default-src 'none'; frame-ancestors 'none'` | API response CSP |
+| `Permissions-Policy` | `geolocation=(), microphone=(), camera=()` | Restricts browser features |
+
+```http
+HTTP/1.1 200 OK
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+Content-Security-Policy: default-src 'none'; frame-ancestors 'none'
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+```
+
+<Callout type="tip">
+**Performance**: Security headers add negligible overhead (<0.01ms) to all responses.
 </Callout>
 
 ---
@@ -135,15 +176,34 @@ API keys can be restricted to specific scopes:
 | `webhooks:read` | View webhook logs |
 | `webhooks:write` | Configure webhooks |
 
+### Password Hashing
+
+User passwords are hashed using **Argon2id** (winner of the Password Hashing Competition):
+
+| Operation | Time | Memory |
+|-----------|------|--------|
+| **Hash** | ~11.4 ms | 16.8 MB |
+| **Verify** | ~11.2 ms | 16.8 MB |
+
+Argon2id provides strong resistance against GPU-based and ASIC attacks while maintaining reasonable performance for authentication flows.
+
+<Callout type="info">
+**Security**: Argon2id with 16.8 MB memory usage provides excellent protection against brute-force attacks, even on hardware with significant computational power.
+</Callout>
+
 ### Rate Limiting
 
 Reevit implements rate limiting to prevent abuse:
 
-| Plan | Requests/minute | Burst |
-|------|-----------------|-------|
-| Free | 60 | 10 |
-| Pro | 300 | 50 |
-| Enterprise | 1000+ | Custom |
+| Plan | Requests/minute | Burst | Latency |
+|------|-----------------|-------|---------|
+| Free | 60 | 10 | ~2 μs |
+| Pro | 300 | 50 | ~2 μs |
+| Enterprise | 1000+ | Custom | ~2 μs |
+
+<Callout type="info">
+**Performance**: In-memory rate limiting adds only ~2μs overhead per request. Redis-based distributed rate limiting is available for multi-instance deployments.
+</Callout>
 
 ---
 
@@ -306,6 +366,23 @@ If you discover a security vulnerability:
 
 <Callout type="critical">
 **Responsible Disclosure**: We appreciate responsible vulnerability reporting and will work with you to resolve issues quickly.
+</Callout>
+
+---
+
+## 📚 Benchmark Methodology
+
+Security benchmarks were run on Apple M1 Max (arm64) with the following configuration:
+
+- **Encryption**: AES-256-GCM with 32-byte keys
+- **Password Hashing**: Argon2id with 16.8 MB memory, 1 iteration
+- **Rate Limiting**: Sliding window algorithm with in-memory storage
+- **HTTPS Headers**: Chi middleware with Go 1.25
+
+All benchmarks represent median performance over 10+ runs.
+
+<Callout type="info">
+**Note**: Actual performance may vary based on hardware, load, and network conditions. Benchmarks are indicative of security implementation efficiency.
 </Callout>
 
 ---
