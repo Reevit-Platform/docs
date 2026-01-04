@@ -104,6 +104,75 @@ await reevit.connections.create({
 
 ---
 
+## 🔒 Credential Security
+
+Reevit takes the security of your PSP credentials seriously. When you create a connection, your sensitive keys are protected using industry-standard encryption.
+
+### Encryption at Rest
+
+All credentials stored in Reevit are encrypted using **AES-256-GCM**:
+
+- Credentials are encrypted immediately upon receipt
+- Encryption keys are managed via hardware security modules (HSM)
+- Reevit staff never see your credentials in plain text
+
+### Credential Access
+
+Your credentials are only decrypted when:
+
+1. **Processing a payment** that routes to this connection
+2. **Testing the connection** via the test endpoint
+3. **You explicitly request** credential retrieval (via API)
+
+### Security Best Practices
+
+1. **Use separate credentials per environment**
+   ```typescript
+   // Sandbox - never use test keys in production
+   await reevit.connections.create({
+     id: 'paystack_sandbox',
+     mode: 'sandbox',
+     credentials: { secret_key: 'sk_test_...' }
+   });
+
+   // Production - use live keys only
+   await reevit.connections.create({
+     id: 'paystack_live',
+     mode: 'live',
+     credentials: { secret_key: 'sk_live_...' }
+   });
+   ```
+
+2. **Never expose credentials in logs or error messages**
+   - Reevit automatically masks credentials in logs
+   - Never print credentials to console in your application
+
+3. **Rotate credentials regularly**
+   - Most PSPs allow key rotation without service interruption
+   - Update credentials via the API when rotating:
+   ```typescript
+   await reevit.connections.update('paystack_live', {
+     credentials: { secret_key: 'sk_live_new_key...' }
+   });
+   ```
+
+4. **Use webhook secrets for signature verification**
+   ```typescript
+   await reevit.connections.create({
+     provider: 'stripe',
+     credentials: {
+       secret_key: 'sk_live_...',
+       stripe_webhook_secret: 'whsec_...'  // For webhook verification
+     }
+   });
+   ```
+
+<Callout type="info">
+**BYOK Model**: Your credentials remain your property. Reevit never shares them with third parties or uses them for any purpose other than processing your payments.
+</Callout>
+
+---
+
 ## ✅ Best Practices
 
 1.  **Redundancy is Key**: Always have at least two connections for your primary market (e.g., Hubtel + Paystack for Ghana). This enables [Smart Routing](/docs/reevit/routing-rules).
