@@ -34,7 +34,7 @@ const bgColorMap = {
 
 export function OrderCard({ title, order, lineItems, color }: OrderCardProps) {
   return (
-    <div className="group relative p-1 rounded-xl overflow-hidden transition-all duration-300 flex-shrink-0 w-[12rem] shadow-inner bg-muted border border-border hover:shadow-[0_2px_12px_rgba(0,0,0,0.03)] dark:hover:shadow-[0_2px_12px_rgba(255,255,255,0.03)] hover:-translate-y-0.5 will-change-transform cursor-pointer">
+    <div className="group relative p-1 rounded-xl overflow-hidden transition-all duration-300 flex-shrink-0 w-[12rem]  bg-muted border border-border hover:shadow-[0_2px_12px_rgba(0,0,0,0.03)] dark:hover:shadow-[0_2px_12px_rgba(255,255,255,0.03)] hover:-translate-y-0.5 will-change-transform cursor-pointer">
       <div className="relative flex flex-col">
         <div className="flex items-center justify-between px-2 py-1 mb-1">
           <span className="flex flex-col text-sm text-foreground">

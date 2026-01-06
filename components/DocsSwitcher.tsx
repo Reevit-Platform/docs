@@ -18,7 +18,7 @@ export function DocsSwitcher() {
         <div className="size-5">
           <HugeiconsIcon icon={CreditCard} className="w-5 h-5" />
         </div>
-        <h1 className="mb-1 text-xl font-semibold tracking-tight">
+        <h1 className="mb-1 text-xl font-semibold  ">
           Reevit
         </h1>
       </div>

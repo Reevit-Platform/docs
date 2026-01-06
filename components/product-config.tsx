@@ -35,7 +35,7 @@ export const ethosCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenSupportIcon className="size-3 sm:size-5 text-purple-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">support</span>
           </h1>
         </div>
@@ -63,7 +63,7 @@ export const openshipCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenShipIcon className="size-3 sm:size-5 text-amber-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">ship</span>
           </h1>
         </div>
@@ -87,7 +87,7 @@ export const openshipCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenShipIcon className="size-3 sm:size-5 text-cyan-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">ship</span>
           </h1>
         </div>
@@ -111,7 +111,7 @@ export const openshipCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenShipIcon className="size-3 sm:size-5 text-blue-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">ship</span>
           </h1>
         </div>
@@ -139,7 +139,7 @@ export const openfrontCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenFrontIcon className="size-3 sm:size-5 text-blue-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">front</span>
           </h1>
         </div>
@@ -163,7 +163,7 @@ export const openfrontCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenFrontIcon className="size-3 sm:size-5 text-amber-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">front</span>
           </h1>
         </div>
@@ -187,7 +187,7 @@ export const openfrontCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenFrontIcon className="size-3 sm:size-5 text-green-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">front</span>
           </h1>
         </div>
@@ -211,7 +211,7 @@ export const openfrontCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenFrontIcon className="size-3 sm:size-5 text-emerald-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">front</span>
           </h1>
         </div>
@@ -235,7 +235,7 @@ export const openfrontCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenFrontIcon className="size-3 sm:size-5 text-pink-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">front</span>
           </h1>
         </div>
@@ -259,7 +259,7 @@ export const openfrontCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenFrontIcon className="size-3 sm:size-5 text-fuchsia-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">front</span>
           </h1>
         </div>
@@ -283,7 +283,7 @@ export const openfrontCards: VerticalConfig[] = [
       <div className={cn(spaceGrotesk.className)}>
         <div className="flex items-center gap-1 sm:gap-2 text-gray-900">
           <OpenFrontIcon className="size-3 sm:size-5 text-red-500" />
-          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold tracking-tight">
+          <h1 className="mb-0.5 text-xs sm:text-lg font-semibold  ">
             open<span className="font-normal">front</span>
           </h1>
         </div>

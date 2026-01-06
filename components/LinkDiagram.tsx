@@ -83,11 +83,11 @@ export function LinkDiagram() {
         <div className="flex flex-col items-center gap-1 hidden md:flex">
           <span className="text-xs text-gray-500 bg-transparent">Link</span>
           <div className="border border-gray-300 bg-white rounded overflow-hidden">
-            <div className="text-xs font-bold uppercase tracking-wider text-green-600 px-2 py-1 text-center">
+            <div className="text-xs font-bold uppercase  text-green-600 px-2 py-1 text-center">
               Bike Central
             </div>
             <div className="border-t border-dashed border-gray-300"></div>
-            <div className="text-xs font-bold uppercase tracking-wider text-blue-600 px-2 py-1 text-center">
+            <div className="text-xs font-bold uppercase  text-blue-600 px-2 py-1 text-center">
               Warehouse #1
             </div>
           </div>

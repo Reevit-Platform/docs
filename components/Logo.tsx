@@ -23,7 +23,7 @@ export const Logo = ({
     <div className={cn(spaceGrotesk.className, className)}>
       <div className="flex items-center gap-2 text-zinc-700 dark:text-white">
         <LogoIcon className={cn("size-5", iconClassName)} suffix="-full" />
-          <h1 className={cn(textClassName, "mb-1 text-xl font-semibold tracking-tight")} >
+          <h1 className={cn(textClassName, "mb-1 text-xl font-semibold  ")} >
           open<span className="font-normal">ship</span>
         </h1>
       </div>

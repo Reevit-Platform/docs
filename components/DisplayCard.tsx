@@ -121,10 +121,10 @@ function DisplayCard({
       <div className="relative flex flex-col">
         <div className="space-y-2 ring-foreground/5 text-card-foreground rounded-lg bg-card border shadow border-transparent ring-1 p-1.5 sm:p-2">
           <div className="flex items-start justify-between">
-            <h3 className="flex items-center font-medium text-gray-900 dark:text-gray-100 tracking-tight text-sm sm:text-[15px]">
+            <h3 className="flex items-center font-medium text-gray-900 dark:text-gray-100   text-sm sm:text-[15px]">
               <div className="shrink-0">
                 <HugeiconsIcon icon={icon} className="size-5 sm:size-6" />
-                <span className="ml-3 sm:ml-7 -mt-1 text-[6px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                <span className="ml-3 sm:ml-7 -mt-1 text-[6px] sm:text-[9px] font-bold text-gray-400 uppercase ">
                   {title}
                 </span>
               </div>
