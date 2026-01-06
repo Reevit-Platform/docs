@@ -131,7 +131,7 @@ export default function HomePage() {
       {/* Hero Content */}
       <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pt-24 pb-16 text-center md:pt-32 md:pb-24">
         {/* Badge */}
-        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-accent/50 px-4 py-2 text-xs font-medium tracking-wider text-muted-foreground uppercase">
+        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-accent/50 px-4 py-2 text-xs font-medium  text-muted-foreground uppercase">
           <span className="size-2 animate-pulse rounded-full bg-fd-primary" />
           Documentation
         </div>
@@ -140,7 +140,7 @@ export default function HomePage() {
         <h1
           className={cn(
             spaceGrotesk.className,
-            "text-5xl font-bold tracking-tight text-foreground md:text-7xl"
+            "text-5xl font-bold   text-foreground md:text-7xl"
           )}
         >
           Reevit <span className="text-muted-foreground/40">Docs</span>

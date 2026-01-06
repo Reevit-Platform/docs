@@ -54,7 +54,7 @@ function SchemaVisualizerInner({ schemaId = "openfront" }: SchemaVisualizerProps
   return (
     <div className="w-full flex flex-col">
       <header className="border-b bg-background px-6 py-4 mb-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-semibold  ">
           {schemaTitle} Database Schema
         </h1>
         <p className="text-sm text-muted-foreground mt-1">

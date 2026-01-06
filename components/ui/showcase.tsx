@@ -302,7 +302,7 @@ function PaymentsView() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-mono text-2xl font-semibold tracking-tight">Snapshot</h1>
+        <h1 className="font-mono text-2xl font-semibold  ">Snapshot</h1>
         <p className="text-muted-foreground font-mono text-sm">
           Payment overview for the last 30 days
         </p>
@@ -318,13 +318,13 @@ function PaymentsView() {
         ].map((stat, i) => (
           <Card key={i} className="gap-2 py-4">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0">
-              <CardTitle className="text-muted-foreground font-mono text-xs font-medium tracking-wider uppercase">
+              <CardTitle className="text-muted-foreground font-mono text-xs font-medium  uppercase">
                 {stat.title}
               </CardTitle>
               <HugeiconsIcon icon={stat.icon} className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="font-mono text-2xl font-semibold tracking-tight">{stat.value}</div>
+              <div className="font-mono text-2xl font-semibold  ">{stat.value}</div>
               {(stat.description || stat.change) && (
                 <p className="text-muted-foreground mt-1 font-mono text-xs">
                   {stat.change && (
@@ -346,7 +346,7 @@ function PaymentsView() {
       <Card className="gap-4">
         <CardHeader className="pb-0">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-muted-foreground font-mono text-xs font-medium tracking-wider uppercase">
+            <CardTitle className="text-muted-foreground font-mono text-xs font-medium  uppercase">
               Recent Payments
             </CardTitle>
             <div className="flex items-center gap-1 text-muted-foreground font-mono text-[10px] uppercase cursor-pointer hover:text-foreground transition-colors">
@@ -359,14 +359,14 @@ function PaymentsView() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border/50">
-                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Payment ID</th>
-                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Amount</th>
-                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Status</th>
-                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Provider</th>
-                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Method</th>
-                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Fee</th>
-                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Attempts</th>
-                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Created</th>
+                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase ">Payment ID</th>
+                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase ">Amount</th>
+                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase ">Status</th>
+                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase ">Provider</th>
+                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase ">Method</th>
+                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase ">Fee</th>
+                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase ">Attempts</th>
+                <th className="py-3 font-mono text-[10px] text-muted-foreground font-medium uppercase ">Created</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
@@ -423,13 +423,13 @@ function ConnectionsView() {
         ].map((metric, i) => (
           <Card key={i} className="gap-2 py-4">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0">
-              <CardTitle className="text-muted-foreground font-mono text-xs font-medium tracking-wider uppercase">
+              <CardTitle className="text-muted-foreground font-mono text-xs font-medium  uppercase">
                 {metric.label}
               </CardTitle>
               <HugeiconsIcon icon={metric.icon} className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="font-mono text-2xl font-semibold tracking-tight">{metric.value}</div>
+              <div className="font-mono text-2xl font-semibold  ">{metric.value}</div>
               {metric.description && (
                 <p className="text-muted-foreground mt-1 font-mono text-xs">{metric.description}</p>
               )}
@@ -513,7 +513,7 @@ function ConnectionsView() {
             {/* Credentials */}
             <div className="border-border/50 space-y-2 border-t pt-3">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-mono text-xs font-medium tracking-wider uppercase">
+                <span className="text-muted-foreground font-mono text-xs font-medium  uppercase">
                   Credentials
                 </span>
               </div>
@@ -778,7 +778,7 @@ function WebhooksView() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-muted-foreground font-mono text-xs font-medium tracking-wider uppercase">
+              <label className="text-muted-foreground font-mono text-xs font-medium  uppercase">
                 Endpoint URL
               </label>
               <div className="bg-muted/50 flex items-center gap-2 rounded-sm p-2 font-mono text-xs">
@@ -799,7 +799,7 @@ function WebhooksView() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-muted-foreground font-mono text-xs font-medium tracking-wider uppercase">
+              <label className="text-muted-foreground font-mono text-xs font-medium  uppercase">
                 Secret Key
               </label>
               <div className="bg-muted/50 flex items-center justify-between rounded-sm p-2 font-mono text-xs">
