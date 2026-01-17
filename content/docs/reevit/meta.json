@@ -13,6 +13,7 @@
     "connections",
     "customers",
     "payment-links",
+    "checkout",
     "subscriptions",
     "webhooks",
     "workflows",

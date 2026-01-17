@@ -1,0 +1,185 @@
+---
+title: Checkout
+description: Hosted checkout flow with SDKs, settings, and CORS allowlist
+icon: CreditCard
+---
+
+import { CreditCardIcon, Link01Icon as LinkIcon, GlobeIcon as WebhookIcon, Shield01Icon as ShieldCheckIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+# Checkout
+
+Reevit Checkout provides a hosted, PCI-friendly payment experience you can launch from your app. Configure allowed origins, enable providers, and embed the checkout SDK for a full end-to-end flow.
+
+---
+
+## Choose Your Checkout Path
+
+- **Checkout SDK (Recommended)**: Embed a modal checkout experience in your React, Vue, or Svelte app.
+- **Payment Links**: Share a hosted checkout page with no frontend code.
+
+<Callout type="info">
+Payment Links are best for one-off sales or invoices. The Checkout SDK is ideal when you want a fully embedded experience.
+</Callout>
+
+---
+
+## Prerequisites
+
+1. **Connect a provider** in [Connections](/docs/reevit/connections).
+2. **Grab your public key** (`pfk_test_...` or `pfk_live_...`) from **Developers → API Keys**.
+3. **Decide your environment** (test vs live) and use the matching key.
+
+---
+
+## Step 1: Configure Checkout Settings
+
+Open **Dashboard → Checkout Settings** and configure:
+
+### Allowed Origins (Required)
+
+Browser requests to the checkout endpoints are protected by CORS. Add every web domain that will open the checkout.
+
+- Add **one origin per line**
+- Include the **scheme** and **port** if needed (e.g., `http://localhost:3000`)
+- Wildcards are supported for subdomains (e.g., `https://*.example.com`)
+
+Example:
+```
+https://shop.example.com
+https://checkout.example.com
+http://localhost:3000
+```
+
+### Enabled Providers
+
+Select at least one PSP so checkout can route payment intents. If none are enabled, checkout cannot initialize.
+
+### Branding (Optional)
+
+Set primary color and styling defaults so the checkout modal matches your brand.
+
+### Update Allowed Origins via API (Optional)
+
+```bash
+curl -X PUT https://api.reevit.com/v1/checkout/settings \
+  -H "X-Reevit-Key: pfk_live_xxx" \
+  -H "X-Org-Id: org_123" \
+  -H "Idempotency-Key: checkout-settings-123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "allowed_origins": [
+      "https://shop.example.com",
+      "https://checkout.example.com"
+    ]
+  }'
+```
+
+---
+
+## Step 2: Install the SDK
+
+```bash
+npm install @reevit/react
+```
+
+For Vue and Svelte, see [SDKs](/docs/reevit/sdks).
+
+---
+
+## Step 3: Open Checkout (React Example)
+
+```tsx
+import { ReevitCheckout } from "@reevit/react";
+import "@reevit/react/styles.css";
+
+export function CheckoutButton() {
+  return (
+    <ReevitCheckout
+      publicKey="pfk_test_your_key"
+      amount={10000}
+      currency="GHS"
+      email="customer@example.com"
+      reference={`ORD-${Date.now()}`}
+      onSuccess={(result) => {
+        console.log("Payment success", result);
+      }}
+      onError={(error) => {
+        console.error("Payment failed", error.message);
+      }}
+      onClose={() => {
+        console.log("Checkout closed");
+      }}
+    >
+      <button>Pay GHS 100.00</button>
+    </ReevitCheckout>
+  );
+}
+```
+
+---
+
+## Step 4: Handle Webhooks
+
+To fulfill orders reliably, set up outbound webhooks.
+
+- Configure your webhook endpoint in **Dashboard → Webhooks**.
+- Verify signatures and update your order state on `payment.succeeded`.
+
+If you create payments via SDK or API, include required metadata for inbound PSP webhook routing. See [Webhooks](/docs/reevit/webhooks).
+
+---
+
+## Testing & Go Live
+
+### Test Mode
+
+- Use `pfk_test_...` keys for sandbox payments.
+- Confirm flows end-to-end before switching to live keys.
+- Learn more in [Sandbox & Test Mode](/docs/reevit/test-mode).
+
+### Go Live Checklist
+
+1. Switch to `pfk_live_...` keys.
+2. Add your production domains to **Allowed Origins**.
+3. Ensure live PSP connections are enabled.
+4. Update webhook signing secrets in production.
+
+---
+
+## Troubleshooting
+
+### CORS / network_error
+
+If you see checkout requests fail in the browser:
+
+1. Confirm the site origin is listed in **Checkout Settings → Allowed Origins**.
+2. Ensure the origin includes scheme and port (e.g., `http://localhost:3000`).
+3. Verify you are using a valid public key.
+
+### Styles Not Loading
+
+Make sure you import the SDK styles:
+
+```tsx
+import "@reevit/react/styles.css";
+```
+
+---
+
+## Related Resources
+
+<Cards columns={2}>
+  <Card title="Payment Links" href="/docs/reevit/payment-links" icon={<HugeiconsIcon icon={LinkIcon} />}>
+    Generate hosted checkout pages without writing code.
+  </Card>
+  <Card title="Webhooks" href="/docs/reevit/webhooks" icon={<HugeiconsIcon icon={WebhookIcon} />}>
+    Receive real-time events and fulfill orders automatically.
+  </Card>
+  <Card title="Security" href="/docs/reevit/security" icon={<HugeiconsIcon icon={ShieldCheckIcon} />}>
+    Learn how Reevit keeps checkout and data secure.
+  </Card>
+  <Card title="Payments" href="/docs/reevit/payments" icon={<HugeiconsIcon icon={CreditCardIcon} />}>
+    Understand the unified payment lifecycle and routing logic.
+  </Card>
+</Cards>
