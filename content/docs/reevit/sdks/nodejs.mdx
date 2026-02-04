@@ -5,7 +5,7 @@ description: TypeScript/JavaScript SDK for Reevit API
 
 # Node.js SDK
 
-[![npm version](https://img.shields.io/npm/v/@reevit/node-sdk.svg)](https://www.npmjs.com/package/@reevit/node-sdk)
+[![npm version](https://img.shields.io/npm/v/@reevit/node.svg)](https://www.npmjs.com/package/@reevit/node)
 [![GitHub](https://img.shields.io/badge/GitHub-Reevit--Platform%2Fnode-sdk-blue)](https://github.com/Reevit-Platform/node-sdk)
 
 The official Node.js/TypeScript SDK for the Reevit payment orchestration platform.
@@ -27,7 +27,7 @@ import { Reevit } from '@reevit/node';
 
 // Initialize the client
 const reevit = new Reevit(
-  'pfk_live_your_api_key',  // Your API key
+  'pfk_live_your_api_key.secret',  // Your API key
   'org_your_org_id'          // Your organization ID
 );
 
@@ -35,7 +35,7 @@ const reevit = new Reevit(
 const payment = await reevit.payments.createIntent({
   amount: 5000,      // 50.00 GHS (amount in smallest currency unit)
   currency: 'GHS',
-  method: 'momo',
+  method: 'mobile_money',
   country: 'GH',
   customer_id: 'cust_123',
   reference: 'ORD-12345'
@@ -56,8 +56,7 @@ import { Reevit } from '@reevit/node';
 
 const reevit = new Reevit(
   process.env.REEVIT_API_KEY!,
-  process.env.REEVIT_ORG_ID!,
-  process.env.REEVIT_BASE_URL || 'https://api.reevit.io'
+  process.env.REEVIT_ORG_ID!
 );
 ```
 
@@ -78,38 +77,24 @@ const reevit = new Reevit(
 const payment = await reevit.payments.createIntent({
   amount: 10000,           // 100.00 in smallest currency unit
   currency: 'GHS',         // Currency code (GHS, NGN, KES, USD)
-  method: 'momo',          // Payment method
+  method: 'mobile_money',          // Payment method
   country: 'GH',           // ISO country code
   customer_id: 'cust_123', // Optional: Your customer reference
   reference: 'order_456',  // Optional: External reference
-  metadata: {              // Required: Custom metadata
-    org_id: 'your_org_id',   // Required for webhook routing
-    connection_id: 'your_conn_id', // Required for webhook routing
-    payment_id: 'order_456', // Required for Stripe & routing
-    product: 'Premium Plan'
+  metadata: {              // Optional: Custom metadata
+    product: 'Premium Plan',
+    order_id: 'order_456'
   }
 });
 ```
-
-### Required Metadata for Webhooks
-
-For inbound webhooks (Paystack, Stripe, etc.) to route correctly back to Reevit, you must include these fields in the `metadata` object:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
-| `connection_id` | ✅ Yes | The connection ID for the provider |
-| `payment_id` | ✅ Yes | Your internal order ID (Required for Stripe) |
-
----
 
 ### Payment Methods by Country
 
 | Country | Code | Supported Methods |
 |---------|------|-------------------|
-| Ghana | `GH` | `momo`, `card`, `bank_transfer` |
-| Nigeria | `NG` | `card`, `bank_transfer`, `ussd` |
-| Kenya | `KE` | `mpesa`, `card` |
+| Ghana | `GH` | `mobile_money`, `card`, `bank_transfer` |
+| Nigeria | `NG` | `card`, `bank_transfer` |
+| Kenya | `KE` | `mobile_money`, `card` |
 
 ### Get Payment
 
@@ -165,7 +150,7 @@ const paystackConnection = await reevit.connections.create({
   provider: 'paystack',
   mode: 'live',
   credentials: {
-    secret_key: 'pfk_live_xxxxx'
+    secret_key: 'sk_live_xxx'
   },
   labels: ['nigeria', 'primary'],
   routing_hints: {
@@ -193,7 +178,7 @@ const isValid = await reevit.connections.test({
   provider: 'paystack',
   mode: 'live',
   credentials: {
-    secret_key: 'pfk_live_xxxxx'
+    secret_key: 'sk_live_xxx'
   }
 });
 ```
@@ -209,7 +194,7 @@ const subscription = await reevit.subscriptions.create({
   plan_id: 'plan_premium',
   amount: 9900,           // 99.00 per month
   currency: 'GHS',
-  method: 'momo',
+  method: 'mobile_money',
   interval: 'monthly',
   metadata: {
     plan_name: 'Premium',
@@ -242,17 +227,22 @@ const updatedPolicy = await reevit.fraud.update({
 ## Webhook Verification
 
 ```typescript
-import { verifyWebhook } from '@reevit/node';
+import crypto from 'crypto';
 
-app.post('/webhooks/reevit', (req, res) => {
+app.post('/webhooks/reevit', express.raw({ type: 'application/json' }), (req, res) => {
   const signature = req.headers['x-reevit-signature'];
-  
-  if (!verifyWebhook(req.rawBody, signature, webhookSecret)) {
+  const expected = 'sha256=' + crypto
+    .createHmac('sha256', webhookSecret)
+    .update(req.body)
+    .digest('hex');
+
+  if (!signature || signature.length !== expected.length ||
+      !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
     return res.status(401).send('Invalid signature');
   }
-  
-  const event = req.body;
-  
+
+  const event = JSON.parse(req.body.toString('utf8'));
+
   switch (event.type) {
     case 'payment.succeeded':
       // Handle success
@@ -261,7 +251,7 @@ app.post('/webhooks/reevit', (req, res) => {
       // Handle failure
       break;
   }
-  
+
   res.status(200).send('OK');
 });
 ```
@@ -277,7 +267,7 @@ try {
   const payment = await reevit.payments.createIntent({
     amount: 5000,
     currency: 'GHS',
-    method: 'momo',
+    method: 'mobile_money',
     country: 'GH'
   });
 } catch (error) {
