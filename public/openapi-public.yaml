@@ -117,7 +117,7 @@ info:
 servers:
   - url: http://localhost:8081
     description: Local development server
-  - url: https://api.reevit.com
+  - url: https://api.reevit.io
     description: Production server
 security:
   - ApiKeyAuth: []
