@@ -45,45 +45,34 @@ Every payment on Reevit follows a secure, 5-step lifecycle:
 
 ### Creating a Payment Intent
 
-To start a transaction, use the `create` method in the SDK. This reserves the payment and returns a `client_secret` if frontend action is needed.
+To start a transaction, use the `createIntent` method in the SDK. This reserves the payment and returns a `client_secret` if frontend action is needed.
 
 ```typescript
 import { Reevit } from '@reevit/node';
 
-const payment = await reevit.payments.create({
+const reevit = new Reevit(
+  process.env.REEVIT_API_KEY!,
+  process.env.REEVIT_ORG_ID!
+);
+
+const payment = await reevit.payments.createIntent({
   amount: 1000,           // 10.00 GHS
   currency: 'GHS',
-  method: 'card',         // 'card', 'momo', or 'bank'
+  method: 'card',         // 'card', 'mobile_money', or 'bank_transfer'
   country: 'GH',
   customer_id: 'user_1',
   reference: 'ORD-12345',
-  metadata: { 
+  metadata: {
     cart_id: '99',
-    // Required for webhook routing - see below
-    org_id: process.env.REEVIT_ORG_ID,
-    connection_id: 'conn_xxx',
-    payment_id: 'order_12345'
+    order_id: 'order_12345'
   }
 });
 
 // Response status: 'requires_action' | 'succeeded' | 'failed'
 ```
 
-### Required Metadata for Webhook Routing
-
-<Callout type="warning">
-**Critical**: For payment provider webhooks (Paystack, Flutterwave, etc.) to route back to Reevit correctly, you **must** include specific fields in the `metadata` object. Without these, webhooks will fail with a **400 Bad Request** error.
-</Callout>
-
-| Metadata Field | Required | Description |
-|---------------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID (from Reevit Dashboard → Settings) |
-| `connection_id` | ✅ Yes | The connection ID for the payment provider |
-| `payment_id` | ✅ Yes | Your internal payment/order ID (Required for Stripe & Webhook routing) |
-| `customer_email` | Optional | Customer email for receipts |
-
-<Callout type="tip">
-**Payment Links**: If you're using Reevit [Payment Links](/docs/reevit/payment-links), these metadata fields are automatically included. You only need to set them manually when creating payments via API or SDK.
+<Callout type="info">
+Reevit automatically injects the correlation metadata needed for PSP webhooks. Use `metadata` for your own fields like order IDs or cart IDs.
 </Callout>
 
 ### Handling Next Actions
@@ -99,7 +88,7 @@ If a payment requires user input (like a 3D Secure redirect or a Mobile Money pr
 
 1.  **Always use Idempotency**: Provide an `idempotency_key` (like an Order ID) to prevent double-charging customers during network retries.
 2.  **Fulfill on Webhooks**: Never fulfill an order based solely on a frontend redirect. Wait for the `payment.succeeded` [webhook event](/docs/reevit/webhooks).
-3.  **Use Test Mode**: Develop your integration using `pfk_test_` keys to simulate different success and failure scenarios.
+3.  **Use Test Mode**: Develop your integration using `pfk_test_...secret` keys to simulate different success and failure scenarios.
 
 ---
 

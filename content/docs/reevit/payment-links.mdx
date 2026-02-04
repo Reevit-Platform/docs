@@ -73,8 +73,8 @@ console.log(link.url); // https://pay.reevit.dev/lnk_xyz123
 | `metadata` | object | | Attach your own key-value pairs for tracking. |
 | `reference` | string | | Your internal order ID or reference for the transaction. |
 
-<Callout type="tip">
-  **Webhook Routing**: For payments created via Payment Links, Reevit automatically includes the required `org_id` and `connection_id` in the metadata. The `payment_id` is also automatically set to the unique payment ID generated for the transaction.
+<Callout type="info">
+  **Webhook Routing**: Reevit automatically injects the correlation metadata needed for PSP webhooks. Use `metadata` for your own tracking fields.
 </Callout>
 
 ---

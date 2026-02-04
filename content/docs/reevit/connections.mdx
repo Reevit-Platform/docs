@@ -46,11 +46,11 @@ const connection = await reevit.connections.create({
   provider: 'paystack',
   mode: 'live',
   credentials: {
-    secret_key: 'pfk_live_xxx',
-    public_key: 'pfk_live_xxx'
+    secret_key: 'sk_live_xxx',
+    public_key: 'pk_live_xxx'
   },
   capabilities: {
-    methods: ['card', 'momo'],
+    methods: ['card', 'mobile_money'],
     countries: ['GH']
   }
 });
@@ -80,7 +80,7 @@ Reevit is built to support the most reliable providers in African and Global mar
 | `status` | string | | `active` or `inactive`. Inactive connections are ignored by the router. Default: `active`. |
 | `credentials` | object | ✅ | Provider-specific API keys (e.g., `secret_key`, `public_key`). Encrypted at rest. |
 | `labels` | string[] | | Tags for categorization and routing (e.g., `["primary", "ghana", "fallback"]`). |
-| `capabilities` | object | | Defines supported `methods` (e.g., `card`, `momo`) and `countries` (e.g., `GH`, `NG`). Auto-detected if omitted. |
+| `capabilities` | object | | Defines supported `methods` (e.g., `card`, `mobile_money`) and `countries` (e.g., `GH`, `NG`). Auto-detected if omitted. |
 | `routing_hints` | object | | Advanced: hints for cost/latency optimization. |
 
 ### Understanding `labels`

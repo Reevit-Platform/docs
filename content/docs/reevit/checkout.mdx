@@ -27,7 +27,7 @@ Payment Links are best for one-off sales or invoices. The Checkout SDK is ideal 
 ## Prerequisites
 
 1. **Connect a provider** in [Connections](/docs/reevit/connections).
-2. **Grab your public key** (`pfk_test_...` or `pfk_live_...`) from **Developers → API Keys**.
+2. **Grab your public key** (`pfk_test_...secret` or `pfk_live_...secret`) from **Developers → API Keys**.
 3. **Decide your environment** (test vs live) and use the matching key.
 
 ---
@@ -62,8 +62,8 @@ Set primary color and styling defaults so the checkout modal matches your brand.
 ### Update Allowed Origins via API (Optional)
 
 ```bash
-curl -X PUT https://api.reevit.com/v1/checkout/settings \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X PUT https://api.reevit.io/v1/checkout/settings \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: checkout-settings-123" \
   -H "Content-Type: application/json" \
@@ -96,7 +96,7 @@ import "@reevit/react/styles.css";
 export function CheckoutButton() {
   return (
     <ReevitCheckout
-      publicKey="pfk_test_your_key"
+      publicKey="pfk_test_your_key.secret"
       amount={10000}
       currency="GHS"
       email="customer@example.com"
@@ -126,7 +126,7 @@ To fulfill orders reliably, set up outbound webhooks.
 - Configure your webhook endpoint in **Dashboard → Webhooks**.
 - Verify signatures and update your order state on `payment.succeeded`.
 
-If you create payments via SDK or API, include required metadata for inbound PSP webhook routing. See [Webhooks](/docs/reevit/webhooks).
+If you create payments via SDK or API, Reevit injects the correlation metadata needed for PSP webhook routing automatically. Use `metadata` for your own fields. See [Webhooks](/docs/reevit/webhooks).
 
 ---
 
@@ -134,13 +134,13 @@ If you create payments via SDK or API, include required metadata for inbound PSP
 
 ### Test Mode
 
-- Use `pfk_test_...` keys for sandbox payments.
+- Use `pfk_test_...secret` keys for sandbox payments.
 - Confirm flows end-to-end before switching to live keys.
 - Learn more in [Sandbox & Test Mode](/docs/reevit/test-mode).
 
 ### Go Live Checklist
 
-1. Switch to `pfk_live_...` keys.
+1. Switch to `pfk_live_...secret` keys.
 2. Add your production domains to **Allowed Origins**.
 3. Ensure live PSP connections are enabled.
 4. Update webhook signing secrets in production.

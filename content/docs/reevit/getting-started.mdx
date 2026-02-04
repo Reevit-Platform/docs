@@ -30,7 +30,7 @@ Before writing any code, you need to set up your business environment in the [Re
 Once your organization is ready, it's time to integrate the Reevit API.
 
 ### 1. Get your API Keys
-Navigate to **Developers → API Keys**. You will need your `Secret Key` (starts with `pfk_live_`) and your `Organization ID`.
+Navigate to **Developers → API Keys**. You will need your `Secret Key` (starts with `pfk_live_...secret`) and your `Organization ID`.
 
 ### 2. Install the SDK
 We recommend using our official SDKs for the best experience, including automatic retries and type safety.
@@ -52,19 +52,20 @@ Here is how you create a simple payment intent using our SDK.
 ```typescript
 import { Reevit } from '@reevit/node';
 
-const reevit = new Reevit(process.env.REEVIT_SECRET_KEY);
+const reevit = new Reevit(
+  process.env.REEVIT_API_KEY!,
+  process.env.REEVIT_ORG_ID!
+);
 
-const payment = await reevit.payments.create({
+const payment = await reevit.payments.createIntent({
   amount: 5000,
   currency: 'GHS',
-  method: 'momo',
+  method: 'mobile_money',
   country: 'GH',
   customer_id: 'cust_123',
   reference: 'ORD-123',
-  metadata: { 
-    org_id: 'your_org_id',
-    connection_id: 'your_connection_id',
-    payment_id: 'ORD-123' 
+  metadata: {
+    order_id: 'ORD-123'
   }
 });
 
@@ -101,4 +102,3 @@ To keep your application in sync with real-world payment events, you must config
     Learn how to safely test your integration without processing real funds.
   </Card>
 </Cards>
-

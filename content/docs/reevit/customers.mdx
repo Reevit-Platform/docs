@@ -50,7 +50,7 @@ const customer = await reevit.customers.create({
 When creating a payment, include the `customer_id`:
 
 ```typescript
-await reevit.payments.create({
+await reevit.payments.createIntent({
   amount: 15000,
   currency: 'GHS',
   customer_id: customer.id, // Link to customer profile
