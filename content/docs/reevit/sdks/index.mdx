@@ -33,7 +33,7 @@ Official client libraries for integrating Reevit payments into your applications
   />
   <Card
     title="Python SDK"
-    description="Python SDK with async support"
+    description="Python SDK for server-side integrations"
     href="/docs/reevit/sdks/python"
   />
   <Card
@@ -64,6 +64,7 @@ Pre-built checkout widgets with customizable themes for React, Vue, and Svelte.
 ### Features
 
 - ✅ Pre-built checkout UI with modal
+- ✅ Server-created `sessionSecret` checkout support
 - ✅ PSP bridge integrations (Paystack, Stripe, Flutterwave, Monnify, M-Pesa)
 - ✅ Theming and dark mode support
 - ✅ Mobile-responsive design
@@ -77,18 +78,48 @@ Server-side libraries for the Reevit REST API with full type safety.
 
 | Language | Package | GitHub |
 |----------|---------|--------|
-| **TypeScript/Node.js** | `@reevit/node` | [Reevit-Platform/node](https://github.com/Reevit-Platform/node-sdk) |
+| **TypeScript/Node.js** | `@reevit/node` | [Reevit-Platform/node-sdk](https://github.com/Reevit-Platform/node-sdk) |
 | **Python** | `reevit` | [Reevit-Platform/python](https://github.com/Reevit-Platform/python-sdk) |
-| **Go** | `github.com/Reevit-Platform/go` | [Reevit-Platform/go](https://github.com/Reevit-Platform/go-sdk) |
+| **Go** | `github.com/Reevit-Platform/go-sdk` | [Reevit-Platform/go-sdk](https://github.com/Reevit-Platform/go-sdk) |
 | **PHP** | `reevit/reevit-php` | [Reevit-Platform/php](https://github.com/Reevit-Platform/php-sdk) |
 
 ### Features
 
-- ✅ Full API coverage (Payments, Connections, Subscriptions, Webhooks)
+- ✅ Full API coverage (Payments, Checkout Sessions, Connections, Subscriptions, Webhooks)
 - ✅ Type safety (TypeScript types, Python hints, Go structs)
-- ✅ Automatic retries with exponential backoff
+- ✅ Standardized request errors and recoverable failure hints
 - ✅ Idempotency key support
 - ✅ Webhook signature verification
+
+---
+
+## Recommended Checkout Flow
+
+Create checkout sessions on your backend, then pass only the returned session secret to your frontend SDK.
+
+```typescript
+// Backend
+const session = await reevit.checkoutSessions.create(
+  {
+    amount: 5000,
+    currency: "GHS",
+    method: "mobile_money",
+    country: "GH",
+    metadata: { order_id: "ORD-12345" },
+  },
+  { idempotencyKey: "order_ORD-12345" }
+);
+```
+
+```tsx
+// Frontend
+<ReevitCheckout
+  sessionSecret={session.session_secret}
+  onSuccess={(result) => console.log("Paid!", result)}
+/>
+```
+
+Frontend-only checkouts using `publicKey`, `amount`, and `currency` remain supported. For live production flows, checkout sessions are recommended because the backend owns payment creation and the browser only renders the authorized session.
 
 ---
 
@@ -120,15 +151,10 @@ import { ReevitCheckout } from '@reevit/react';
 import '@reevit/react/styles.css';
 
 <ReevitCheckout
-  publicKey="pfk_test_xxx"
+  publicKey="pfk_test_xxx.secret"
   amount={5000}
   currency="GHS"
   reference="ORD-12345"
-  metadata={{
-    org_id: "your_org_id",
-    connection_id: "your_connection_id",
-    payment_id: "ORD-12345"
-  }}
   onSuccess={(result) => console.log('Paid!', result)}
 >
   <button>Pay Now</button>
@@ -144,19 +170,14 @@ npm install @reevit/node
 ```typescript
 import { Reevit } from '@reevit/node';
 
-const client = new Reevit('pfk_live_xxx', 'org_123');
+const client = new Reevit('pfk_live_xxx.secret', 'org_123');
 
 const payment = await client.payments.createIntent({
   amount: 5000,
   currency: 'GHS',
-  method: 'momo',
+  method: 'mobile_money',
   country: 'GH',
-  reference: 'ORD-12345',
-  metadata: {
-    org_id: 'your_org_id',
-    connection_id: 'your_connection_id',
-    payment_id: 'ORD-12345'
-  }
+  reference: 'ORD-12345'
 });
 ```
 
@@ -166,7 +187,7 @@ const payment = await client.payments.createIntent({
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `apiKey` / `publicKey` | Your API key | Required |
+| `apiKey` / `publicKey` | Your API key (`pfk_...secret`) | Required |
 | `orgId` | Organization ID (backend only) | Required |
 | `baseUrl` / `apiBaseUrl` | API base URL | `https://api.reevit.io` |
 | `timeout` | Request timeout | `30s` |

@@ -52,7 +52,7 @@ import { Reevit } from '@reevit/node';
 const rule = await reevit.routing.createRule({
   name: 'Ghana MoMo → Hubtel Primary',
   countries: ['GH'],
-  methods: ['momo'],
+  methods: ['mobile_money'],
   connection_id: 'hubtel_live_primary',
   priority: 10,
   fallback_to_default: true // Attempt other Ghanaian connections if Hubtel fails

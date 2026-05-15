@@ -21,18 +21,15 @@ composer require reevit/reevit-php
 <?php
 require_once 'vendor/autoload.php';
 
-use Reevit\Client;
+use Reevit\Reevit;
 
-$client = new Client([
-    'api_key' => 'pfk_live_xxx',
-    'org_id' => 'org_123',
-]);
+$client = new Reevit('pfk_live_xxx.secret');
 
 // Create payment intent
 $intent = $client->payments->createIntent([
     'amount' => 5000,
     'currency' => 'GHS',
-    'method' => 'momo',
+    'method' => 'mobile_money',
     'country' => 'GH',
     'customer_id' => 'cust_456',
     'reference' => 'ORD-12345',
@@ -41,7 +38,27 @@ $intent = $client->payments->createIntent([
     ],
 ]);
 
-echo "Payment ID: {$intent->id}, Status: {$intent->status}\n";
+echo "Payment ID: {$intent['id']}, Status: {$intent['status']}\n";
+```
+
+---
+
+## Checkout Sessions
+
+Use checkout sessions when a browser SDK will render the payment UI. Your backend creates the session, then your frontend receives only `$session['session_secret']`.
+
+```php
+$session = $client->checkoutSessions->create([
+    'amount' => 5000,
+    'currency' => 'GHS',
+    'method' => 'mobile_money',
+    'country' => 'GH',
+    'metadata' => [
+        'order_id' => 'ORD-12345',
+    ],
+], 'order_ORD-12345');
+
+echo $session['session_secret'];
 ```
 
 ---
@@ -49,12 +66,10 @@ echo "Payment ID: {$intent->id}, Status: {$intent->status}\n";
 ## Configuration
 
 ```php
-$client = new Client([
-    'api_key' => getenv('REEVIT_API_KEY'),
-    'org_id' => getenv('REEVIT_ORG_ID'),
-    'base_url' => getenv('REEVIT_BASE_URL') ?: 'https://api.reevit.io',
-    'timeout' => 30,
-]);
+$client = new Reevit(
+    getenv('REEVIT_API_KEY'),
+    getenv('REEVIT_BASE_URL') ?: 'https://api.reevit.io'
+);
 ```
 
 ---
@@ -67,34 +82,21 @@ $client = new Client([
 $intent = $client->payments->createIntent([
     'amount' => 10000,
     'currency' => 'GHS',
-    'method' => 'momo',
+    'method' => 'mobile_money',
     'country' => 'GH',
     'customer_id' => 'cust_123',
     'reference' => 'ORD-2024-001',
     'metadata' => [
-        'org_id' => 'your_org_id',
-        'connection_id' => 'your_conn_id',
-        'payment_id' => 'ORD-2024-001',
         'order_id' => 'ORD-2024-001',
     ],
 ]);
 ```
 
-### Required Metadata for Webhooks
-
-For inbound webhooks (Paystack, Stripe, etc.) to route correctly back to Reevit, you must include these fields in the `metadata` array:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
-| `connection_id` | ✅ Yes | The connection ID for the provider |
-| `payment_id` | ✅ Yes | Your internal order ID (Required for Stripe) |
-
 ### Get Payment
 
 ```php
 $payment = $client->payments->get('pay_abc123');
-echo "Status: {$payment->status}\n";
+echo "Status: {$payment['status']}\n";
 ```
 
 ### List Payments
@@ -102,7 +104,7 @@ echo "Status: {$payment->status}\n";
 ```php
 $payments = $client->payments->list(['limit' => 50, 'offset' => 0]);
 foreach ($payments as $payment) {
-    echo "{$payment->id}: {$payment->status}\n";
+    echo "{$payment['id']}: {$payment['status']}\n";
 }
 ```
 
@@ -130,7 +132,7 @@ $connection = $client->connections->create([
     'provider' => 'paystack',
     'mode' => 'live',
     'credentials' => [
-        'secret_key' => 'pfk_live_xxxxx',
+        'secret_key' => 'sk_live_xxx',
     ],
     'labels' => ['nigeria', 'primary'],
     'routing_hints' => [
@@ -155,13 +157,12 @@ foreach ($connections as $conn) {
 
 ```php
 <?php
-use Reevit\Webhook;
-
 $payload = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_X_REEVIT_SIGNATURE'] ?? '';
 $webhookSecret = getenv('REEVIT_WEBHOOK_SECRET');
 
-if (!Webhook::verify($payload, $signature, $webhookSecret)) {
+$expected = 'sha256=' . hash_hmac('sha256', $payload, $webhookSecret);
+if (!hash_equals($expected, $signature)) {
     http_response_code(401);
     exit('Invalid signature');
 }
@@ -170,22 +171,7 @@ $event = json_decode($payload, true);
 
 switch ($event['type']) {
     case 'payment.succeeded':
-        $data = $event['data'];
-        $orderId = $data['metadata']['order_id'] ?? null;
-        // Fulfill order, send confirmation email
-        error_log("Payment succeeded for order {$orderId}");
-        break;
-        
-    case 'payment.failed':
-        // Notify customer, allow retry
-        break;
-        
-    case 'subscription.renewed':
-        // Extend access
-        break;
-        
-    case 'subscription.canceled':
-        // Revoke access
+        // Handle success
         break;
 }
 
@@ -203,8 +189,6 @@ Route::post('/webhooks/reevit', [WebhookController::class, 'handle']);
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Reevit\Webhook;
-
 class WebhookController extends Controller
 {
     public function handle(Request $request)
@@ -213,7 +197,8 @@ class WebhookController extends Controller
         $signature = $request->header('X-Reevit-Signature', '');
         $secret = config('services.reevit.webhook_secret');
         
-        if (!Webhook::verify($payload, $signature, $secret)) {
+        $expected = 'sha256=' . hash_hmac('sha256', $payload, $secret);
+        if (!hash_equals($expected, $signature)) {
             return response()->json(['error' => 'Invalid signature'], 401);
         }
         
@@ -240,7 +225,7 @@ try {
     $payment = $client->payments->createIntent([
         'amount' => 5000,
         'currency' => 'GHS',
-        'method' => 'momo',
+        'method' => 'mobile_money',
         'country' => 'GH',
     ]);
 } catch (\Reevit\Exception\ApiException $e) {
@@ -257,7 +242,7 @@ try {
 ## Environment Variables
 
 ```bash
-export REEVIT_API_KEY=pfk_live_xxx
+export REEVIT_API_KEY=pfk_live_xxx.secret
 export REEVIT_ORG_ID=org_xxx
 export REEVIT_WEBHOOK_SECRET=whsec_xxx
 ```

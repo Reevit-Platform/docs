@@ -15,7 +15,8 @@ Reevit Checkout provides a hosted, PCI-friendly payment experience you can launc
 
 ## Choose Your Checkout Path
 
-- **Checkout SDK (Recommended)**: Embed a modal checkout experience in your React, Vue, or Svelte app.
+- **Server-created Checkout Session (Recommended)**: Create a checkout session on your backend, then pass `sessionSecret` to the React, Vue, or Svelte SDK.
+- **Frontend-only Checkout SDK**: Embed a modal checkout experience directly in your frontend with a public key, amount, and currency. This remains supported, especially for sandbox/testing.
 - **Payment Links**: Share a hosted checkout page with no frontend code.
 
 <Callout type="info">
@@ -27,7 +28,7 @@ Payment Links are best for one-off sales or invoices. The Checkout SDK is ideal 
 ## Prerequisites
 
 1. **Connect a provider** in [Connections](/docs/reevit/connections).
-2. **Grab your public key** (`pfk_test_...` or `pfk_live_...`) from **Developers → API Keys**.
+2. **Grab your public key** (`pfk_test_...secret` or `pfk_live_...secret`) from **Developers → API Keys**.
 3. **Decide your environment** (test vs live) and use the matching key.
 
 ---
@@ -62,8 +63,8 @@ Set primary color and styling defaults so the checkout modal matches your brand.
 ### Update Allowed Origins via API (Optional)
 
 ```bash
-curl -X PUT https://api.reevit.com/v1/checkout/settings \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X PUT https://api.reevit.io/v1/checkout/settings \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: checkout-settings-123" \
   -H "Content-Type: application/json" \
@@ -77,30 +78,48 @@ curl -X PUT https://api.reevit.com/v1/checkout/settings \
 
 ---
 
-## Step 2: Install the SDK
+## Step 2: Create a Checkout Session
 
-```bash
-npm install @reevit/react
+Create the payment on your backend with a private API key. This keeps payment creation, routing policy, metadata, and idempotency under your control.
+
+```typescript
+import { Reevit } from "@reevit/node";
+
+const reevit = new Reevit(process.env.REEVIT_API_KEY!, process.env.REEVIT_ORG_ID!);
+
+export async function createCheckoutSession(order: { id: string; amount: number; email: string }) {
+  return reevit.checkoutSessions.create(
+    {
+      amount: order.amount,
+      currency: "GHS",
+      method: "mobile_money",
+      country: "GH",
+      customer_id: order.email,
+      metadata: { order_id: order.id },
+    },
+    { idempotencyKey: `order_${order.id}` }
+  );
+}
 ```
 
-For Vue and Svelte, see [SDKs](/docs/reevit/sdks).
+Your backend returns `session.session_secret` to the frontend. Do not expose private API keys in the browser.
 
 ---
 
 ## Step 3: Open Checkout (React Example)
 
+```bash
+npm install @reevit/react
+```
+
 ```tsx
 import { ReevitCheckout } from "@reevit/react";
 import "@reevit/react/styles.css";
 
-export function CheckoutButton() {
+export function CheckoutButton({ sessionSecret }: { sessionSecret: string }) {
   return (
     <ReevitCheckout
-      publicKey="pfk_test_your_key"
-      amount={10000}
-      currency="GHS"
-      email="customer@example.com"
-      reference={`ORD-${Date.now()}`}
+      sessionSecret={sessionSecret}
       onSuccess={(result) => {
         console.log("Payment success", result);
       }}
@@ -117,6 +136,8 @@ export function CheckoutButton() {
 }
 ```
 
+For Vue and Svelte, pass the same `sessionSecret` prop to `ReevitCheckout`. If you cannot add a backend yet, the frontend-only `publicKey + amount + currency` flow still works. Live frontend-created intents log a deprecation warning and should be migrated to checkout sessions over time.
+
 ---
 
 ## Step 4: Handle Webhooks
@@ -126,7 +147,7 @@ To fulfill orders reliably, set up outbound webhooks.
 - Configure your webhook endpoint in **Dashboard → Webhooks**.
 - Verify signatures and update your order state on `payment.succeeded`.
 
-If you create payments via SDK or API, include required metadata for inbound PSP webhook routing. See [Webhooks](/docs/reevit/webhooks).
+If you create payments via SDK or API, Reevit injects the correlation metadata needed for PSP webhook routing automatically. Use `metadata` for your own fields. See [Webhooks](/docs/reevit/webhooks).
 
 ---
 
@@ -134,13 +155,13 @@ If you create payments via SDK or API, include required metadata for inbound PSP
 
 ### Test Mode
 
-- Use `pfk_test_...` keys for sandbox payments.
+- Use `pfk_test_...secret` keys for sandbox payments.
 - Confirm flows end-to-end before switching to live keys.
 - Learn more in [Sandbox & Test Mode](/docs/reevit/test-mode).
 
 ### Go Live Checklist
 
-1. Switch to `pfk_live_...` keys.
+1. Switch to `pfk_live_...secret` keys.
 2. Add your production domains to **Allowed Origins**.
 3. Ensure live PSP connections are enabled.
 4. Update webhook signing secrets in production.

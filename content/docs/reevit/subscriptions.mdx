@@ -77,8 +77,8 @@ Reevit provides **one API** for subscription billing that:
 Let's create a subscription for a customer signing up for your premium plan:
 
 ```bash
-curl -X POST https://api.reevit.com/v1/subscriptions \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/subscriptions \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: sub-cust_456-premium" \
   -H "Content-Type: application/json" \
@@ -87,29 +87,18 @@ curl -X POST https://api.reevit.com/v1/subscriptions \
     "plan_id": "premium",
     "amount": 9900,
     "currency": "GHS",
-    "method": "momo",
+    "method": "mobile_money",
     "interval": "monthly",
     "metadata": {
-      "org_id": "your_org_id",
-      "connection_id": "your_conn_id",
-      "payment_id": "sub-cust_456-premium",
       "tier": "premium",
       "signup_source": "website"
     }
   }'
 ```
 
-### Required Metadata for Webhooks
-
-For subscription-related webhooks to route correctly, you should include these fields in the `metadata` object:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
-| `connection_id` | ✅ Yes | The connection ID for the provider |
-| `payment_id` | ✅ Yes | A unique ID for the initial subscription payment |
-
----
+<Callout type="info">
+Reevit automatically injects the correlation metadata needed for PSP webhooks. Use `metadata` for your own fields like plan tier or signup source.
+</Callout>
 
 ### Understanding the Request
 
@@ -119,7 +108,7 @@ For subscription-related webhooks to route correctly, you should include these f
 | `plan_id` | Your plan identifier | `premium` | Helps track which plan customer has |
 | `amount` | Amount in minor units | `9900` = GHS 99.00 | The recurring charge amount |
 | `currency` | ISO 4217 code | `GHS` | Currency for billing |
-| `method` | Payment method | `momo`, `card`, `bank` | How customer will be charged |
+| `method` | Payment method | `mobile_money`, `card`, `bank_transfer` (aliases: `momo`, `bank`) | How customer will be charged |
 | `interval` | Billing frequency | `monthly`, `yearly` | How often to charge |
 | `metadata` | Custom data | `{"tier": "premium"}` | Store additional context |
 
@@ -132,7 +121,7 @@ For subscription-related webhooks to route correctly, you should include these f
   "plan_id": "premium",
   "amount": 9900,
   "currency": "GHS",
-  "method": "momo",
+  "method": "mobile_money",
   "interval": "monthly",
   "status": "active",
   "next_renewal_at": "2025-03-10T10:00:00Z",
@@ -183,8 +172,8 @@ Understanding subscription statuses helps you manage customer access:
 ### List Subscriptions
 
 ```bash
-curl "https://api.reevit.com/v1/subscriptions?status=active" \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl "https://api.reevit.io/v1/subscriptions?status=active" \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -206,8 +195,8 @@ curl "https://api.reevit.com/v1/subscriptions?status=active" \
 ### Get Single Subscription
 
 ```bash
-curl https://api.reevit.com/v1/subscriptions/sub_abc123 \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/subscriptions/sub_abc123 \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -223,8 +212,8 @@ curl https://api.reevit.com/v1/subscriptions/sub_abc123 \
 ### Change Plan or Amount
 
 ```bash
-curl -X PATCH https://api.reevit.com/v1/subscriptions/sub_abc123 \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X PATCH https://api.reevit.io/v1/subscriptions/sub_abc123 \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: sub-update-001" \
   -d '{
@@ -250,8 +239,8 @@ curl -X PATCH https://api.reevit.com/v1/subscriptions/sub_abc123 \
 ### Cancel Subscription
 
 ```bash
-curl -X POST https://api.reevit.com/v1/subscriptions/sub_abc123/cancel \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/subscriptions/sub_abc123/cancel \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: sub-cancel-001"
 ```
@@ -274,8 +263,8 @@ curl -X POST https://api.reevit.com/v1/subscriptions/sub_abc123/cancel \
 Resume a paused subscription:
 
 ```bash
-curl -X POST https://api.reevit.com/v1/subscriptions/sub_abc123/resume \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/subscriptions/sub_abc123/resume \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: sub-resume-001"
 ```
@@ -326,8 +315,8 @@ Draft → Due → Paid/Failed → Canceled (if needed)
 ### List Invoices
 
 ```bash
-curl "https://api.reevit.com/v1/invoices?subscription_id=sub_abc123" \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl "https://api.reevit.io/v1/invoices?subscription_id=sub_abc123" \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -350,8 +339,8 @@ curl "https://api.reevit.com/v1/invoices?subscription_id=sub_abc123" \
 ### Get Single Invoice
 
 ```bash
-curl https://api.reevit.com/v1/invoices/inv_xyz789 \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/invoices/inv_xyz789 \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -380,8 +369,8 @@ curl https://api.reevit.com/v1/invoices/inv_xyz789 \
 Manually retry a failed invoice:
 
 ```bash
-curl -X POST https://api.reevit.com/v1/invoices/inv_xyz789/retry \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/invoices/inv_xyz789/retry \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: inv-retry-001"
 ```
@@ -418,8 +407,8 @@ Retry policies define how failed subscription payments are retried. This is cruc
 ### Setting Retry Policy
 
 ```bash
-curl -X POST https://api.reevit.com/v1/policies/retry \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/policies/retry \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: retry-policy-001" \
   -d '{

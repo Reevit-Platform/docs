@@ -18,12 +18,14 @@ npm install @reevit/vue @reevit/core
 
 ## Quick Start
 
-The simplest way to integrate Reevit is using the `ReevitCheckout` component.
+The recommended production flow is to create a checkout session on your backend, then pass `sessionSecret` to the `ReevitCheckout` component.
 
 ```vue
 <script setup lang="ts">
 import { ReevitCheckout } from '@reevit/vue';
 import '@reevit/vue/styles.css';
+
+const sessionSecret = 'cs_session_secret_from_your_backend';
 
 const handleSuccess = (result: any) => {
   console.log('Payment success!', result);
@@ -36,11 +38,7 @@ const handleError = (error: any) => {
 
 <template>
   <ReevitCheckout
-    publicKey="pfk_test_xxx"
-    :amount="10000"
-    currency="GHS"
-    email="customer@example.com"
-    reference="ORD-12345"
+    :sessionSecret="sessionSecret"
     @success="handleSuccess"
     @error="handleError"
   >
@@ -57,51 +55,52 @@ const handleError = (error: any) => {
 </template>
 ```
 
+Frontend-only usage still works if you are not ready to add a backend:
+
+```vue
+<ReevitCheckout
+  publicKey="pfk_test_xxx.secret"
+  :amount="10000"
+  currency="GHS"
+  email="customer@example.com"
+/>
+```
+
+Live frontend-created intents are deprecated and will log a browser console warning. Move production checkouts to `sessionSecret` when possible.
+
 ---
 
 ## Props Reference
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
-| `publicKey` | `string` | ✅ | Your project's public key |
-| `amount` | `number` | ✅ | Amount in smallest unit |
-| `currency` | `string` | ✅ | 3-letter currency code |
+| `sessionSecret` | `string` | Recommended | Server-created checkout session secret |
+| `publicKey` | `string` | Required without `sessionSecret` | Your project's public key |
+| `amount` | `number` | Required without `sessionSecret` | Amount in smallest unit |
+| `currency` | `string` | Required without `sessionSecret` | 3-letter currency code |
 | `email` | `string` | | Customer's email |
 | `phone` | `string` | | Customer's phone number |
 | `reference` | `string` | | Your transaction reference |
-| `metadata` | `object` | ⚠️ | **Required for webhooks** - See below |
+| `idempotencyKey` | `string` | | Optional idempotency key to safely retry or dedupe intent creation |
+| `metadata` | `object` | | Optional key-value pairs for your own tracking |
 | `paymentMethods` | `string[]` | | Enabled payment methods |
 | `theme` | `ReevitTheme` | | Customization options |
 | `isOpen` | `boolean` | | Control modal visibility manually |
 | `initialPaymentIntent` | `PaymentIntent` | | Pre-created intent for controlled mode |
 | `apiBaseUrl` | `string` | | Custom API URL |
 
-### Required Metadata for Webhook Routing
+### Idempotency & Duplicate Prevention
 
-<Callout type="warning">
-For webhooks to route correctly, your payments must include `org_id`, `connection_id`, and optionally `payment_id` in the metadata.
-</Callout>
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID |
-| `connection_id` | ✅ Yes | The payment provider connection ID |
-| `payment_id` | ✅ Yes | Your internal order/payment ID (Required for Stripe & routing) |
+Provide an `idempotencyKey` tied to your order or cart ID to avoid creating duplicate intents.
 
 ```vue
 <ReevitCheckout
-  publicKey="pfk_test_xxx"
-  :amount="5000"
+  publicKey="pfk_live_your_key.secret"
+  :amount="10000"
   currency="GHS"
-  :metadata="{
-    org_id: 'org_xxx',
-    connection_id: 'conn_xxx',
-    payment_id: 'order_123'
-  }"
-  @success="handleSuccess"
->
-  <button>Pay Now</button>
-</ReevitCheckout>
+  email="customer@example.com"
+  idempotencyKey="order_12345"
+/>
 ```
 
 ## Events
@@ -124,7 +123,7 @@ For webhooks to route correctly, your payments must include `org_id`, `connectio
     darkMode: false,
     borderRadius: '4px'
   }"
-  publicKey="pfk_test_xxx"
+  publicKey="pfk_test_xxx.secret"
   :amount="5000"
   currency="GHS"
 >
@@ -141,7 +140,7 @@ If you prefer to create the payment intent on your backend before opening the ch
 ```vue
 <template>
   <ReevitCheckout
-    publicKey="pfk_test_xxx"
+    publicKey="pfk_test_xxx.secret"
     :initialPaymentIntent="myPreCreatedIntent"
     @success="handleSuccess"
   >
@@ -173,7 +172,7 @@ const {
   isLoading 
 } = useReevit({
   config: {
-    publicKey: 'pfk_test_xxx',
+    publicKey: 'pfk_test_xxx.secret',
     amount: 5000,
     currency: 'GHS',
     email: 'customer@example.com',
@@ -220,14 +219,14 @@ For advanced use cases, use PSP bridge functions directly.
 import { createStripeInstance, confirmStripePayment } from '@reevit/vue';
 
 // Create Stripe instance
-const stripe = await createStripeInstance('pfk_test_xxx');
+const stripe = await createStripeInstance('pfk_test_xxx.secret');
 const elements = stripe.elements({ clientSecret: 'pi_xxx_secret_xxx' });
 const paymentElement = elements.create('payment');
 paymentElement.mount('#payment-element');
 
 // Later, confirm the payment
 await confirmStripePayment({
-  publishableKey: 'pfk_test_xxx',
+  publishableKey: 'pfk_test_xxx.secret',
   clientSecret: 'pi_xxx_secret_xxx',
   elements,
   onSuccess: (result) => console.log('Paid:', result.paymentIntentId),
@@ -281,7 +280,7 @@ For Nuxt 3 applications, wrap the component in `<ClientOnly>`:
 <template>
   <ClientOnly>
     <ReevitCheckout
-      publicKey="pfk_test_xxx"
+      publicKey="pfk_test_xxx.secret"
       :amount="5000"
       currency="GHS"
       @success="handleSuccess"

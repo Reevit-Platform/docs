@@ -25,7 +25,7 @@ All data transmitted to and from Reevit is encrypted using **TLS 1.3** (Transpor
 
 ```bash
 # All Reevit endpoints require TLS 1.2+
-curl -https://api.reevit.com/v1/payments
+curl -https://api.reevit.io/v1/payments
 ```
 
 ### Encryption at Rest
@@ -149,8 +149,8 @@ Reevit uses API keys for authentication. Keys are scoped to organizations and ca
 
 | Key Type | Purpose | Scope |
 |----------|---------|-------|
-| **Live Keys** (`pfk_live_...`) | Production payments | All operations |
-| **Test Keys** (`pfk_test_...`) | Development & testing | Read-only for some endpoints |
+| **Live Keys** (`pfk_live_...secret`) | Production payments | All operations |
+| **Test Keys** (`pfk_test_...secret`) | Development & testing | Read-only for some endpoints |
 
 ### Authentication Scopes
 
@@ -261,12 +261,15 @@ By default, data is processed in **EU-West (Ireland)**. Enterprise customers can
 ### For Your Application
 
 1. **Never expose API keys in client-side code**
-   ```typescript
+   ```bash
    // ❌ Wrong - exposes key to browser
-   const client = new Reevit('pk_live_xxx');
+   const client = new Reevit('pfk_live_xxx.secret', 'org_123');
 
    // ✅ Correct - use server-side only
-   const client = new Reevit(process.env.REEVIT_SECRET_KEY);
+   const client = new Reevit(
+     process.env.REEVIT_API_KEY!,
+     process.env.REEVIT_ORG_ID!
+   );
    ```
 
 2. **Use webhooks for payment confirmation**
@@ -286,11 +289,12 @@ By default, data is processed in **EU-West (Ireland)**. Enterprise customers can
 
 3. **Implement idempotency**
    ```typescript
-   const payment = await reevit.payments.create({
-     idempotency_key: 'order_12345',  // Prevents duplicate charges
-     amount: 5000,
-     currency: 'GHS'
-   });
+   curl -X POST https://api.reevit.io/v1/payments/intents \
+     -H "X-Reevit-Key: pfk_live_xxx.secret" \
+     -H "X-Org-Id: org_123" \
+     -H "Idempotency-Key: order_12345" \
+     -H "Content-Type: application/json" \
+     -d '{"amount": 5000, "currency": "GHS", "method": "mobile_money", "country": "GH"}'
    ```
 
 4. **Validate webhooks on your server**

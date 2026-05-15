@@ -12,7 +12,7 @@ The official Go SDK for the Reevit payment orchestration platform.
 ## Installation
 
 ```bash
-go get github.com/Reevit-Platform/go-sdk
+go get github.com/Reevit-Platform/go-sdk@v0.9.0
 ```
 
 ## Quick Start
@@ -23,24 +23,20 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/Reevit-Platform/go/reevit"
+    reevit "github.com/Reevit-Platform/go-sdk"
 )
 
 func main() {
-    client := reevit.NewClient(
-        reevit.WithAPIKey("pfk_live_xxx"),
-        reevit.WithOrgID("org_123"),
-    )
+    client := reevit.NewClient("pfk_live_xxx.secret", "org_123")
 
-    // Create payment intent
-    intent, err := client.Payments.CreateIntent(context.Background(), &reevit.CreateIntentRequest{
+    intent, err := client.Payments.CreateIntent(context.Background(), &reevit.PaymentIntentRequest{
         Amount:     5000,
         Currency:   "GHS",
-        Method:     "momo",
+        Method:     "mobile_money",
         Country:    "GH",
         CustomerID: "cust_456",
         Reference:  "ORD-12345",
-        Metadata: map[string]string{
+        Metadata: map[string]interface{}{
             "order_id": "12345",
         },
     })
@@ -54,15 +50,33 @@ func main() {
 
 ---
 
+## Checkout Sessions
+
+Use checkout sessions when a browser SDK will render the payment UI. Your backend creates the session, then your frontend receives only `session.SessionSecret`.
+
+```go
+session, err := client.CheckoutSessions.Create(ctx, &reevit.PaymentIntentRequest{
+    Amount:   5000,
+    Currency: "GHS",
+    Method:   "mobile_money",
+    Country:  "GH",
+    Metadata: map[string]interface{}{
+        "order_id": "ORD-12345",
+    },
+}, reevit.WithIdempotencyKey("order_ORD-12345"))
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Println(session.SessionSecret)
+```
+
+---
+
 ## Configuration
 
 ```go
-client := reevit.NewClient(
-    reevit.WithAPIKey("pfk_live_xxx"),
-    reevit.WithOrgID("org_123"),
-    reevit.WithBaseURL("https://api.reevit.io"),
-    reevit.WithTimeout(30 * time.Second),
-)
+client := reevit.NewClient("pfk_live_xxx.secret", "org_123")
 ```
 
 ### Environment Variables
@@ -71,8 +85,8 @@ client := reevit.NewClient(
 import "os"
 
 client := reevit.NewClient(
-    reevit.WithAPIKey(os.Getenv("REEVIT_API_KEY")),
-    reevit.WithOrgID(os.Getenv("REEVIT_ORG_ID")),
+    os.Getenv("REEVIT_API_KEY"),
+    os.Getenv("REEVIT_ORG_ID"),
 )
 ```
 
@@ -83,33 +97,18 @@ client := reevit.NewClient(
 ### Create Payment Intent
 
 ```go
-intent, err := client.Payments.CreateIntent(ctx, &reevit.CreateIntentRequest{
+intent, err := client.Payments.CreateIntent(ctx, &reevit.PaymentIntentRequest{
     Amount:     10000,
     Currency:   "GHS",
-    Method:     "momo",
+    Method:     "mobile_money",
     Country:    "GH",
     CustomerID: "cust_123",
     Reference:  "ORD-2024-001",
-    Metadata: map[string]string{
-        "org_id":        "your_org_id",
-        "connection_id": "your_conn_id",
-        "payment_id":    "ORD-2024-001",
-        "order_id":      "ORD-2024-001",
+    Metadata: map[string]interface{}{
+        "order_id": "ORD-2024-001",
     },
 })
 ```
-
-### Required Metadata for Webhooks
-
-For inbound webhooks (Paystack, Stripe, etc.) to route correctly back to Reevit, you must include these fields in the `Metadata` map:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
-| `connection_id` | ✅ Yes | The connection ID for the provider |
-| `payment_id` | ✅ Yes | Your internal order ID (Required for Stripe) |
-
----
 
 ### Get Payment
 
@@ -130,20 +129,6 @@ for _, p := range payments {
 }
 ```
 
-### Refund Payment
-
-```go
-// Full refund
-refund, err := client.Payments.Refund(ctx, "pay_abc123", nil)
-
-// Partial refund
-refund, err := client.Payments.Refund(ctx, "pay_abc123", &reevit.RefundRequest{
-    Amount: 2500,
-    Reason: "Customer requested",
-})
-```
-
----
 
 ## Connections
 
@@ -154,7 +139,7 @@ conn, err := client.Connections.Create(ctx, &reevit.CreateConnectionRequest{
     Provider: "paystack",
     Mode:     "live",
     Credentials: map[string]string{
-        "secret_key": "pfk_live_xxxxx",
+        "secret_key": "sk_live_xxx",
     },
     Labels: []string{"nigeria", "primary"},
     RoutingHints: &reevit.RoutingHints{
@@ -180,24 +165,36 @@ for _, c := range connections {
 ## Webhook Verification
 
 ```go
-import "github.com/Reevit-Platform/go/webhooks"
+import (
+    "crypto/hmac"
+    "crypto/sha256"
+    "encoding/hex"
+    "encoding/json"
+    "io"
+    "log"
+    "net/http"
+)
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
     body, _ := io.ReadAll(r.Body)
     signature := r.Header.Get("X-Reevit-Signature")
-    
-    if !webhooks.Verify(body, signature, webhookSecret) {
+
+    mac := hmac.New(sha256.New, []byte(webhookSecret))
+    mac.Write(body)
+    expected := "sha256=" + hex.EncodeToString(mac.Sum(nil))
+
+    if !hmac.Equal([]byte(signature), []byte(expected)) {
         http.Error(w, "Invalid signature", 401)
         return
     }
-    
-    var event webhooks.Event
+
+    var event map[string]interface{}
     json.Unmarshal(body, &event)
-    
-    switch event.Type {
+
+    switch event["type"] {
     case "payment.succeeded":
         // Handle success
-        log.Printf("Payment succeeded: %s", event.Data.ID)
+        log.Printf("Payment succeeded: %v", event["data"])
     case "payment.failed":
         // Handle failure
     }
@@ -228,17 +225,17 @@ if err != nil {
 ## Types
 
 ```go
-import "github.com/Reevit-Platform/go/reevit"
+import reevit "github.com/Reevit-Platform/go-sdk"
 
 func processPayment(payment *reevit.Payment) {
     fmt.Printf("Processing %s\n", payment.ID)
 }
 
-func buildRequest() *reevit.CreateIntentRequest {
-    return &reevit.CreateIntentRequest{
+func buildRequest() *reevit.PaymentIntentRequest {
+    return &reevit.PaymentIntentRequest{
         Amount:   5000,
         Currency: "GHS",
-        Method:   "momo",
+        Method:   "mobile_money",
         Country:  "GH",
     }
 }

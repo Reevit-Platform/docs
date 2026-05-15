@@ -26,8 +26,8 @@ Set organization-level risk controls for payment intents.
 ### Get Fraud Policy
 
 ```bash
-curl https://api.reevit.com/v1/policies/fraud \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/policies/fraud \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -48,8 +48,8 @@ curl https://api.reevit.com/v1/policies/fraud \
 ### Set Fraud Policy
 
 ```bash
-curl -X POST https://api.reevit.com/v1/policies/fraud \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/policies/fraud \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: fraud-policy-001" \
   -d '{
@@ -73,8 +73,8 @@ Policies are merged, not replaced:
 Override fraud policy for a specific payment:
 
 ```bash
-curl -X POST https://api.reevit.com/v1/payments/intents \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/payments/intents \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: order-12345" \
   -d '{
@@ -102,8 +102,8 @@ curl -X POST https://api.reevit.com/v1/payments/intents \
 View policy changes:
 
 ```bash
-curl https://api.reevit.com/v1/policies/fraud/audit \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/policies/fraud/audit \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -130,8 +130,8 @@ Configure how failed subscription payments are retried.
 ### Get Retry Policy
 
 ```bash
-curl https://api.reevit.com/v1/policies/retry \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/policies/retry \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -150,8 +150,8 @@ curl https://api.reevit.com/v1/policies/retry \
 ### Set Retry Policy
 
 ```bash
-curl -X POST https://api.reevit.com/v1/policies/retry \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/policies/retry \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: retry-policy-001" \
   -d '{
@@ -185,8 +185,8 @@ Policies are applied in order:
 ### List Retry Policies
 
 ```bash
-curl https://api.reevit.com/v1/policies/retry/list \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/policies/retry/list \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -195,8 +195,8 @@ curl https://api.reevit.com/v1/policies/retry/list \
 ### Delete Retry Policy
 
 ```bash
-curl -X DELETE "https://api.reevit.com/v1/policies/retry?plan_id=premium" \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X DELETE "https://api.reevit.io/v1/policies/retry?plan_id=premium" \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 

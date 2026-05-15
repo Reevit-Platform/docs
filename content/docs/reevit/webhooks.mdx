@@ -33,54 +33,27 @@ These are webhooks from payment providers (Paystack, Flutterwave, M-Pesa, etc.) 
 **PSP Webhook URLs:**
 | Provider | Webhook URL to configure in PSP Dashboard |
 |----------|-------------------------------------------|
-| Paystack | `https://api.reevit.com/webhooks/paystack` |
-| Flutterwave | `https://api.reevit.com/webhooks/flutterwave` |
-| Hubtel | `https://api.reevit.com/webhooks/hubtel` |
-| M-Pesa | `https://api.reevit.com/webhooks/mpesa` |
-| Stripe | `https://api.reevit.com/webhooks/stripe` |
+| Paystack | `https://api.reevit.io/webhooks/paystack` |
+| Flutterwave | `https://api.reevit.io/webhooks/flutterwave` |
+| Hubtel | `https://api.reevit.io/webhooks/hubtel` |
+| M-Pesa | `https://api.reevit.io/webhooks/mpesa` |
+| Stripe | `https://api.reevit.io/webhooks/stripe` |
 
 <Callout type="info">
 You configure these URLs in the **payment provider's dashboard** (e.g., Paystack Dashboard), NOT in Reevit.
 </Callout>
 
-#### Required Metadata for Webhook Routing
+#### Metadata & Webhook Correlation
 
-<Callout type="warning">
-**Critical**: For inbound webhooks to route correctly, your payments must include specific metadata fields when created. Without these fields, webhooks will fail with a **400 Bad Request** error.
+<Callout type="info">
+Reevit automatically injects the correlation metadata needed for PSP webhooks. Use `metadata` for your own fields like order IDs or cart IDs.
 </Callout>
-
-When creating payments (via SDK or API), you **must** include the following metadata fields:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID (from Reevit Dashboard) |
-| `connection_id` | ✅ Yes | The connection ID used for the payment |
-| `payment_id` | ✅ Yes | Your internal payment/order ID (Required for Stripe & routing) |
-| `customer_email` | Optional | Customer email for receipts |
-
-**Example: SDK Usage**
-
-```tsx
-<ReevitCheckout
-  publicKey="pfk_live_xxx"
-  amount={5000}
-  currency="GHS"
-  email="customer@example.com"
-  metadata={{
-    org_id: "org_abc123",           // Required for webhook routing
-    connection_id: "conn_xyz789",    // Required for webhook routing
-    payment_id: "order_12345",       // Your internal reference
-    customer_email: "customer@example.com"
-  }}
-  // ...
-/>
-```
 
 **Example: API Usage**
 
 ```bash
-curl -X POST https://api.reevit.com/v1/payments/intents \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/payments/intents \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_abc123" \
   -d '{
     "amount": 5000,
@@ -88,16 +61,10 @@ curl -X POST https://api.reevit.com/v1/payments/intents \
     "method": "card",
     "country": "GH",
     "metadata": {
-      "org_id": "org_abc123",
-      "connection_id": "conn_xyz789",
-      "payment_id": "order_12345"
+      "order_id": "order_12345"
     }
   }'
 ```
-
-<Callout type="tip">
-When using **Payment Links**, Reevit automatically populates these fields from the payment link configuration. You don't need to manually set them.
-</Callout>
 
 ### Outbound Webhooks (Reevit → Your App)
 
@@ -183,8 +150,8 @@ This is the webhook you configure in **Reevit Dashboard > Developers > Webhooks*
 ### Via API
 
 ```bash
-curl -X POST https://api.reevit.com/v1/webhooks/config \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/webhooks/config \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123" \
   -H "Idempotency-Key: webhook-config-001" \
   -d '{
@@ -209,8 +176,8 @@ curl -X POST https://api.reevit.com/v1/webhooks/config \
 ### Get Configuration
 
 ```bash
-curl https://api.reevit.com/v1/webhooks/config \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/webhooks/config \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -786,8 +753,8 @@ app.post('/webhooks/reevit', async (req, res) => {
 Send a test event to verify your endpoint:
 
 ```bash
-curl -X POST https://api.reevit.com/v1/webhooks/test \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/webhooks/test \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -819,8 +786,8 @@ ngrok http 3000
 ### List Events
 
 ```bash
-curl "https://api.reevit.com/v1/webhooks/events?limit=20" \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl "https://api.reevit.io/v1/webhooks/events?limit=20" \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -832,8 +799,8 @@ curl "https://api.reevit.com/v1/webhooks/events?limit=20" \
 ### Get Single Event
 
 ```bash
-curl https://api.reevit.com/v1/webhooks/events/evt_abc123 \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/webhooks/events/evt_abc123 \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -848,8 +815,8 @@ curl https://api.reevit.com/v1/webhooks/events/evt_abc123 \
 Re-send a webhook event if delivery failed or you need to reprocess:
 
 ```bash
-curl -X POST https://api.reevit.com/v1/webhooks/events/evt_abc123/replay \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl -X POST https://api.reevit.io/v1/webhooks/events/evt_abc123/replay \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 
@@ -865,8 +832,8 @@ curl -X POST https://api.reevit.com/v1/webhooks/events/evt_abc123/replay \
 ### View Delivery Attempts
 
 ```bash
-curl https://api.reevit.com/v1/webhooks/outbound \
-  -H "X-Reevit-Key: pfk_live_xxx" \
+curl https://api.reevit.io/v1/webhooks/outbound \
+  -H "X-Reevit-Key: pfk_live_xxx.secret" \
   -H "X-Org-Id: org_123"
 ```
 

@@ -1,6 +1,6 @@
 ---
 title: Python SDK
-description: Python SDK for Reevit API with async support
+description: Python SDK for Reevit API
 ---
 
 # Python SDK
@@ -21,22 +21,43 @@ pip install reevit
 ```python
 from reevit import Reevit
 
-client = Reevit(api_key="pfk_live_xxx")
+client = Reevit(api_key="pfk_live_xxx.secret")
 
 # Create a payment
 payment = client.payments.create_intent({
     "amount": 5000,  # 50.00 GHS
     "currency": "GHS",
-    "method": "momo",
+    "method": "mobile_money",
     "country": "GH",
     "customer_id": "cust_123",
     "reference": "ORD-12345",
     "metadata": {
         "order_id": "12345"
     }
-})
+}, idempotency_key="ORD-12345")
 
 print(f"Payment created: {payment['id']}")
+```
+
+---
+
+## Checkout Sessions
+
+Use checkout sessions when a browser SDK will render the payment UI. Your backend creates the session, then your frontend receives only `session["session_secret"]`.
+
+```python
+session = client.checkout_sessions.create(
+    {
+        "amount": 5000,
+        "currency": "GHS",
+        "method": "mobile_money",
+        "country": "GH",
+        "metadata": {"order_id": "ORD-12345"},
+    },
+    idempotency_key="order_ORD-12345",
+)
+
+print(session["session_secret"])
 ```
 
 ---
@@ -51,7 +72,6 @@ from reevit import Reevit
 
 client = Reevit(
     api_key=os.environ["REEVIT_API_KEY"],
-    org_id=os.environ["REEVIT_ORG_ID"],
     base_url=os.environ.get("REEVIT_BASE_URL", "https://api.reevit.io")
 )
 ```
@@ -66,29 +86,15 @@ client = Reevit(
 payment = client.payments.create_intent({
     "amount": 10000,
     "currency": "GHS",
-    "method": "momo",
+    "method": "mobile_money",
     "country": "GH",
     "customer_id": "cust_123",
     "reference": "ORD-2024-001",
     "metadata": {
-        "org_id": "your_org_id",
-        "connection_id": "your_conn_id",
-        "payment_id": "ORD-2024-001",
         "order_id": "ORD-2024-001"
     }
-})
+}, idempotency_key="ORD-2024-001")
 ```
-
-### Required Metadata for Webhooks
-
-For inbound webhooks (Paystack, Stripe, etc.) to route correctly back to Reevit, you must include these fields in the `metadata` dictionary:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID (from Dashboard) |
-| `connection_id` | ✅ Yes | The connection ID for the provider |
-| `payment_id` | ✅ Yes | Your internal order ID (Required for Stripe) |
-
 ### Get Payment
 
 ```python
@@ -116,32 +122,6 @@ refund = client.payments.refund("pay_abc123", amount=2500, reason="Customer requ
 
 ---
 
-## Async Support
-
-```python
-import asyncio
-from reevit import AsyncReevit
-
-async def main():
-    client = AsyncReevit(
-        api_key="pfk_live_xxx",
-        org_id="org_123"
-    )
-    
-    payment = await client.payments.create_intent({
-        "amount": 5000,
-        "currency": "GHS",
-        "method": "momo",
-        "country": "GH",
-        "reference": "ORD-12345"
-    })
-    
-    print(f"Payment ID: {payment['id']}")
-
-asyncio.run(main())
-```
-
----
 
 ## Webhook Verification
 
@@ -291,7 +271,7 @@ def reevit_webhook(request):
 ## Environment Variables
 
 ```bash
-export REEVIT_API_KEY=pfk_live_xxx
+export REEVIT_API_KEY=pfk_live_xxx.secret
 export REEVIT_ORG_ID=org_xxx
 export REEVIT_WEBHOOK_SECRET=whsec_xxx
 ```

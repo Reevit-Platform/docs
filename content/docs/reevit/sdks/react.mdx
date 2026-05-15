@@ -18,20 +18,16 @@ npm install @reevit/react
 
 ## Quick Start
 
-The simplest way to integrate Reevit is using the `ReevitCheckout` component.
+The recommended production flow is to create a checkout session on your backend, then pass `sessionSecret` to the `ReevitCheckout` component.
 
 ```tsx
 import { ReevitCheckout } from '@reevit/react';
 import '@reevit/react/styles.css';
 
-function App() {
+function App({ sessionSecret }: { sessionSecret: string }) {
   return (
     <ReevitCheckout
-      publicKey="pfk_test_your_key"
-      amount={10000} // Amount in smallest unit (pesewas for GHS)
-      currency="GHS"
-      email="customer@example.com"
-      reference={`ORD-${Date.now()}`}
+      sessionSecret={sessionSecret}
       onSuccess={(result) => {
         console.log('Payment success!', result);
         alert(`Payment of ${result.currency} ${result.amount/100} successful!`);
@@ -46,6 +42,20 @@ function App() {
 }
 ```
 
+Frontend-only usage still works if you are not ready to add a backend:
+
+```tsx
+<ReevitCheckout
+  publicKey="pfk_test_your_key.secret"
+  amount={10000}
+  currency="GHS"
+  email="customer@example.com"
+  onSuccess={handleSuccess}
+/>
+```
+
+Live frontend-created intents are deprecated and will log a browser console warning. Move production checkouts to `sessionSecret` when possible.
+
 > **Note:** Always import the styles CSS file to get the built-in checkout modal styling.
 
 ---
@@ -54,13 +64,15 @@ function App() {
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
-| `publicKey` | `string` | ✅ | Your project's public key (`pfk_test_...` or `pfk_live_...`) |
-| `amount` | `number` | ✅ | Amount in smallest unit (e.g., 500 for 5.00) |
-| `currency` | `string` | ✅ | 3-letter ISO currency code (GHS, NGN, USD, etc.) |
+| `sessionSecret` | `string` | Recommended | Server-created checkout session secret |
+| `publicKey` | `string` | Required without `sessionSecret` | Your project's public key (`pfk_test_...secret` or `pfk_live_...secret`) |
+| `amount` | `number` | Required without `sessionSecret` | Amount in smallest unit (e.g., 500 for 5.00) |
+| `currency` | `string` | Required without `sessionSecret` | 3-letter ISO currency code (GHS, NGN, USD, etc.) |
 | `email` | `string` | | Customer's email address |
 | `phone` | `string` | | Customer's phone (recommended for Mobile Money) |
 | `reference` | `string` | | Your own unique transaction reference |
-| `metadata` | `object` | ⚠️ | **Required for webhooks** - Key-value pairs including routing fields |
+| `idempotencyKey` | `string` | | Optional idempotency key to safely retry or dedupe intent creation |
+| `metadata` | `object` | | Optional key-value pairs for your own tracking |
 | `paymentMethods` | `string[]` | | Enabled methods: `['card', 'mobile_money', 'bank_transfer']` |
 | `theme` | `ReevitTheme` | | Customization options |
 | `apiBaseUrl` | `string` | | Custom API URL (for self-hosted or testing) |
@@ -69,50 +81,20 @@ function App() {
 | `onError` | `function` | | Called when an error occurs |
 | `onClose` | `function` | | Called when user dismisses the widget |
 
-### Required Metadata Fields
+### Idempotency & Duplicate Prevention
 
-<Callout type="warning">
-**Important**: For payment provider webhooks (Paystack, Flutterwave, etc.) to route correctly back to Reevit, you must include specific fields in the `metadata` prop. Without these, webhooks will fail with a **400 Bad Request** error.
-</Callout>
-
-| Metadata Field | Required | Description |
-|---------------|----------|-------------|
-| `org_id` | ✅ Yes | Your organization ID (from Reevit Dashboard → Settings) |
-| `connection_id` | ✅ Yes | The connection ID for the payment provider |
-| `payment_id` | ✅ Yes | Your internal payment/order ID (Required for Stripe & Webhook routing) |
-| `customer_email` | Optional | Customer email for receipts and notifications |
-
-**Example with Required Metadata:**
+To prevent duplicate payment intents (for example in React StrictMode), set an `idempotencyKey` tied to your order or cart ID. The SDK will reuse the same intent for the same key.
 
 ```tsx
 <ReevitCheckout
-  publicKey="pfk_live_your_key"
+  publicKey="pfk_live_your_key.secret"
   amount={10000}
   currency="GHS"
   email="customer@example.com"
-  metadata={{
-    // Required for webhook routing
-    org_id: process.env.NEXT_PUBLIC_REEVIT_ORG_ID,
-    connection_id: "conn_your_connection_id",
-    
-    // Recommended for tracing
-    payment_id: `order_${orderId}`,
-    customer_email: "customer@example.com",
-    
-    // Your custom fields
-    order_items: "product_123,product_456",
-    customer_name: "John Doe",
-  }}
+  idempotencyKey={`order_${orderId}`}
   onSuccess={handleSuccess}
-  onError={handleError}
->
-  <button>Pay Now</button>
-</ReevitCheckout>
+/>
 ```
-
-<Callout type="tip">
-**Payment Links**: If you're using Reevit Payment Links, the `org_id` and `connection_id` are automatically included in the metadata. You only need to pass these manually when using the SDK directly.
-</Callout>
 
 ---
 
@@ -122,7 +104,7 @@ Customize the checkout widget to match your brand:
 
 ```tsx
 <ReevitCheckout
-  publicKey="pfk_test_xxx"
+  publicKey="pfk_test_xxx.secret"
   amount={5000}
   currency="GHS"
   theme={{
@@ -152,13 +134,40 @@ Customize the checkout widget to match your brand:
 
 ---
 
+## Server-created Sessions
+
+Create sessions on your backend with `@reevit/node`, then pass the returned `session_secret` to React.
+
+```typescript
+const session = await reevit.checkoutSessions.create(
+  {
+    amount: 10000,
+    currency: 'GHS',
+    method: 'mobile_money',
+    country: 'GH',
+    metadata: { order_id: order.id },
+  },
+  { idempotencyKey: `order_${order.id}` }
+);
+```
+
+```tsx
+<ReevitCheckout
+  sessionSecret={session.session_secret}
+  onSuccess={handleSuccess}
+  onError={handleError}
+/>
+```
+
+---
+
 ## Controlled Mode
 
 If you prefer to create the payment intent on your backend before opening the checkout, you can use **Controlled Mode**.
 
 ```tsx
 <ReevitCheckout
-  publicKey="pfk_test_xxx"
+  publicKey="pfk_test_xxx.secret"
   initialPaymentIntent={myPreCreatedIntent}
   onSuccess={handleSuccess}
 >
@@ -187,7 +196,7 @@ function CustomCheckout() {
     isLoading,     // Loading state boolean
   } = useReevit({
     config: {
-      publicKey: 'pfk_test_xxx',
+      publicKey: 'pfk_test_xxx.secret',
       amount: 5000,
       currency: 'GHS',
       email: 'customer@example.com',
@@ -239,7 +248,7 @@ The default bridge for card and mobile money payments in Ghana/Nigeria:
 import { PaystackBridge } from '@reevit/react';
 
 <PaystackBridge
-  publicKey="pfk_test_xxx"
+  publicKey="pfk_test_xxx.secret"
   email="customer@example.com"
   amount={5000}
   currency="GHS"
@@ -259,7 +268,7 @@ For card payments including Apple Pay and Google Pay:
 import { StripeBridge } from '@reevit/react';
 
 <StripeBridge
-  publishableKey="pfk_test_xxx"
+  publishableKey="pfk_test_xxx.secret"
   clientSecret="pi_xxx_secret_xxx" // From your backend
   amount={5000}
   currency="USD"
