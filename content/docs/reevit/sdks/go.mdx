@@ -12,7 +12,7 @@ The official Go SDK for the Reevit payment orchestration platform.
 ## Installation
 
 ```bash
-go get github.com/Reevit-Platform/go-sdk@v0.5.0
+go get github.com/Reevit-Platform/go-sdk@v0.9.0
 ```
 
 ## Quick Start
@@ -46,6 +46,29 @@ func main() {
 
     fmt.Printf("Payment ID: %s, Status: %s\n", intent.ID, intent.Status)
 }
+```
+
+---
+
+## Checkout Sessions
+
+Use checkout sessions when a browser SDK will render the payment UI. Your backend creates the session, then your frontend receives only `session.SessionSecret`.
+
+```go
+session, err := client.CheckoutSessions.Create(ctx, &reevit.PaymentIntentRequest{
+    Amount:   5000,
+    Currency: "GHS",
+    Method:   "mobile_money",
+    Country:  "GH",
+    Metadata: map[string]interface{}{
+        "order_id": "ORD-12345",
+    },
+}, reevit.WithIdempotencyKey("order_ORD-12345"))
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Println(session.SessionSecret)
 ```
 
 ---

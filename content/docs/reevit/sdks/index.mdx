@@ -64,6 +64,7 @@ Pre-built checkout widgets with customizable themes for React, Vue, and Svelte.
 ### Features
 
 - ✅ Pre-built checkout UI with modal
+- ✅ Server-created `sessionSecret` checkout support
 - ✅ PSP bridge integrations (Paystack, Stripe, Flutterwave, Monnify, M-Pesa)
 - ✅ Theming and dark mode support
 - ✅ Mobile-responsive design
@@ -84,11 +85,41 @@ Server-side libraries for the Reevit REST API with full type safety.
 
 ### Features
 
-- ✅ Full API coverage (Payments, Connections, Subscriptions, Webhooks)
+- ✅ Full API coverage (Payments, Checkout Sessions, Connections, Subscriptions, Webhooks)
 - ✅ Type safety (TypeScript types, Python hints, Go structs)
-- ✅ Automatic retries with exponential backoff
+- ✅ Standardized request errors and recoverable failure hints
 - ✅ Idempotency key support
 - ✅ Webhook signature verification
+
+---
+
+## Recommended Checkout Flow
+
+Create checkout sessions on your backend, then pass only the returned session secret to your frontend SDK.
+
+```typescript
+// Backend
+const session = await reevit.checkoutSessions.create(
+  {
+    amount: 5000,
+    currency: "GHS",
+    method: "mobile_money",
+    country: "GH",
+    metadata: { order_id: "ORD-12345" },
+  },
+  { idempotencyKey: "order_ORD-12345" }
+);
+```
+
+```tsx
+// Frontend
+<ReevitCheckout
+  sessionSecret={session.session_secret}
+  onSuccess={(result) => console.log("Paid!", result)}
+/>
+```
+
+Frontend-only checkouts using `publicKey`, `amount`, and `currency` remain supported. For live production flows, checkout sessions are recommended because the backend owns payment creation and the browser only renders the authorized session.
 
 ---
 

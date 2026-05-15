@@ -18,20 +18,16 @@ npm install @reevit/react
 
 ## Quick Start
 
-The simplest way to integrate Reevit is using the `ReevitCheckout` component.
+The recommended production flow is to create a checkout session on your backend, then pass `sessionSecret` to the `ReevitCheckout` component.
 
 ```tsx
 import { ReevitCheckout } from '@reevit/react';
 import '@reevit/react/styles.css';
 
-function App() {
+function App({ sessionSecret }: { sessionSecret: string }) {
   return (
     <ReevitCheckout
-      publicKey="pfk_test_your_key.secret"
-      amount={10000} // Amount in smallest unit (pesewas for GHS)
-      currency="GHS"
-      email="customer@example.com"
-      reference={`ORD-${Date.now()}`}
+      sessionSecret={sessionSecret}
       onSuccess={(result) => {
         console.log('Payment success!', result);
         alert(`Payment of ${result.currency} ${result.amount/100} successful!`);
@@ -46,6 +42,20 @@ function App() {
 }
 ```
 
+Frontend-only usage still works if you are not ready to add a backend:
+
+```tsx
+<ReevitCheckout
+  publicKey="pfk_test_your_key.secret"
+  amount={10000}
+  currency="GHS"
+  email="customer@example.com"
+  onSuccess={handleSuccess}
+/>
+```
+
+Live frontend-created intents are deprecated and will log a browser console warning. Move production checkouts to `sessionSecret` when possible.
+
 > **Note:** Always import the styles CSS file to get the built-in checkout modal styling.
 
 ---
@@ -54,9 +64,10 @@ function App() {
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
-| `publicKey` | `string` | ✅ | Your project's public key (`pfk_test_...secret` or `pfk_live_...secret`) |
-| `amount` | `number` | ✅ | Amount in smallest unit (e.g., 500 for 5.00) |
-| `currency` | `string` | ✅ | 3-letter ISO currency code (GHS, NGN, USD, etc.) |
+| `sessionSecret` | `string` | Recommended | Server-created checkout session secret |
+| `publicKey` | `string` | Required without `sessionSecret` | Your project's public key (`pfk_test_...secret` or `pfk_live_...secret`) |
+| `amount` | `number` | Required without `sessionSecret` | Amount in smallest unit (e.g., 500 for 5.00) |
+| `currency` | `string` | Required without `sessionSecret` | 3-letter ISO currency code (GHS, NGN, USD, etc.) |
 | `email` | `string` | | Customer's email address |
 | `phone` | `string` | | Customer's phone (recommended for Mobile Money) |
 | `reference` | `string` | | Your own unique transaction reference |
@@ -120,6 +131,33 @@ Customize the checkout widget to match your brand:
 | `borderRadius` | `string` | Border radius for buttons and inputs |
 | `fontFamily` | `string` | Custom font family |
 | `darkMode` | `boolean` | Enable dark mode styling |
+
+---
+
+## Server-created Sessions
+
+Create sessions on your backend with `@reevit/node`, then pass the returned `session_secret` to React.
+
+```typescript
+const session = await reevit.checkoutSessions.create(
+  {
+    amount: 10000,
+    currency: 'GHS',
+    method: 'mobile_money',
+    country: 'GH',
+    metadata: { order_id: order.id },
+  },
+  { idempotencyKey: `order_${order.id}` }
+);
+```
+
+```tsx
+<ReevitCheckout
+  sessionSecret={session.session_secret}
+  onSuccess={handleSuccess}
+  onError={handleError}
+/>
+```
 
 ---
 

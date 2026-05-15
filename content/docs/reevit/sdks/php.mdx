@@ -43,6 +43,26 @@ echo "Payment ID: {$intent['id']}, Status: {$intent['status']}\n";
 
 ---
 
+## Checkout Sessions
+
+Use checkout sessions when a browser SDK will render the payment UI. Your backend creates the session, then your frontend receives only `$session['session_secret']`.
+
+```php
+$session = $client->checkoutSessions->create([
+    'amount' => 5000,
+    'currency' => 'GHS',
+    'method' => 'mobile_money',
+    'country' => 'GH',
+    'metadata' => [
+        'order_id' => 'ORD-12345',
+    ],
+], 'order_ORD-12345');
+
+echo $session['session_secret'];
+```
+
+---
+
 ## Configuration
 
 ```php

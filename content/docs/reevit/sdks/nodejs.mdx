@@ -47,6 +47,32 @@ console.log('Status:', payment.status);
 
 ---
 
+## Checkout Sessions
+
+Use checkout sessions when a browser SDK will render the payment UI. Your backend creates the session with a private key, then your frontend receives only `session.session_secret`.
+
+```typescript
+const session = await reevit.checkoutSessions.create(
+  {
+    amount: 5000,
+    currency: 'GHS',
+    method: 'mobile_money',
+    country: 'GH',
+    customer_id: 'cust_123',
+    metadata: { order_id: 'ORD-12345' },
+  },
+  { idempotencyKey: 'order_ORD-12345' }
+);
+
+console.log(session.session_secret);
+```
+
+```tsx
+<ReevitCheckout sessionSecret={session.session_secret} />
+```
+
+---
+
 ## Configuration
 
 ### Environment Variables (Recommended)
@@ -134,6 +160,28 @@ const partialRefund = await reevit.payments.refund(
   2500,                    // Refund 25.00
   'Customer requested'     // Reason (optional)
 );
+```
+
+---
+
+## Error Handling
+
+The SDK throws `ReevitAPIError` for API and network failures. Use `recoverable` to decide whether to show retry UI.
+
+```typescript
+import { ReevitAPIError } from '@reevit/node';
+
+try {
+  await reevit.checkoutSessions.create(payload, { idempotencyKey: 'order_123' });
+} catch (error) {
+  if (error instanceof ReevitAPIError) {
+    console.error(error.code, error.status, error.requestId);
+    if (error.recoverable) {
+      // show retry action
+    }
+  }
+  throw error;
+}
 ```
 
 ---

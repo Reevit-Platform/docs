@@ -18,12 +18,14 @@ npm install @reevit/svelte @reevit/core
 
 ## Quick Start
 
-The simplest way to integrate Reevit is using the `ReevitCheckout` component.
+The recommended production flow is to create a checkout session on your backend, then pass `sessionSecret` to the `ReevitCheckout` component.
 
 ```svelte
 <script lang="ts">
   import { ReevitCheckout } from '@reevit/svelte';
   import '@reevit/svelte/styles.css';
+
+  const sessionSecret = 'cs_session_secret_from_your_backend';
 
   const handleSuccess = (event) => {
     console.log('Payment success!', event.detail);
@@ -35,11 +37,7 @@ The simplest way to integrate Reevit is using the `ReevitCheckout` component.
 </script>
 
 <ReevitCheckout
-  publicKey="pfk_test_xxx.secret"
-  amount={10000}
-  currency="GHS"
-  email="customer@example.com"
-  reference="ORD-12345"
+  sessionSecret={sessionSecret}
   on:success={handleSuccess}
   on:error={handleError}
 >
@@ -49,15 +47,29 @@ The simplest way to integrate Reevit is using the `ReevitCheckout` component.
 </ReevitCheckout>
 ```
 
+Frontend-only usage still works if you are not ready to add a backend:
+
+```svelte
+<ReevitCheckout
+  publicKey="pfk_test_xxx.secret"
+  amount={10000}
+  currency="GHS"
+  email="customer@example.com"
+/>
+```
+
+Live frontend-created intents are deprecated and will log a browser console warning. Move production checkouts to `sessionSecret` when possible.
+
 ---
 
 ## Props Reference
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
-| `publicKey` | `string` | ✅ | Your project's public key |
-| `amount` | `number` | ✅ | Amount in smallest unit |
-| `currency` | `string` | ✅ | 3-letter currency code |
+| `sessionSecret` | `string` | Recommended | Server-created checkout session secret |
+| `publicKey` | `string` | Required without `sessionSecret` | Your project's public key |
+| `amount` | `number` | Required without `sessionSecret` | Amount in smallest unit |
+| `currency` | `string` | Required without `sessionSecret` | 3-letter currency code |
 | `email` | `string` | | Customer's email |
 | `phone` | `string` | | Customer's phone number |
 | `reference` | `string` | | Your transaction reference |

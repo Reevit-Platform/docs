@@ -41,6 +41,27 @@ print(f"Payment created: {payment['id']}")
 
 ---
 
+## Checkout Sessions
+
+Use checkout sessions when a browser SDK will render the payment UI. Your backend creates the session, then your frontend receives only `session["session_secret"]`.
+
+```python
+session = client.checkout_sessions.create(
+    {
+        "amount": 5000,
+        "currency": "GHS",
+        "method": "mobile_money",
+        "country": "GH",
+        "metadata": {"order_id": "ORD-12345"},
+    },
+    idempotency_key="order_ORD-12345",
+)
+
+print(session["session_secret"])
+```
+
+---
+
 ## Configuration
 
 ### Environment Variables
