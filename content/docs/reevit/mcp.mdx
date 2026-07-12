@@ -33,14 +33,14 @@ key cannot refund, no matter what the model asks for.
 ## Setup
 
 1. Create an API key in the dashboard (**Developers → API keys**) with **only
-   the scopes you want the agent to have**. Start with a `rk_test_...` key —
+   the scopes you want the agent to have**. Start with a `pfk_test_...` key —
    test mode moves no real money.
 2. Add the server to your client:
 
 <Tabs items={['Claude Code', 'Claude Desktop', 'Cursor', 'VS Code', 'Windsurf', 'Zed', 'Codex CLI', 'Gemini CLI']}>
   <Tab value="Claude Code">
     ```bash
-    claude mcp add reevit -e REEVIT_API_KEY=rk_test_... -- npx -y @reevit/mcp
+    claude mcp add reevit -e REEVIT_API_KEY=pfk_test_... -- npx -y @reevit/mcp
     ```
   </Tab>
   <Tab value="Claude Desktop">
@@ -52,7 +52,7 @@ key cannot refund, no matter what the model asks for.
         "reevit": {
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -67,7 +67,7 @@ key cannot refund, no matter what the model asks for.
         "reevit": {
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -83,7 +83,7 @@ key cannot refund, no matter what the model asks for.
           "type": "stdio",
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -98,7 +98,7 @@ key cannot refund, no matter what the model asks for.
         "reevit": {
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -129,7 +129,7 @@ key cannot refund, no matter what the model asks for.
     [mcp_servers.reevit]
     command = "npx"
     args = ["-y", "@reevit/mcp"]
-    env = { REEVIT_API_KEY = "rk_test_..." }
+    env = { REEVIT_API_KEY = "pfk_test_..." }
     ```
   </Tab>
   <Tab value="Gemini CLI">
@@ -141,7 +141,7 @@ key cannot refund, no matter what the model asks for.
         "reevit": {
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -176,7 +176,7 @@ For remote or agent-platform use, run the same server over streamable HTTP.
 It is stateless — each request gets a fresh server, so no session leakage:
 
 ```bash
-REEVIT_API_KEY=rk_test_... npx -y @reevit/mcp --http --port 8788
+REEVIT_API_KEY=pfk_test_... npx -y @reevit/mcp --http --port 8788
 # endpoint: http://localhost:8788/mcp
 ```
 
