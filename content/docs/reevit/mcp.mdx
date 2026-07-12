@@ -1,0 +1,194 @@
+---
+title: MCP Server
+description: Let AI agents create payment links, look up payments, and issue refunds through your Reevit account
+icon: Bot
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Reevit MCP Server
+
+**[@reevit/mcp](https://www.npmjs.com/package/@reevit/mcp)** connects AI agents —
+Claude Code, Claude Desktop, Cursor, VS Code Copilot, Windsurf, Cline, Zed,
+Codex CLI, Gemini CLI, or anything else that speaks the
+[Model Context Protocol](https://modelcontextprotocol.io) — to your Reevit
+account through a **scoped API key you control**.
+
+Ask your agent to "create a GHS 50 payment link for the March invoice" or
+"how many payments failed this week?", and it calls Reevit directly.
+
+## Tools
+
+| Tool | What it does | Scope needed |
+| --- | --- | --- |
+| `create_payment_link` | Shareable pay link (fixed or open amount) | `payment_links:write` |
+| `get_payment` | One payment by id, with status + route | `payments:read` |
+| `list_payments` | Recent payments with filters | `payments:read` |
+| `create_refund` | Full/partial refund — **live mode requires `confirm: true`** | `payments:write` |
+| `get_analytics_summary` | Volume, counts, success rate | `payments:read` |
+
+Scopes are enforced by the Reevit backend on every call: a `payments:read`-only
+key cannot refund, no matter what the model asks for.
+
+## Setup
+
+1. Create an API key in the dashboard (**Developers → API keys**) with **only
+   the scopes you want the agent to have**. Start with a `rk_test_...` key —
+   test mode moves no real money.
+2. Add the server to your client:
+
+<Tabs items={['Claude Code', 'Claude Desktop', 'Cursor', 'VS Code', 'Windsurf', 'Zed', 'Codex CLI', 'Gemini CLI']}>
+  <Tab value="Claude Code">
+    ```bash
+    claude mcp add reevit -e REEVIT_API_KEY=rk_test_... -- npx -y @reevit/mcp
+    ```
+  </Tab>
+  <Tab value="Claude Desktop">
+    Add to `claude_desktop_config.json` (Settings → Developer → Edit Config):
+
+    ```json
+    {
+      "mcpServers": {
+        "reevit": {
+          "command": "npx",
+          "args": ["-y", "@reevit/mcp"],
+          "env": { "REEVIT_API_KEY": "rk_test_..." }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Cursor">
+    Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` in your project:
+
+    ```json
+    {
+      "mcpServers": {
+        "reevit": {
+          "command": "npx",
+          "args": ["-y", "@reevit/mcp"],
+          "env": { "REEVIT_API_KEY": "rk_test_..." }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="VS Code">
+    Add to `.vscode/mcp.json` in your workspace (Copilot agent mode):
+
+    ```json
+    {
+      "servers": {
+        "reevit": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "@reevit/mcp"],
+          "env": { "REEVIT_API_KEY": "rk_test_..." }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Windsurf">
+    Add to `~/.codeium/windsurf/mcp_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "reevit": {
+          "command": "npx",
+          "args": ["-y", "@reevit/mcp"],
+          "env": { "REEVIT_API_KEY": "rk_test_..." }
+        }
+      }
+    }
+    ```
+
+    Cline uses the same `mcpServers` entry in `cline_mcp_settings.json`
+    (Cline → MCP Servers → Configure).
+  </Tab>
+  <Tab value="Zed">
+    Add to Zed `settings.json`, and set `REEVIT_API_KEY` in the environment
+    Zed is launched from:
+
+    ```json
+    {
+      "context_servers": {
+        "reevit": {
+          "command": { "path": "npx", "args": ["-y", "@reevit/mcp"] },
+          "settings": {}
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Codex CLI">
+    Add to `~/.codex/config.toml`:
+
+    ```toml
+    [mcp_servers.reevit]
+    command = "npx"
+    args = ["-y", "@reevit/mcp"]
+    env = { REEVIT_API_KEY = "rk_test_..." }
+    ```
+  </Tab>
+  <Tab value="Gemini CLI">
+    Add to `~/.gemini/settings.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "reevit": {
+          "command": "npx",
+          "args": ["-y", "@reevit/mcp"],
+          "env": { "REEVIT_API_KEY": "rk_test_..." }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Configuration
+
+| Env var | Default | Notes |
+| --- | --- | --- |
+| `REEVIT_API_KEY` | — (required) | Scoped API key from the dashboard |
+| `REEVIT_MODE` | `test` | `test` or `live`. Live refunds additionally require `confirm: true` per call |
+| `REEVIT_API_URL` | `https://api.reevit.io` | Point at a self-hosted / local API |
+
+## Safety model
+
+- **Scopes, not trust** — authorization lives in the backend key scopes, not
+  in anything the model promises. Mint the key with the minimum scopes the
+  agent needs.
+- **Live-money gate** — `create_refund` in live mode refuses to run unless the
+  call includes `confirm: true`, so an agent must surface the decision to a
+  human first.
+- **Idempotency** — money-moving calls send an `Idempotency-Key`, so a retried
+  tool call can never double-refund or double-create.
+- **Minor units** — amounts are minor units everywhere (GHS 50.00 = `5000`),
+  the same convention as the [REST API](/docs/reevit/api-reference).
+
+## Streamable HTTP mode
+
+For remote or agent-platform use, run the same server over streamable HTTP.
+It is stateless — each request gets a fresh server, so no session leakage:
+
+```bash
+REEVIT_API_KEY=rk_test_... npx -y @reevit/mcp --http --port 8788
+# endpoint: http://localhost:8788/mcp
+```
+
+Auth is still the configured scoped key — this is a self-hosted endpoint, so
+put it behind your own network boundary.
+
+## See also
+
+- [Authentication & API keys](/docs/reevit/authentication) — scopes, key
+  rotation, test vs live keys
+- [Test mode](/docs/reevit/test-mode) — simulate payments without moving money
+- [API reference](/docs/reevit/api-reference) — the REST API the MCP tools
+  call under the hood
+- [@reevit/mcp on npm](https://www.npmjs.com/package/@reevit/mcp) ·
+  [source on GitHub](https://github.com/Reevit-Platform/primeflow/tree/main/mcp)
