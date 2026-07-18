@@ -33,14 +33,23 @@ These are webhooks from payment providers (Paystack, Flutterwave, M-Pesa, etc.) 
 **PSP Webhook URLs:**
 | Provider | Webhook URL to configure in PSP Dashboard |
 |----------|-------------------------------------------|
-| Paystack | `https://api.reevit.io/webhooks/paystack` |
-| Flutterwave | `https://api.reevit.io/webhooks/flutterwave` |
-| Hubtel | `https://api.reevit.io/webhooks/hubtel` |
-| M-Pesa | `https://api.reevit.io/webhooks/mpesa` |
-| Stripe | `https://api.reevit.io/webhooks/stripe` |
+| Paystack | `https://api.reevit.io/v1/webhooks/incoming/paystack` |
+| Flutterwave | `https://api.reevit.io/v1/webhooks/incoming/flutterwave` |
+| Hubtel | `https://api.reevit.io/v1/webhooks/incoming/hubtel` |
+| M-Pesa | `https://api.reevit.io/v1/webhooks/incoming/mpesa` |
+| Stripe | `https://api.reevit.io/v1/webhooks/incoming/stripe` |
+
+<Callout type="info">
+Legacy routes such as `https://api.reevit.io/webhooks/hubtel` are still accepted for backwards compatibility.
+</Callout>
 
 <Callout type="info">
 You configure these URLs in the **payment provider's dashboard** (e.g., Paystack Dashboard), NOT in Reevit.
+</Callout>
+
+<Callout type="info">
+For Hubtel, Reevit also injects the managed inbound callback URL automatically when creating Hubtel
+payment requests. Merchants should not enter a manual Hubtel `callback_url` per connection.
 </Callout>
 
 #### Metadata & Webhook Correlation
