@@ -140,6 +140,28 @@ For Vue and Svelte, pass the same `sessionSecret` prop to `ReevitCheckout`. If y
 
 ---
 
+## Option: Generate Checkout Integration with the Reevit CLI
+
+You can scaffold and wire checkout into an existing frontend page with:
+
+```bash
+reevit init --goal checkout \
+  --checkout-page src/app/cart/page.tsx \
+  --checkout-fields price,name,email,phone,reference \
+  --checkout-metadata order_id,product_sku
+```
+
+In interactive mode, the CLI asks for:
+
+- Which existing page should host the checkout button.
+- Which customer fields to collect (`price`/`amount`, `name`, `email`, `phone`, `reference`).
+- Which custom metadata keys to include (for example, `order_id` or `cart_id`).
+
+Enter `-` at the page prompt (or pass `--checkout-page -`) to keep the scaffolded
+component and runnable demo standalone. Customer values map to
+`customer_name`, `customer_email`, and `customer_phone` workflow variables;
+custom keys become `metadata_<key>`.
+
 ## Step 4: Handle Webhooks
 
 To fulfill orders reliably, set up outbound webhooks.
