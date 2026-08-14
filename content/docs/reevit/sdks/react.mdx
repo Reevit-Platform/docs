@@ -154,10 +154,15 @@ const session = await reevit.checkoutSessions.create(
 ```tsx
 <ReevitCheckout
   sessionSecret={session.session_secret}
+  paymentMethods={['card', 'mobile_money']}
   onSuccess={handleSuccess}
   onError={handleError}
 />
 ```
+
+The component finalizes the session with the shopper's last selected method and
+provider before opening the PSP. Retries with the same selection reuse the same
+intent, while changing the selection creates a separately scoped intent.
 
 ---
 
