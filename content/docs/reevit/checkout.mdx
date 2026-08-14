@@ -92,7 +92,6 @@ export async function createCheckoutSession(order: { id: string; amount: number;
     {
       amount: order.amount,
       currency: "GHS",
-      method: "mobile_money",
       country: "GH",
       customer_id: order.email,
       metadata: { order_id: order.id },
@@ -120,6 +119,9 @@ export function CheckoutButton({ sessionSecret }: { sessionSecret: string }) {
   return (
     <ReevitCheckout
       sessionSecret={sessionSecret}
+      paymentMethods={['card', 'mobile_money']}
+      email="customer@example.com"
+      phone="0241234567"
       onSuccess={(result) => {
         console.log("Payment success", result);
       }}
@@ -135,6 +137,16 @@ export function CheckoutButton({ sessionSecret }: { sessionSecret: string }) {
   );
 }
 ```
+
+On **Make payment**, the SDK submits the shopper's final method and provider
+through the session-authenticated API. Reevit creates or reuses an intent scoped
+to that checkout session, method, and provider, and the SDK opens the PSP only
+after receiving the new intent. This is especially important for Paystack:
+`resumeTransaction()` reopens the transaction represented by its access code,
+so a Mobile Money selection must use a Mobile Money-specific access code.
+
+The session secret authorizes this browser operation. Your private Reevit API
+key stays on the server.
 
 For Vue and Svelte, pass the same `sessionSecret` prop to `ReevitCheckout`. If you cannot add a backend yet, the frontend-only `publicKey + amount + currency` flow still works. Live frontend-created intents log a deprecation warning and should be migrated to checkout sessions over time.
 
