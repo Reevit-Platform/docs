@@ -21,26 +21,45 @@ Ask your agent to "create a GHS 50 payment link for the March invoice" or
 
 | Tool | What it does | Scope needed |
 | --- | --- | --- |
-| `create_payment_link` | Shareable pay link (fixed or open amount) | `payment_links:write` |
-| `get_payment` | One payment by id, with status + route | `payments:read` |
-| `list_payments` | Recent payments with filters | `payments:read` |
-| `create_refund` | Full/partial refund — **live mode requires `confirm: true`** | `payments:write` |
-| `get_analytics_summary` | Volume, counts, success rate | `payments:read` |
+| `reevit_create_payment_link` | Shareable pay link (fixed or open amount) | `payment_links:write` |
+| `reevit_list_payment_links` | Links with filters and use counts, paged | `payment_links:read` |
+| `reevit_get_payment_link` | One link by id (`plink_…`) | `payment_links:read` |
+| `reevit_get_payment` | One payment by id, with status + route | `payments:read` |
+| `reevit_list_payments` | Recent payments with filters, paged | `payments:read` |
+| `reevit_get_payment_failures` | **Why** a payment failed: provider error, fault party, retriable | `payments:read` |
+| `reevit_get_payment_status_history` | Ordered status transitions and what triggered each | `payments:read` + a plan with audit logs |
+| `reevit_create_refund` | Full/partial refund — **live mode requires human approval** | `payments:write` |
+| `reevit_get_refund` | One refund by id — did it actually settle? | `payments:read` |
+| `reevit_list_refunds` | Refunds account-wide, or every refund on one payment | `payments:read` |
+| `reevit_get_payment_analytics` | Volume, counts, success rate | `payments:read` |
 
 Scopes are enforced by the Reevit backend on every call: a `payments:read`-only
 key cannot refund, no matter what the model asks for.
 
+<Callout type="warn">
+  **Tool names changed in 0.2.0.** Every tool is now prefixed `reevit_`, and
+  `get_analytics_summary` became `reevit_get_payment_analytics`. Tool names share one
+  flat namespace across every server in a session, so the old names collided with any
+  other server exposing a `get_payment`. Nothing needs changing in your config — only
+  prompts or agent instructions that name tools explicitly.
+</Callout>
+
+`reevit_get_payment_status_history` carries a second gate on top of scopes: a plan-feature
+check for audit logs. It answers **402**, not 403, when the account plan does not include
+it. The two are distinct on purpose — 403 is about the key, 402 is about the account, so
+no amount of re-keying clears a 402.
+
 ## Setup
 
 1. Create an API key in the dashboard (**Developers → API keys**) with **only
-   the scopes you want the agent to have**. Start with a `rk_test_...` key —
+   the scopes you want the agent to have**. Start with a `pfk_test_...` key —
    test mode moves no real money.
 2. Add the server to your client:
 
 <Tabs items={['Claude Code', 'Claude Desktop', 'Cursor', 'VS Code', 'Windsurf', 'Zed', 'Codex CLI', 'Gemini CLI']}>
   <Tab value="Claude Code">
     ```bash
-    claude mcp add reevit -e REEVIT_API_KEY=rk_test_... -- npx -y @reevit/mcp
+    claude mcp add reevit -e REEVIT_API_KEY=pfk_test_... -- npx -y @reevit/mcp
     ```
   </Tab>
   <Tab value="Claude Desktop">
@@ -52,7 +71,7 @@ key cannot refund, no matter what the model asks for.
         "reevit": {
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -67,7 +86,7 @@ key cannot refund, no matter what the model asks for.
         "reevit": {
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -83,7 +102,7 @@ key cannot refund, no matter what the model asks for.
           "type": "stdio",
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -98,7 +117,7 @@ key cannot refund, no matter what the model asks for.
         "reevit": {
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -129,7 +148,7 @@ key cannot refund, no matter what the model asks for.
     [mcp_servers.reevit]
     command = "npx"
     args = ["-y", "@reevit/mcp"]
-    env = { REEVIT_API_KEY = "rk_test_..." }
+    env = { REEVIT_API_KEY = "pfk_test_..." }
     ```
   </Tab>
   <Tab value="Gemini CLI">
@@ -141,7 +160,7 @@ key cannot refund, no matter what the model asks for.
         "reevit": {
           "command": "npx",
           "args": ["-y", "@reevit/mcp"],
-          "env": { "REEVIT_API_KEY": "rk_test_..." }
+          "env": { "REEVIT_API_KEY": "pfk_test_..." }
         }
       }
     }
@@ -153,20 +172,59 @@ key cannot refund, no matter what the model asks for.
 
 | Env var | Default | Notes |
 | --- | --- | --- |
-| `REEVIT_API_KEY` | — (required) | Scoped API key from the dashboard |
-| `REEVIT_MODE` | `test` | `test` or `live`. Live refunds additionally require `confirm: true` per call |
+| `REEVIT_API_KEY` | — (required) | Scoped API key from the dashboard. Must start `pfk_test_` or `pfk_live_` |
 | `REEVIT_API_URL` | `https://api.reevit.io` | Point at a self-hosted / local API |
+| `REEVIT_MCP_HTTP_TOKEN` | — | Bearer token **required** by `--http`. See [Streamable HTTP mode](#streamable-http-mode) |
+| `REEVIT_MODE` | derived from the key | Optional. If set it must agree with the key, or the server refuses to start |
+
+### Mode comes from the key, not the environment
+
+Test vs live is a property of the API key (`pfk_test_…` / `pfk_live_…`), not of the
+environment. The backend derives it from the key prefix and ignores any mode header on
+API-key requests, so `REEVIT_MODE` cannot put a live key into test mode — it can only
+misdescribe one. The server therefore derives mode from the key and treats a contradicting
+`REEVIT_MODE` as a startup error.
+
+A key with an unrecognized prefix is rejected at startup rather than assumed to be test.
+That also catches a truncated or mispasted key immediately, instead of on the first API call.
+
+<Callout type="warn">
+  **Changed in 0.2.0.** Earlier versions defaulted `REEVIT_MODE` to `test` when it was
+  unset. Because the live-refund gate keyed off that value, a **live** key with no
+  `REEVIT_MODE` set was treated as test mode and the refund confirmation was skipped —
+  while the backend still executed the refund for real. Upgrade to 0.2.0 or later.
+</Callout>
 
 ## Safety model
 
 - **Scopes, not trust** — authorization lives in the backend key scopes, not
   in anything the model promises. Mint the key with the minimum scopes the
   agent needs.
-- **Live-money gate** — `create_refund` in live mode refuses to run unless the
-  call includes `confirm: true`, so an agent must surface the decision to a
-  human first.
-- **Idempotency** — money-moving calls send an `Idempotency-Key`, so a retried
-  tool call can never double-refund or double-create.
+- **Live-money gate** — `reevit_create_refund` in live mode will not proceed without
+  human approval of that specific refund. Live mode comes from the key, so this cannot
+  be bypassed by omitting `REEVIT_MODE`. Which mechanism applies depends on your client:
+  - **Client supports [elicitation](https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation)** —
+    the server asks the user directly, naming the payment, amount and reason. This
+    supersedes `confirm` entirely; setting `confirm: true` does not skip the prompt. It
+    fails closed: a decline, a dismissal, or an error reaching the client all refuse the
+    refund without calling the API.
+  - **Client does not** — the server falls back to requiring `confirm: true` on the call.
+    This is weaker by necessity: `confirm` is a tool *input*, so the model writes it.
+    Prefer a client that can elicit when using live keys.
+- **Credentials never enter the transcript** — a payment's `client_secret` (and any
+  `*_secret` field at any depth) and any raw `pfk_…` API key are replaced with a
+  `[redacted …]` marker before the result leaves the server. A per-payment
+  `client_secret` is a bearer token for that payment; an ordinary read used to write one
+  straight into the model's context and into whatever transcript your client keeps.
+- **Idempotency** — money-moving calls send an `Idempotency-Key` derived from the request
+  itself (a hash of method, path and canonicalised body), so a retry of the same logical
+  operation carries the same key and the backend deduplicates it. The flip side: a
+  *deliberate* repeat with identical parameters inside the 24h window also collapses, and
+  the result says `"replayed": true` rather than pretending a second refund was created.
+  Pass a distinct `idempotency_key` to force a genuinely separate one.
+- **Bounded work** — each request gets a 30s deadline and the whole call, retries
+  included, gets 60s. Retries are capped, honour `Retry-After`, and only ever replay a GET
+  or a request carrying an idempotency key.
 - **Minor units** — amounts are minor units everywhere (GHS 50.00 = `5000`),
   the same convention as the [REST API](/docs/reevit/api-reference).
 
@@ -176,12 +234,33 @@ For remote or agent-platform use, run the same server over streamable HTTP.
 It is stateless — each request gets a fresh server, so no session leakage:
 
 ```bash
-REEVIT_API_KEY=rk_test_... npx -y @reevit/mcp --http --port 8788
-# endpoint: http://localhost:8788/mcp
+REEVIT_API_KEY=pfk_test_... \
+REEVIT_MCP_HTTP_TOKEN="$(openssl rand -hex 32)" \
+  npx -y @reevit/mcp --http --port 8788
+# endpoint: http://127.0.0.1:8788/mcp
+# every request needs:  Authorization: Bearer $REEVIT_MCP_HTTP_TOKEN
 ```
 
-Auth is still the configured scoped key — this is a self-hosted endpoint, so
-put it behind your own network boundary.
+`REEVIT_MCP_HTTP_TOKEN` is **required** — the server refuses to start without it. Anyone
+who can reach this endpoint can drive every tool with your key, including
+`reevit_create_refund`, so it is not an optional hardening step.
+
+Three guards apply in HTTP mode:
+
+- **Loopback bind** — it listens on `127.0.0.1`, not `0.0.0.0`, so it is not reachable
+  from the rest of your network by default. Override the host only behind a boundary you
+  control.
+- **Bearer token** — compared in constant time; a missing or wrong token is a `401`.
+- **DNS-rebinding guard** — requests whose `Host` is not a loopback name get a `403`, so a
+  website you visit cannot script your local server.
+
+Bodies over 1 MB are rejected with `413`.
+
+<Callout type="warn">
+  **Do not run `@reevit/mcp` 0.1.1 in HTTP mode.** It bound `0.0.0.0` with no
+  authentication, so anything that could reach the port could issue refunds with your key.
+  Fixed in 0.2.0.
+</Callout>
 
 ## See also
 
@@ -190,5 +269,5 @@ put it behind your own network boundary.
 - [Test mode](/docs/reevit/test-mode) — simulate payments without moving money
 - [API reference](/docs/reevit/api-reference) — the REST API the MCP tools
   call under the hood
-- [@reevit/mcp on npm](https://www.npmjs.com/package/@reevit/mcp) ·
-  [source on GitHub](https://github.com/Reevit-Platform/mcp)
+- [@reevit/mcp on npm](https://www.npmjs.com/package/@reevit/mcp) — changelog and
+  published versions
