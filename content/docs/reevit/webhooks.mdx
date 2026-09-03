@@ -166,14 +166,24 @@ curl -X POST https://api.reevit.io/v1/webhooks/config \
   -d '{
     "url": "https://yourapp.com/webhooks/reevit",
     "events": [
-      "payment.succeeded",
-      "payment.failed",
-      "payment.refunded",
-      "subscription.renewed"
+      "payment.created",
+      "payment.updated",
+      "payment.canceled",
+      "refund.succeeded"
     ],
     "enabled": true
   }'
 ```
+
+<Callout type="warn">
+`events` is an **exact-match filter and is not validated**. A name Reevit never
+emits is accepted, stored, and shown as configured — and matches nothing, so
+your endpoint receives no deliveries at all. Copy the names from
+[Event Types](#event-types) exactly.
+
+Omitting `events` subscribes to **every** event, which means a misspelled list
+is strictly worse than no list.
+</Callout>
 
 ### Webhook URL Requirements
 
@@ -194,7 +204,7 @@ curl https://api.reevit.io/v1/webhooks/config \
 ```json
 {
   "url": "https://yourapp.com/webhooks/reevit",
-  "events": ["payment.succeeded", "payment.failed"],
+  "events": ["payment.created", "payment.updated"],
   "enabled": true,
   "signing_secret": "whsec_xxx",
   "created_at": "2025-02-10T10:00:00Z"
@@ -212,29 +222,54 @@ Reevit sends different events for different scenarios. Subscribe only to events 
 | Event | When It Fires | Use Case |
 |-------|---------------|----------|
 | `payment.created` | Payment intent created | Log payment attempts |
-| `payment.succeeded` | Payment completed successfully | **Fulfill order, send confirmation** |
-| `payment.failed` | Payment failed | Notify customer, allow retry |
+| `payment.updated` | The payment changed state — read `data.status` | **Fulfill on `succeeded`, notify on `failed`** |
 | `payment.canceled` | Payment canceled | Release inventory, update order |
-| `payment.refunded` | Refund completed | Update order status, notify customer |
+| `payment.expired` | The intent expired before the customer completed it | Release inventory, offer a fresh link |
 
-### Subscription Events
+<Callout type="warn">
+There is no `payment.succeeded` or `payment.failed` **webhook**. Those names
+exist inside Reevit, but a payment reaching a terminal state is delivered as
+`payment.updated` carrying the new `status`. Branch on `data.status`, not on
+the event name — a handler waiting for `payment.succeeded` waits forever.
+</Callout>
 
-| Event | When It Fires | Use Case |
-|-------|---------------|----------|
-| `subscription.created` | New subscription created | Activate subscription, send welcome email |
-| `subscription.updated` | Subscription modified | Update subscription status |
-| `subscription.canceled` | Subscription canceled | Deactivate access, send cancellation email |
-| `subscription.paused` | Subscription paused | Suspend access temporarily |
-| `subscription.resumed` | Subscription resumed | Reactivate access |
-
-### Invoice Events
+### Refund Events
 
 | Event | When It Fires | Use Case |
 |-------|---------------|----------|
-| `invoice.created` | Invoice generated | Notify customer of upcoming charge |
-| `invoice.paid` | Invoice payment succeeded | Extend subscription, grant access |
-| `invoice.failed` | Invoice payment failed | Notify customer, retry payment |
-| `invoice.canceled` | Invoice canceled | Update subscription status |
+| `refund.succeeded` | Refund completed | Update order status, notify customer |
+| `refund.failed` | Refund could not be completed | Alert ops, retry or refund out of band |
+| `refund.updated` | Refund changed state | Track progress |
+
+### Reconciliation Events
+
+| Event | When It Fires | Use Case |
+|-------|---------------|----------|
+| `reconciliation.mismatch` | A settlement did not reconcile | Alert finance before month-end close |
+
+### Onboarding Events
+
+| Event | When It Fires | Use Case |
+|-------|---------------|----------|
+| `onboarding.started` | A merchant began onboarding | Kick off your own checks |
+| `onboarding.submitted` | Onboarding submitted for review | Track pipeline |
+| `onboarding.approved` | Onboarding approved | Enable live features |
+| `onboarding.rejected` | Onboarding rejected | Notify, collect what is missing |
+
+### Test Events
+
+| Event | When It Fires | Use Case |
+|-------|---------------|----------|
+| `reevit.webhook.test` | You call `POST /v1/webhooks/test` | Confirm the endpoint and secret before going live |
+
+<Callout type="warn">
+**Subscription and invoice lifecycle events are not delivered as outbound
+webhooks.** Subscriptions and invoices exist in the API and the dashboard, but
+they raise no `subscription.*` or `invoice.*` delivery to your endpoint —
+subscribing to those names produces silence. Drive renewals from the
+`payment.*` events the charge itself raises, or poll the subscription and
+invoice endpoints.
+</Callout>
 
 ---
 
@@ -244,10 +279,14 @@ Every webhook includes a consistent payload structure:
 
 ```json
 {
-  "id": "evt_abc123",
-  "type": "payment.succeeded",
+  "event": "payment.updated",
   "org_id": "org_123",
-  "created_at": "2025-02-10T10:05:00Z",
+  "timestamp": "2026-02-10T10:05:00Z",
+  "api_version": "2026-03-05",
+  "delivery_id": "3f2a1c9e-6b4d-4f70-9a1e-5c8d2b7e0a13",
+  "attempt": 1,
+  "mode": "live",
+  "signature_timestamp": "2026-02-10T10:05:00Z",
   "data": {
     "id": "pay_xyz789",
     "amount": 5000,
@@ -264,27 +303,39 @@ Every webhook includes a consistent payload structure:
 
 ### Payload Fields
 
-- **`id`**: Unique event identifier (use for idempotency)
-- **`type`**: Event type (e.g., `payment.succeeded`)
+- **`event`**: The event name. **This is the discriminator** — there is no
+  `type` field, and a handler that reads `event.type` gets `undefined`.
 - **`org_id`**: Your organization ID
-- **`created_at`**: When the event occurred (ISO 8601)
-- **`data`**: Event-specific data (varies by event type)
+- **`timestamp`**: When the event was raised (RFC 3339)
+- **`api_version`**: Payload contract version
+- **`delivery_id`**: Stable across retries of the same event — **use this for
+  idempotency**. There is no top-level `id`.
+- **`attempt`**: `1` on first delivery, incrementing on each retry
+- **`mode`**: `live` or `sandbox`
+- **`signature_timestamp`**: When the signature was computed (RFC 3339)
+- **`data`**: Event-specific data (varies by event)
+
+Every field above is mirrored in a header: `X-Reevit-Event`,
+`X-Reevit-Delivery-ID`, `X-Reevit-Delivery-Attempt`, `X-Reevit-Mode`,
+`X-Reevit-API-Version` and `X-Reevit-Signature-Timestamp`.
 
 ### Using Event Data
 
 **Example: Fulfill Order on Payment Success**
 
 ```javascript
-if (event.type === 'payment.succeeded') {
+// The discriminator is `event`, and a completed payment arrives as
+// `payment.updated` with a terminal `status`.
+if (event.event === 'payment.updated' && event.data.status === 'succeeded') {
   const payment = event.data;
   const orderId = payment.metadata.order_id;
-  
+
   // Fulfill order
   await fulfillOrder(orderId);
-  
+
   // Send confirmation email
   await sendConfirmationEmail(payment.customer_id);
-  
+
   // Update analytics
   await trackPurchase(payment);
 }
@@ -474,15 +525,18 @@ export async function POST(request: NextRequest) {
   const event = JSON.parse(rawBody);
 
   // Handle events
-  switch (event.type) {
+  // `event`, not `type` — reading `event.type` yields undefined, falls to
+  // default, returns 200 and silently drops every delivery.
+  switch (event.event) {
     case "reevit.webhook.test":
       console.log("Test webhook received");
       break;
-    case "payment.succeeded":
-      await handlePaymentSucceeded(event.data);
-      break;
-    case "payment.failed":
-      await handlePaymentFailed(event.data);
+    case "payment.updated":
+      if (event.data.status === "succeeded") {
+        await handlePaymentSucceeded(event.data);
+      } else if (event.data.status === "failed") {
+        await handlePaymentFailed(event.data);
+      }
       break;
   }
 
@@ -536,12 +590,13 @@ app.post('/webhooks/reevit', express.raw({ type: 'application/json' }), (req, re
   
   const event = JSON.parse(payload);
   
-  switch (event.type) {
-    case 'payment.succeeded':
-      // Fulfill order
-      break;
-    case 'payment.failed':
-      // Notify customer
+  switch (event.event) {
+    case 'payment.updated':
+      if (event.data.status === 'succeeded') {
+        // Fulfill order
+      } else if (event.data.status === 'failed') {
+        // Notify customer
+      }
       break;
   }
   
@@ -591,12 +646,17 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
     var event map[string]interface{}
     json.Unmarshal(body, &event)
     
-    // Handle event based on type
-    switch event["type"] {
-    case "payment.succeeded":
-        // Fulfill order
-    case "payment.failed":
-        // Notify customer
+    // The discriminator is "event". Go cannot express "either key" in a
+    // struct tag, so read it explicitly.
+    switch event["event"] {
+    case "payment.updated":
+        data, _ := event["data"].(map[string]interface{})
+        switch data["status"] {
+        case "succeeded":
+            // Fulfill order
+        case "failed":
+            // Notify customer
+        }
     }
     
     w.WriteHeader(http.StatusOK)
@@ -638,12 +698,13 @@ def webhook():
     
     event = request.get_json()
     
-    if event['type'] == 'payment.succeeded':
-        # Fulfill order
-        pass
-    elif event['type'] == 'payment.failed':
-        # Notify customer
-        pass
+    if event['event'] == 'payment.updated':
+        if event['data']['status'] == 'succeeded':
+            # Fulfill order
+            pass
+        elif event['data']['status'] == 'failed':
+            # Notify customer
+            pass
     
     return jsonify({'received': True})
 ```
@@ -677,12 +738,13 @@ if (!verifySignature($payload, $signature, $secret)) {
 
 $event = json_decode($payload, true);
 
-switch ($event['type']) {
-    case 'payment.succeeded':
-        // Fulfill order
-        break;
-    case 'payment.failed':
-        // Notify customer
+switch ($event['event']) {
+    case 'payment.updated':
+        if ($event['data']['status'] === 'succeeded') {
+            // Fulfill order
+        } elseif ($event['data']['status'] === 'failed') {
+            // Notify customer
+        }
         break;
 }
 
@@ -914,7 +976,9 @@ After 5 failed attempts, the event is marked as failed and won't be retried auto
 4. **Rate Limiting**: Implement rate limiting on webhook endpoint
 5. **Monitor Failures**: Alert on repeated webhook failures
 6. **Keep Secrets Secure**: Never expose webhook secrets
-7. **Use Idempotency**: Handle duplicate events gracefully
+7. **Use Idempotency**: Deduplicate on `delivery_id` (or the
+   `X-Reevit-Delivery-ID` header). It is stable across retries of the same
+   event, while `attempt` increments.
 
 ---
 
@@ -923,27 +987,33 @@ After 5 failed attempts, the event is marked as failed and won't be retried auto
 ### Order Fulfillment
 
 ```javascript
-if (event.type === 'payment.succeeded') {
+if (event.event === 'payment.updated' && event.data.status === 'succeeded') {
   const orderId = event.data.metadata.order_id;
   await fulfillOrder(orderId);
   await sendConfirmationEmail(event.data.customer_id);
 }
 ```
 
-### Subscription Management
+### Subscription Renewals
+
+There is no `subscription.renewed` webhook. A renewal reaches you as the
+`payment.updated` event for the renewal charge — correlate it to the
+subscription through the metadata you set when the charge was created.
 
 ```javascript
-if (event.type === 'subscription.renewed') {
-  const subscription = event.data;
-  await extendAccess(subscription.customer_id);
-  await sendRenewalConfirmation(subscription);
+if (event.event === 'payment.updated' && event.data.status === 'succeeded') {
+  const subscriptionId = event.data.metadata?.subscription_id;
+  if (subscriptionId) {
+    await extendAccess(event.data.customer_id);
+    await sendRenewalConfirmation(subscriptionId);
+  }
 }
 ```
 
 ### Refund Processing
 
 ```javascript
-if (event.type === 'payment.refunded') {
+if (event.event === 'refund.succeeded') {
   const refund = event.data;
   await updateOrderStatus(refund.metadata.order_id, 'refunded');
   await notifyCustomer(refund.customer_id, 'refund_processed');
@@ -953,7 +1023,7 @@ if (event.type === 'payment.refunded') {
 ### Failed Payment Handling
 
 ```javascript
-if (event.type === 'payment.failed') {
+if (event.event === 'payment.updated' && event.data.status === 'failed') {
   const payment = event.data;
   await notifyCustomer(payment.customer_id, 'payment_failed');
   await allowRetry(payment.id);

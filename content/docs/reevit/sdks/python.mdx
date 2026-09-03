@@ -165,17 +165,18 @@ def webhook():
         return jsonify({'error': 'Invalid signature'}), 401
     
     event = request.get_json()
-    event_type = event.get('type')
-    
-    if event_type == 'payment.succeeded':
-        data = event.get('data', {})
-        order_id = data.get('metadata', {}).get('order_id')
-        # Fulfill order, send confirmation email
-        print(f"Payment succeeded for order {order_id}")
-    
-    elif event_type == 'payment.failed':
-        # Notify customer, allow retry
-        pass
+    # The discriminator is 'event', not 'type'.
+    event_name = event.get('event')
+    data = event.get('data', {})
+
+    if event_name == 'payment.updated':
+        if data.get('status') == 'succeeded':
+            order_id = data.get('metadata', {}).get('order_id')
+            # Fulfill order, send confirmation email
+            print(f"Payment succeeded for order {order_id}")
+        elif data.get('status') == 'failed':
+            # Notify customer, allow retry
+            pass
     
     return jsonify({'received': True})
 ```
@@ -213,11 +214,13 @@ async def webhook(request: Request):
         raise HTTPException(status_code=401, detail='Invalid signature')
     
     event = await request.json()
-    event_type = event.get('type')
-    
-    if event_type == 'payment.succeeded':
+    event_name = event.get('event')
+
+    if event_name == 'payment.updated':
         data = event.get('data', {})
-        # Process payment
+        if data.get('status') == 'succeeded':
+            # Process payment
+            pass
     
     return {'received': True}
 ```
@@ -257,9 +260,9 @@ def reevit_webhook(request):
         return JsonResponse({'error': 'Invalid signature'}, status=401)
     
     event = json.loads(payload)
-    event_type = event.get('type')
-    
-    if event_type == 'payment.succeeded':
+    event_name = event.get('event')
+
+    if event_name == 'payment.updated' and event.get('data', {}).get('status') == 'succeeded':
         # Handle success
         pass
     

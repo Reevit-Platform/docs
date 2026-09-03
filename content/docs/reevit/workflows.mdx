@@ -33,7 +33,7 @@ Reevit Workflows allow you to automate complex business logic triggered by real-
 
 Reevit follows a simple, robust execution cycle:
 
-1.  **Event Trigger**: A transaction moves to a new state (e.g., `payment.succeeded`).
+1.  **Event Trigger**: A transaction moves to a new state (e.g., `payment.success`).
 2.  **Condition Filter**: The engine checks if the event meets your criteria (e.g., `amount > 1000 GHS`).
 3.  **Action Execution**: Reevit communicates with your [Connected Integrations](#supported-integrations) to deliver messages or sync data.
 4.  **Audit Log**: Every execution is logged with full request/response payloads for debugging.
@@ -62,7 +62,7 @@ import { Reevit } from '@reevit/node';
 
 const workflow = await reevit.workflows.create({
   name: 'VIP Purchase Alert',
-  trigger: 'payment.succeeded',
+  trigger: 'payment.success',
   conditions: {
     amount_gte: 500000 // 5,000 GHS
   },

@@ -291,12 +291,15 @@ app.post('/webhooks/reevit', express.raw({ type: 'application/json' }), (req, re
 
   const event = JSON.parse(req.body.toString('utf8'));
 
-  switch (event.type) {
-    case 'payment.succeeded':
-      // Handle success
-      break;
-    case 'payment.failed':
-      // Handle failure
+  // The discriminator is `event`; terminal states arrive as
+  // `payment.updated` with the outcome in `data.status`.
+  switch (event.event) {
+    case 'payment.updated':
+      if (event.data.status === 'succeeded') {
+        // Handle success
+      } else if (event.data.status === 'failed') {
+        // Handle failure
+      }
       break;
   }
 
