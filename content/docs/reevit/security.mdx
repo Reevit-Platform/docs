@@ -261,7 +261,7 @@ By default, data is processed in **EU-West (Ireland)**. Enterprise customers can
 ### For Your Application
 
 1. **Never expose API keys in client-side code**
-   ```bash
+   ```typescript
    // ❌ Wrong - exposes key to browser
    const client = new Reevit('pfk_live_xxx.secret', 'org_123');
 
@@ -277,18 +277,22 @@ By default, data is processed in **EU-West (Ireland)**. Enterprise customers can
    // ❌ Never trust client-side success
    if (payment.status === 'succeeded') fulfillOrder();
 
-   // ✅ Always verify via webhook
+   // ✅ Always verify via webhook.
+   // A terminal outcome arrives as `payment.updated` with the result in
+   // `data.status`. There is no `payment.succeeded` event — see
+   // https://docs.reevit.io/webhooks#event-types for the full list.
    app.post('/webhooks/reevit', async (req, res) => {
      if (verifySignature(req)) {
-       if (req.body.event === 'payment.succeeded') {
-         fulfillOrder(req.body.data.payment_id);
+       const event = req.body;
+       if (event.event === 'payment.updated' && event.data.status === 'succeeded') {
+         fulfillOrder(event.data.id);
        }
      }
    });
    ```
 
 3. **Implement idempotency**
-   ```typescript
+   ```bash
    curl -X POST https://api.reevit.io/v1/payments/intents \
      -H "X-Reevit-Key: pfk_live_xxx.secret" \
      -H "X-Org-Id: org_123" \
