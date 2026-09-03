@@ -169,9 +169,11 @@ if (!hash_equals($expected, $signature)) {
 
 $event = json_decode($payload, true);
 
-switch ($event['type']) {
-    case 'payment.succeeded':
-        // Handle success
+switch ($event['event']) {
+    case 'payment.updated':
+        if ($event['data']['status'] === 'succeeded') {
+            // Handle success
+        }
         break;
 }
 
@@ -204,10 +206,12 @@ class WebhookController extends Controller
         
         $event = $request->all();
         
-        switch ($event['type']) {
-            case 'payment.succeeded':
-                $orderId = $event['data']['metadata']['order_id'] ?? null;
-                // Fulfill order
+        switch ($event['event']) {
+            case 'payment.updated':
+                if ($event['data']['status'] === 'succeeded') {
+                    $orderId = $event['data']['metadata']['order_id'] ?? null;
+                    // Fulfill order
+                }
                 break;
         }
         

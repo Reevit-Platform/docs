@@ -457,7 +457,21 @@ Retry policies are applied in order of specificity:
 
 ## Webhook Events
 
-Subscriptions trigger webhook events you can use to automate your business logic.
+Subscriptions raise events inside Reevit, and they drive the dashboard and
+your notification preferences. **They are not delivered to your webhook
+endpoint.**
+
+<Callout type="warn">
+There are no outbound `subscription.*` or `invoice.*` webhooks. Reevit
+delivers `payment.*` and `refund.*` events only — see
+[Event Types](/docs/reevit/webhooks#event-types). Subscribing to the names below produces
+an endpoint that receives nothing.
+
+To react to a renewal, handle the `payment.updated` event for the renewal
+charge and correlate it through the metadata you set when creating it.
+</Callout>
+
+The events below exist in the dashboard and in notification preferences.
 
 ### Subscription Events
 
@@ -480,28 +494,30 @@ Subscriptions trigger webhook events you can use to automate your business logic
 
 ### Example: Automating Access
 
+Because there is no `subscription.*` delivery, drive access from the payment
+that actually reaches your endpoint. The discriminator is `event`, not `type`.
+
 ```javascript
-// When subscription is created
-if (event.type === 'subscription.created') {
-  const subscription = event.data;
-  await activateAccess(subscription.customer_id);
-  await sendWelcomeEmail(subscription.customer_id);
+// A renewal or first charge succeeded: extend or activate access.
+if (event.event === 'payment.updated' && event.data.status === 'succeeded') {
+  const subscriptionId = event.data.metadata?.subscription_id;
+  if (subscriptionId) {
+    await extendAccess(subscriptionId);
+    await sendReceipt(event.data);
+  }
 }
 
-// When invoice is paid
-if (event.type === 'invoice.paid') {
-  const invoice = event.data;
-  await extendAccess(invoice.subscription_id);
-  await sendReceipt(invoice);
-}
-
-// When subscription is canceled
-if (event.type === 'subscription.canceled') {
-  const subscription = event.data;
-  await revokeAccess(subscription.customer_id);
-  await sendCancellationEmail(subscription.customer_id);
+// A charge failed: the subscription is heading for dunning.
+if (event.event === 'payment.updated' && event.data.status === 'failed') {
+  const subscriptionId = event.data.metadata?.subscription_id;
+  if (subscriptionId) {
+    await warnCustomer(subscriptionId);
+  }
 }
 ```
+
+Cancellations and pauses are not delivered at all — read them from
+`GET /v1/subscriptions/{id}` or act on them where you initiate them.
 
 ---
 

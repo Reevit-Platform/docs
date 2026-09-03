@@ -191,12 +191,17 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
     var event map[string]interface{}
     json.Unmarshal(body, &event)
 
-    switch event["type"] {
-    case "payment.succeeded":
-        // Handle success
-        log.Printf("Payment succeeded: %v", event["data"])
-    case "payment.failed":
-        // Handle failure
+    // The discriminator is "event"; the outcome is in data.status.
+    switch event["event"] {
+    case "payment.updated":
+        data, _ := event["data"].(map[string]interface{})
+        switch data["status"] {
+        case "succeeded":
+            // Handle success
+            log.Printf("Payment succeeded: %v", data)
+        case "failed":
+            // Handle failure
+        }
     }
     
     w.WriteHeader(200)

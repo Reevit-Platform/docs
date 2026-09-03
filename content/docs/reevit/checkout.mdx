@@ -179,7 +179,8 @@ custom keys become `metadata_<key>`.
 To fulfill orders reliably, set up outbound webhooks.
 
 - Configure your webhook endpoint in **Dashboard → Webhooks**.
-- Verify signatures and update your order state on `payment.succeeded`.
+- Verify signatures, then update your order state on `payment.updated` when
+  `data.status` is `succeeded` — there is no `payment.succeeded` webhook.
 
 If you create payments via SDK or API, Reevit injects the correlation metadata needed for PSP webhook routing automatically. Use `metadata` for your own fields. See [Webhooks](/docs/reevit/webhooks).
 
